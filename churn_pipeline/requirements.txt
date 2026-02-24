@@ -1,0 +1,13 @@
+# Add your Python dependencies here
+fastapi
+uvicorn
+sqlalchemy
+pymysql
+pandas
+numpy
+scikit-learn
+scipy
+apscheduler
+python-multipart
+jinja2
+requests

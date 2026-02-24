@@ -1,4 +1,6 @@
-# Churn Pipeline
+
+# Unsupervised real-time customer churn detection using Online Isolation Forest
+with continuous incremental learning, Flask API, and MySQL integration.
 
 This project contains a churn prediction pipeline with the following structure:
 

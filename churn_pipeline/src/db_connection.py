@@ -141,6 +141,41 @@ def register_model(model_version: str, model_path: str, trained_on_records: int,
         raise
 
 
+def update_model_registry(model_version: str, model_path: str, trained_on_records: int, notes: str = ""):
+    """Update existing active model row instead of inserting new one."""
+    try:
+        engine = get_engine()
+        with engine.begin() as conn:
+            # Check if any model exists with this version
+            result = conn.execute(text(
+                "SELECT COUNT(*) as cnt FROM model_registry WHERE model_version = :v"
+            ), {"v": model_version})
+            count = result.fetchone()["cnt"]
+
+            if count > 0:
+                # Update existing row
+                conn.execute(text("""
+                    UPDATE model_registry
+                    SET trained_on_records = :records,
+                        training_date      = NOW(),
+                        notes              = :notes
+                    WHERE model_version = :v
+                """), {"records": trained_on_records, "notes": notes, "v": model_version})
+                logger.info(f"✅ Model registry updated: {model_version}")
+            else:
+                # First time — insert new row
+                conn.execute(text("""
+                    INSERT INTO model_registry
+                        (model_version, model_path, trained_on_records, is_active, notes)
+                    VALUES
+                        (:v, :path, :records, 1, :notes)
+                """), {"v": model_version, "path": model_path,
+                       "records": trained_on_records, "notes": notes})
+                logger.info(f"✅ Model registry created: {model_version}")
+    except Exception as e:
+        logger.error(f"❌ update_model_registry error: {e}")
+
+
 def get_active_model():
     try:
         engine = get_engine()

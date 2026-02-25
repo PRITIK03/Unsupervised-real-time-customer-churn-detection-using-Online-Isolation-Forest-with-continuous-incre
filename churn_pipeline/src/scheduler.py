@@ -50,9 +50,13 @@ def run_pipeline():
     Full daily pipeline job:
     1. Fetch new unprocessed data from MySQL
     2. Preprocess and feature engineer
-    3. Train / update model
+    3. Train / update model (with saved label encoders)
     4. Evaluate and log metrics
-    5. Register new model version
+    5. Update model registry (same row)
+
+    FIX: preprocess() now returns 5 values — added label_encoders
+    as the 5th. Passed through to run_training() so encoders get
+    saved into the model package for correct API inference.
     """
     logger.info("=" * 60)
     logger.info(f"  PIPELINE JOB STARTED — {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
@@ -61,7 +65,7 @@ def run_pipeline():
     try:
         # ── Step 1: Preprocess ────────────
         logger.info("STEP 1 — Preprocessing new data...")
-        X, feature_cols, scaler, raw_ids = prep.preprocess(fetch_all=False)
+        X, feature_cols, scaler, raw_ids, label_encoders = prep.preprocess(fetch_all=False)
 
         if X is None or len(X) == 0:
             logger.warning("⚠️ No new data found for today. Pipeline skipped.")
@@ -71,7 +75,10 @@ def run_pipeline():
 
         # ── Step 2: Train ─────────────────
         logger.info("STEP 2 — Training model...")
-        oif, version = train.run_training(X, feature_cols, scaler, raw_ids)
+        oif, version = train.run_training(
+            X, feature_cols, scaler, raw_ids,
+            label_encoders = label_encoders   # ← pass encoders through to model package
+        )
         logger.info(f"✅ Step 2 complete — Model version: {version}")
 
         # ── Step 3: Evaluate ──────────────
@@ -150,8 +157,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.run_now:
-        # Run pipeline right now for testing
         run_now()
     else:
-        # Start the daily cron scheduler
         start_scheduler()

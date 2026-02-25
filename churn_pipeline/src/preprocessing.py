@@ -41,7 +41,14 @@ def preprocess(fetch_all: bool = False):
     Fetch data from MySQL, clean, encode, scale.
     fetch_all=False  → only unprocessed records (daily cron use)
     fetch_all=True   → all processed records (full retrain use)
-    Returns: X_scaled (numpy array), feature_columns, scaler, raw_ids
+
+    Returns: X_scaled, feature_columns, scaler, raw_ids, label_encoders
+
+    FIX: now returns label_encoders as 5th element — a dict of
+    {column_name: fitted LabelEncoder} so train.py can save them
+    into the model package. The API then loads and reuses these
+    exact encoders at inference time, instead of fitting a fresh
+    encoder on a single row (which always returns 0 for everything).
     """
     logger.info("=" * 50)
     logger.info("  PREPROCESSING STARTED")
@@ -55,11 +62,11 @@ def preprocess(fetch_all: bool = False):
 
     if df.empty:
         logger.warning("⚠️ No data to process. Exiting.")
-        return None, None, None, None
+        return None, None, None, None, None
 
     logger.info(f"✅ Fetched {len(df)} records from database.")
 
-    # Save original IDs to mark as processed later
+    # Save original IDs before dropping system columns
     raw_ids = df["id"].tolist() if "id" in df.columns else []
 
     # ── Step 2: Drop non-feature columns ──
@@ -88,15 +95,19 @@ def preprocess(fetch_all: bool = False):
     logger.info(f"✅ Null values handled.")
 
     # ── Step 6: Encode categoricals ───────
-    le = LabelEncoder()
+    # Each LabelEncoder is fitted on the full training set and returned
+    # so it can be saved into the model package and reused at inference.
+    label_encoders = {}
     for col in cfg.CATEGORICAL_COLUMNS:
         if col in df.columns:
+            le = LabelEncoder()
             df[col] = le.fit_transform(df[col].astype(str))
+            label_encoders[col] = le
 
-    logger.info(f"✅ Categorical columns encoded.")
+    logger.info(f"✅ Categorical columns encoded. {len(label_encoders)} encoders built.")
 
     # ── Step 7: Scale numericals ──────────
-    scaler = StandardScaler()
+    scaler   = StandardScaler()
     X_scaled = scaler.fit_transform(df)
     logger.info(f"✅ Features scaled with StandardScaler.")
 
@@ -111,16 +122,17 @@ def preprocess(fetch_all: bool = False):
     logger.info(f"  PREPROCESSING COMPLETE — {len(df)} records ready")
     logger.info("=" * 50)
 
-    return X_scaled, feature_cols, scaler, raw_ids
+    return X_scaled, feature_cols, scaler, raw_ids, label_encoders
 
 
 # ─────────────────────────────────────────
 #  TEST
 # ─────────────────────────────────────────
 if __name__ == "__main__":
-    X, cols, scaler, ids = preprocess(fetch_all=False)
+    X, cols, scaler, ids, encoders = preprocess(fetch_all=False)
     if X is not None:
         print(f"\nShape of processed data : {X.shape}")
         print(f"Number of features      : {len(cols)}")
         print(f"Feature columns         : {cols}")
+        print(f"Label encoders built    : {list(encoders.keys())}")
         print(f"Sample (first row)      : {X[0]}")

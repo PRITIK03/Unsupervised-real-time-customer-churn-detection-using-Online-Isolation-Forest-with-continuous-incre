@@ -6,6 +6,7 @@ import numpy as np
 from datetime import datetime
 from collections import deque
 from sklearn.ensemble import IsolationForest
+from sklearn.preprocessing import LabelEncoder
 
 # ─────────────────────────────────────────
 #  PATH FIX
@@ -129,18 +130,44 @@ class OnlineIsolationForest:
 
 
 # ─────────────────────────────────────────
+#  BUILD & SAVE LABEL ENCODERS
+# ─────────────────────────────────────────
+def build_label_encoders(df_raw):
+    """
+    Fit one LabelEncoder per categorical column on the full training data.
+    Returns a dict: {column_name: fitted_LabelEncoder}
+    Saved into the model package so the API can reuse exact same encodings
+    at inference time — fixes the critical bug where a fresh LabelEncoder
+    fitted on a single row always returns 0 for every value.
+    """
+    encoders = {}
+    for col in cfg.CATEGORICAL_COLUMNS:
+        if col in df_raw.columns:
+            le = LabelEncoder()
+            le.fit(df_raw[col].astype(str).fillna("Unknown"))
+            encoders[col] = le
+            logger.info(f"  Encoder for '{col}': {list(le.classes_)}")
+    logger.info(f"✅ Built {len(encoders)} label encoders.")
+    return encoders
+
+
+# ─────────────────────────────────────────
 #  SAVE MODEL
 # ─────────────────────────────────────────
 def save_model(oif: OnlineIsolationForest, scaler, feature_columns: list,
+               label_encoders: dict,
                existing_version: str = None, existing_path: str = None):
     """
     Save model — always overwrites the same file.
     First time: creates model_v_1.pkl
-    Every time after: overwrites the same existing file
+    Every time after: overwrites the same existing file.
+
+    FIX: label_encoders dict is now included in the model package.
+    The API loads these at startup and uses them for inference,
+    instead of re-fitting a fresh LabelEncoder on a single input row.
     """
     os.makedirs(cfg.MODELS_DIR, exist_ok=True)
 
-    # ── Use existing path if model already exists ──
     if existing_path and os.path.exists(existing_path):
         save_path = existing_path
         version   = existing_version
@@ -162,6 +189,7 @@ def save_model(oif: OnlineIsolationForest, scaler, feature_columns: list,
         "global_min"     : oif.global_min,
         "global_max"     : oif.global_max,
         "scaler"         : scaler,
+        "label_encoders" : label_encoders,   # ← NEW: saved encoders for API reuse
         "feature_columns": feature_columns,
         "version"        : version,
         "last_updated"   : datetime.now().isoformat()
@@ -178,7 +206,11 @@ def save_model(oif: OnlineIsolationForest, scaler, feature_columns: list,
 #  LOAD MODEL
 # ─────────────────────────────────────────
 def load_model(model_path: str):
-    """Load model package from .pkl file."""
+    """
+    Load model package from .pkl file.
+    Returns: (oif, scaler, feature_columns, full_package)
+    label_encoders accessible via package["label_encoders"]
+    """
     if not os.path.exists(model_path):
         logger.error(f"❌ Model file not found: {model_path}")
         return None
@@ -197,6 +229,12 @@ def load_model(model_path: str):
     oif.global_min    = package["global_min"]
     oif.global_max    = package["global_max"]
 
+    # Backward compat: older .pkl files may not have label_encoders
+    if "label_encoders" not in package:
+        logger.warning("⚠️ Model package has no label_encoders (old format). "
+                       "Re-run training to generate updated package.")
+        package["label_encoders"] = {}
+
     logger.info(f"✅ Model loaded: {package['version']}")
     return oif, package["scaler"], package["feature_columns"], package
 
@@ -204,21 +242,25 @@ def load_model(model_path: str):
 # ─────────────────────────────────────────
 #  MAIN TRAIN FUNCTION
 # ─────────────────────────────────────────
-def run_training(X: np.ndarray, feature_columns: list, scaler, record_ids: list):
+def run_training(X: np.ndarray, feature_columns: list, scaler,
+                 record_ids: list, label_encoders: dict = None):
     """
     Full training run:
     1. Check if active model exists
     2. If yes  → update same model, overwrite same file, update same DB row
     3. If no   → initial train, create model_v_1, insert first DB row
     4. Mark records as processed
+
+    label_encoders: pass the dict from preprocessing so it gets saved
+    into the model package for use by the API at inference time.
     """
     logger.info("=" * 50)
     logger.info("  TRAINING STARTED")
     logger.info("=" * 50)
 
-    active_model_info  = db.get_active_model()
-    existing_version   = None
-    existing_path      = None
+    active_model_info = db.get_active_model()
+    existing_version  = None
+    existing_path     = None
 
     if active_model_info and os.path.exists(active_model_info["model_path"]):
         # ── Load and update existing model ────
@@ -238,9 +280,10 @@ def run_training(X: np.ndarray, feature_columns: list, scaler, record_ids: list)
         )
         oif.initial_train(X)
 
-    # ── Save model (overwrite same file) ──
+    # ── Save model (overwrite same file, include encoders) ──
     version, save_path = save_model(
         oif, scaler, feature_columns,
+        label_encoders   = label_encoders or {},
         existing_version = existing_version,
         existing_path    = existing_path
     )
@@ -270,10 +313,10 @@ def run_training(X: np.ndarray, feature_columns: list, scaler, record_ids: list)
 # ─────────────────────────────────────────
 if __name__ == "__main__":
     prep = load_module("preprocessing", os.path.join(ROOT_DIR, "src", "preprocessing.py"))
-    X, feature_cols, scaler, raw_ids = prep.preprocess(fetch_all=False)
+    X, feature_cols, scaler, raw_ids, label_encoders = prep.preprocess(fetch_all=False)
 
     if X is not None:
-        oif, version = run_training(X, feature_cols, scaler, raw_ids)
+        oif, version = run_training(X, feature_cols, scaler, raw_ids, label_encoders)
         labels, scores = oif.predict(X[:5])
         print("\n── Sample Predictions ──")
         for i in range(5):

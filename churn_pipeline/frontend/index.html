@@ -36,6 +36,7 @@
         ::-webkit-scrollbar-track { background: var(--bg-primary); }
         ::-webkit-scrollbar-thumb { background: var(--blue); border-radius: 3px; }
 
+        /* ── SIDEBAR ── */
         .sidebar { position: fixed; left: 0; top: 0; width: 255px; height: 100vh; background: var(--bg-secondary); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px 14px; z-index: 100; }
         .logo-wrap { display: flex; align-items: center; gap: 11px; padding: 10px 14px; margin-bottom: 28px; }
         .logo-icon { width: 38px; height: 38px; background: linear-gradient(135deg, var(--blue), var(--purple)); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
@@ -51,18 +52,20 @@
         .model-badge-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
         .model-badge-ver { font-size: 11px; color: var(--green); font-weight: 600; margin-top: 3px; word-break: break-all; }
 
+        /* ── MAIN ── */
         .main { margin-left: 255px; min-height: 100vh; padding: 28px 30px; }
         .page { display: none; }
         .page.active { display: block; animation: fadeUp 0.4s ease; }
         @keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
-
         .page-title { font-size: 26px; font-weight: 800; background: linear-gradient(135deg, var(--text), var(--text-sec)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 4px; }
         .page-sub { color: var(--text-muted); font-size: 13px; margin-bottom: 24px; }
 
+        /* ── CARDS ── */
         .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 22px; transition: var(--transition); box-shadow: var(--shadow); }
         .card:hover { border-color: var(--border-bright); transform: translateY(-2px); }
         .card-title { font-size: 12px; font-weight: 600; color: var(--text-sec); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; display: flex; align-items: center; gap: 7px; }
 
+        /* ── STAT CARDS ── */
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 16px; margin-bottom: 24px; }
         .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; display: flex; align-items: center; gap: 14px; transition: var(--transition); position: relative; overflow: hidden; }
         .stat-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: var(--ac, var(--blue)); }
@@ -71,9 +74,11 @@
         .stat-val { font-size: 26px; font-weight: 800; line-height: 1; }
         .stat-lbl { font-size: 11px; color: var(--text-muted); margin-top: 3px; font-weight: 500; }
 
+        /* ── CHARTS ── */
         .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 22px; }
         .chart-box { position: relative; height: 250px; }
 
+        /* ── PREDICT ── */
         .predict-layout { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; align-items: start; }
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
         .form-group { display: flex; flex-direction: column; gap: 5px; }
@@ -103,6 +108,7 @@
         .result-detail-lbl { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
         .result-detail-val { font-size: 14px; font-weight: 700; margin-top: 3px; }
 
+        /* ── TABLE ── */
         .table-wrap { overflow-x: auto; border-radius: var(--radius-sm); }
         table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
         thead tr { background: var(--bg-secondary); border-bottom: 1px solid var(--border-bright); }
@@ -111,16 +117,18 @@
         tbody tr:hover { background: var(--bg-hover); }
         tbody td { padding: 11px 14px; color: var(--text-sec); }
 
+        /* ── BADGES ── */
         .badge { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
         .badge-good { background: rgba(16,185,129,0.12); color: var(--green); border: 1px solid rgba(16,185,129,0.28); }
         .badge-warning { background: rgba(245,158,11,0.12); color: var(--yellow); border: 1px solid rgba(245,158,11,0.28); }
         .badge-degraded { background: rgba(239,68,68,0.12); color: var(--red); border: 1px solid rgba(239,68,68,0.28); }
         .badge-active { background: rgba(59,130,246,0.12); color: var(--blue); border: 1px solid rgba(59,130,246,0.28); }
 
+        /* ── SPINNER ── */
         .spinner { width: 36px; height: 36px; border: 3px solid var(--border-bright); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 32px auto; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Contract Risk Bars */
+        /* ── CONTRACT RISK BARS ── */
         .contract-bars { display: flex; flex-direction: column; gap: 20px; padding: 8px 4px; justify-content: center; height: 250px; }
         .contract-bar-row { display: flex; flex-direction: column; gap: 6px; }
         .contract-bar-header { display: flex; justify-content: space-between; align-items: center; }
@@ -129,6 +137,45 @@
         .contract-bar-track { height: 12px; background: var(--bg-secondary); border-radius: 6px; overflow: hidden; border: 1px solid var(--border); }
         .contract-bar-fill { height: 100%; border-radius: 6px; transition: width 1.2s cubic-bezier(0.4,0,0.2,1); }
         .contract-bar-meta { font-size: 11px; color: var(--text-muted); }
+
+        /* ── BATCH CSV UPLOAD (Feature 3) ── */
+        .batch-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+        .batch-tab { padding: 8px 20px; border-radius: var(--radius-sm); border: 1px solid var(--border-bright); background: transparent; color: var(--text-sec); font-size: 13px; font-weight: 600; cursor: pointer; transition: var(--transition); font-family: 'Inter', sans-serif; }
+        .batch-tab.active { background: linear-gradient(135deg,rgba(59,130,246,0.15),rgba(139,92,246,0.15)); color: var(--blue); border-color: rgba(59,130,246,0.3); }
+        .batch-tab:hover:not(.active) { background: var(--bg-card); color: var(--text); }
+
+        .drop-zone { border: 2px dashed var(--border-bright); border-radius: var(--radius); padding: 48px 24px; text-align: center; cursor: pointer; transition: var(--transition); background: var(--bg-secondary); }
+        .drop-zone:hover, .drop-zone.drag-over { border-color: var(--blue); background: rgba(59,130,246,0.05); }
+        .drop-zone-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.6; }
+        .drop-zone-text { font-size: 15px; font-weight: 600; color: var(--text-sec); margin-bottom: 6px; }
+        .drop-zone-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 16px; }
+        .drop-zone-btn { display: inline-block; padding: 8px 22px; background: linear-gradient(135deg, var(--blue), var(--purple)); border: none; border-radius: var(--radius-sm); color: white; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: var(--transition); }
+        .drop-zone-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(59,130,246,0.35); }
+
+        .batch-summary { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 18px; }
+        .batch-summary-card { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; text-align: center; }
+        .batch-summary-val { font-size: 22px; font-weight: 800; }
+        .batch-summary-lbl { font-size: 10px; color: var(--text-muted); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .batch-result-row-Critical td:first-child { border-left: 3px solid var(--red); }
+        .batch-result-row-High td:first-child { border-left: 3px solid var(--orange); }
+        .batch-result-row-Medium td:first-child { border-left: 3px solid var(--yellow); }
+        .batch-result-row-Low td:first-child { border-left: 3px solid var(--green); }
+
+        .download-btn { display: inline-flex; align-items: center; gap: 7px; padding: 8px 18px; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3); color: var(--green); border-radius: var(--radius-sm); font-size: 12px; font-weight: 600; cursor: pointer; transition: var(--transition); font-family: 'Inter', sans-serif; }
+        .download-btn:hover { background: rgba(16,185,129,0.2); transform: translateY(-1px); }
+
+        /* ── TIMELINE SIMULATION (Feature 5) ── */
+        .timeline-wrap { margin-top: 22px; display: none; }
+        .timeline-wrap.visible { display: block; animation: fadeUp 0.5s ease; }
+        .timeline-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
+        .timeline-scenarios { display: flex; gap: 8px; flex-wrap: wrap; }
+        .scenario-chip { display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+        .scenario-chip-mtm   { background: rgba(239,68,68,0.12);  color: var(--red);    border: 1px solid rgba(239,68,68,0.3); }
+        .scenario-chip-1yr   { background: rgba(245,158,11,0.12); color: var(--yellow); border: 1px solid rgba(245,158,11,0.3); }
+        .scenario-chip-2yr   { background: rgba(16,185,129,0.12); color: var(--green);  border: 1px solid rgba(16,185,129,0.3); }
+        .timeline-insight { background: linear-gradient(135deg,rgba(59,130,246,0.08),rgba(139,92,246,0.08)); border: 1px solid rgba(59,130,246,0.2); border-radius: var(--radius-sm); padding: 12px 16px; margin-top: 14px; font-size: 12px; color: var(--text-sec); line-height: 1.7; }
+        .timeline-insight strong { color: var(--cyan); }
 
         .text-center { text-align: center; }
         .gradient-text {
@@ -142,6 +189,7 @@
 </head>
 <body>
 
+<!-- ══ SIDEBAR ══ -->
 <aside class="sidebar">
     <div class="logo-wrap">
         <div class="logo-icon">🛡️</div>
@@ -162,7 +210,9 @@
 
 <main class="main">
 
-<!-- ══ DASHBOARD ══ -->
+<!-- ══════════════════════════════════════
+     DASHBOARD PAGE
+══════════════════════════════════════ -->
 <div id="page-dashboard" class="page active">
     <div class="page-title gradient-text">Customer Churn Dashboard</div>
     <div class="page-sub">Real-time unsupervised churn detection using Online Isolation Forest</div>
@@ -176,96 +226,206 @@
         <div class="stat-card" style="--ac:#06b6d4;--ic:rgba(6,182,212,0.15)"><div class="stat-icon">🤖</div><div><div class="stat-val"><span id="stat-status" class="badge badge-good">GOOD</span></div><div class="stat-lbl">Model Health</div></div></div>
     </div>
 
-    <!-- Row 1: Donut + Trend -->
     <div class="charts-grid">
         <div class="card"><div class="card-title">🍩 Risk Distribution</div><div class="chart-box"><canvas id="riskDonutChart"></canvas></div></div>
         <div class="card"><div class="card-title">📈 Performance Trend</div><div class="chart-box"><canvas id="trendLineChart"></canvas></div></div>
     </div>
-
-    <!-- Row 2: NEW — Score Histogram + Contract Risk Bars -->
     <div class="charts-grid">
-        <div class="card">
-            <div class="card-title">📊 Risk Score Distribution</div>
-            <div class="chart-box"><canvas id="scoreHistogramChart"></canvas></div>
-        </div>
-        <div class="card">
-            <div class="card-title">📋 Contract Type Risk Breakdown</div>
-            <div id="contractRiskBars" class="contract-bars">
-                <div style="display:flex;align-items:center;justify-content:center;height:100%"><div class="spinner"></div></div>
-            </div>
-        </div>
+        <div class="card"><div class="card-title">📊 Risk Score Distribution</div><div class="chart-box"><canvas id="scoreHistogramChart"></canvas></div></div>
+        <div class="card"><div class="card-title">📋 Contract Type Risk Breakdown</div><div id="contractRiskBars" class="contract-bars"><div style="display:flex;align-items:center;justify-content:center;height:100%"><div class="spinner"></div></div></div></div>
     </div>
-
-    <!-- Row 3: KS Distance full width -->
     <div class="card"><div class="card-title">📉 Model Drift (KS Distance)</div><div class="chart-box" style="height:210px"><canvas id="ksDistanceChart"></canvas></div></div>
 </div>
 
-<!-- ══ PREDICT ══ -->
+<!-- ══════════════════════════════════════
+     PREDICT PAGE
+══════════════════════════════════════ -->
 <div id="page-predict" class="page">
     <div class="page-title gradient-text">Churn Risk Predictor</div>
-    <div class="page-sub">Enter customer details to get real-time churn risk analysis</div>
-    <div style="display:flex;gap:10px;margin-bottom:18px">
-        <button onclick="fillSampleData('high_risk')" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#ef4444;padding:7px 14px;border-radius:7px;cursor:pointer;font-size:12px;font-family:Inter,sans-serif">🔴 High Risk Sample</button>
-        <button onclick="fillSampleData('low_risk')" style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);color:#10b981;padding:7px 14px;border-radius:7px;cursor:pointer;font-size:12px;font-family:Inter,sans-serif">🟢 Low Risk Sample</button>
-        <button onclick="resetForm()" style="background:rgba(71,85,105,0.2);border:1px solid #2d3748;color:#94a3b8;padding:7px 14px;border-radius:7px;cursor:pointer;font-size:12px;font-family:Inter,sans-serif">🔄 Reset</button>
+    <div class="page-sub">Single customer analysis or bulk CSV scoring with 12-month risk simulation</div>
+
+    <!-- TAB SWITCHER -->
+    <div class="batch-tabs">
+        <button class="batch-tab active" onclick="switchPredictTab('single', this)">👤 Single Customer</button>
+        <button class="batch-tab" onclick="switchPredictTab('batch', this)">📂 Batch CSV Upload</button>
     </div>
-    <div class="predict-layout">
-        <div class="card">
-            <div class="card-title">📋 Customer Features</div>
-            <form id="predict-form">
-                <div class="form-grid">
-                    <div class="form-group"><label>Gender</label><select id="f_gender"><option value="">Select...</option><option>Male</option><option>Female</option></select></div>
-                    <div class="form-group"><label>Senior Citizen</label><select id="f_SeniorCitizen"><option value="">Select...</option><option value="0">No (0)</option><option value="1">Yes (1)</option></select></div>
-                    <div class="form-group"><label>Partner</label><select id="f_Partner"><option value="">Select...</option><option>Yes</option><option>No</option></select></div>
-                    <div class="form-group"><label>Dependents</label><select id="f_Dependents"><option value="">Select...</option><option>Yes</option><option>No</option></select></div>
-                    <div class="form-group"><label>Tenure (months)</label><input type="number" id="f_tenure" placeholder="e.g. 12" min="0" max="72"></div>
-                    <div class="form-group"><label>Phone Service</label><select id="f_PhoneService"><option value="">Select...</option><option>Yes</option><option>No</option></select></div>
-                    <div class="form-group"><label>Multiple Lines</label><select id="f_MultipleLines"><option value="">Select...</option><option>Yes</option><option>No</option><option>No phone service</option></select></div>
-                    <div class="form-group"><label>Internet Service</label><select id="f_InternetService"><option value="">Select...</option><option>DSL</option><option>Fiber optic</option><option>No</option></select></div>
-                    <div class="form-group"><label>Online Security</label><select id="f_OnlineSecurity"><option value="">Select...</option><option>Yes</option><option>No</option><option>No internet service</option></select></div>
-                    <div class="form-group"><label>Online Backup</label><select id="f_OnlineBackup"><option value="">Select...</option><option>Yes</option><option>No</option><option>No internet service</option></select></div>
-                    <div class="form-group"><label>Device Protection</label><select id="f_DeviceProtection"><option value="">Select...</option><option>Yes</option><option>No</option><option>No internet service</option></select></div>
-                    <div class="form-group"><label>Tech Support</label><select id="f_TechSupport"><option value="">Select...</option><option>Yes</option><option>No</option><option>No internet service</option></select></div>
-                    <div class="form-group"><label>Streaming TV</label><select id="f_StreamingTV"><option value="">Select...</option><option>Yes</option><option>No</option><option>No internet service</option></select></div>
-                    <div class="form-group"><label>Streaming Movies</label><select id="f_StreamingMovies"><option value="">Select...</option><option>Yes</option><option>No</option><option>No internet service</option></select></div>
-                    <div class="form-group"><label>Contract</label><select id="f_Contract"><option value="">Select...</option><option>Month-to-month</option><option>One year</option><option>Two year</option></select></div>
-                    <div class="form-group"><label>Paperless Billing</label><select id="f_PaperlessBilling"><option value="">Select...</option><option>Yes</option><option>No</option></select></div>
-                    <div class="form-group" style="grid-column:span 2"><label>Payment Method</label><select id="f_PaymentMethod"><option value="">Select...</option><option>Electronic check</option><option>Mailed check</option><option>Bank transfer (automatic)</option><option>Credit card (automatic)</option></select></div>
-                    <div class="form-group"><label>Monthly Charges ($)</label><input type="number" id="f_MonthlyCharges" placeholder="e.g. 65.50" step="0.01" min="0"></div>
-                    <div class="form-group"><label>Total Charges ($)</label><input type="number" id="f_TotalCharges" placeholder="e.g. 1200.00" step="0.01" min="0"></div>
-                </div>
-                <button type="button" id="predict-btn" class="predict-btn" onclick="submitPrediction()">🔍 Analyze Churn Risk</button>
-            </form>
+
+    <!-- ── SINGLE PREDICT TAB ── -->
+    <div id="tab-single">
+        <div style="display:flex;gap:10px;margin-bottom:18px">
+            <button onclick="fillSampleData('high_risk')" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#ef4444;padding:7px 14px;border-radius:7px;cursor:pointer;font-size:12px;font-family:Inter,sans-serif">🔴 High Risk Sample</button>
+            <button onclick="fillSampleData('low_risk')" style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);color:#10b981;padding:7px 14px;border-radius:7px;cursor:pointer;font-size:12px;font-family:Inter,sans-serif">🟢 Low Risk Sample</button>
+            <button onclick="resetForm()" style="background:rgba(71,85,105,0.2);border:1px solid #2d3748;color:#94a3b8;padding:7px 14px;border-radius:7px;cursor:pointer;font-size:12px;font-family:Inter,sans-serif">🔄 Reset</button>
         </div>
-        <div class="card result-card">
-            <div class="card-title">🎯 Risk Analysis Result</div>
-            <div id="result-placeholder" class="result-placeholder">
-                <div style="font-size:44px;opacity:0.25">🛡️</div>
-                <div style="font-size:14px;font-weight:600;color:var(--text-sec)">Ready to Analyze</div>
-                <div style="font-size:12px;color:var(--text-muted);text-align:center;max-width:180px">Fill in customer details and click Analyze</div>
-            </div>
-            <div id="result-content" class="result-content">
-                <div class="risk-meter-wrap">
-                    <div class="risk-meter">
-                        <canvas id="riskMeterCanvas" width="190" height="105"></canvas>
-                        <div class="risk-score-display"><div class="risk-num" id="risk-score-number">0</div><div class="risk-lbl">Risk Score</div></div>
+
+        <div class="predict-layout">
+            <!-- Form -->
+            <div class="card">
+                <div class="card-title">📋 Customer Features</div>
+                <form id="predict-form">
+                    <div class="form-grid">
+                        <div class="form-group"><label>Gender</label><select id="f_gender"><option value="">Select...</option><option>Male</option><option>Female</option></select></div>
+                        <div class="form-group"><label>Senior Citizen</label><select id="f_SeniorCitizen"><option value="">Select...</option><option value="0">No (0)</option><option value="1">Yes (1)</option></select></div>
+                        <div class="form-group"><label>Partner</label><select id="f_Partner"><option value="">Select...</option><option>Yes</option><option>No</option></select></div>
+                        <div class="form-group"><label>Dependents</label><select id="f_Dependents"><option value="">Select...</option><option>Yes</option><option>No</option></select></div>
+                        <div class="form-group"><label>Tenure (months)</label><input type="number" id="f_tenure" placeholder="e.g. 12" min="0" max="72"></div>
+                        <div class="form-group"><label>Phone Service</label><select id="f_PhoneService"><option value="">Select...</option><option>Yes</option><option>No</option></select></div>
+                        <div class="form-group"><label>Multiple Lines</label><select id="f_MultipleLines"><option value="">Select...</option><option>Yes</option><option>No</option><option>No phone service</option></select></div>
+                        <div class="form-group"><label>Internet Service</label><select id="f_InternetService"><option value="">Select...</option><option>DSL</option><option>Fiber optic</option><option>No</option></select></div>
+                        <div class="form-group"><label>Online Security</label><select id="f_OnlineSecurity"><option value="">Select...</option><option>Yes</option><option>No</option><option>No internet service</option></select></div>
+                        <div class="form-group"><label>Online Backup</label><select id="f_OnlineBackup"><option value="">Select...</option><option>Yes</option><option>No</option><option>No internet service</option></select></div>
+                        <div class="form-group"><label>Device Protection</label><select id="f_DeviceProtection"><option value="">Select...</option><option>Yes</option><option>No</option><option>No internet service</option></select></div>
+                        <div class="form-group"><label>Tech Support</label><select id="f_TechSupport"><option value="">Select...</option><option>Yes</option><option>No</option><option>No internet service</option></select></div>
+                        <div class="form-group"><label>Streaming TV</label><select id="f_StreamingTV"><option value="">Select...</option><option>Yes</option><option>No</option><option>No internet service</option></select></div>
+                        <div class="form-group"><label>Streaming Movies</label><select id="f_StreamingMovies"><option value="">Select...</option><option>Yes</option><option>No</option><option>No internet service</option></select></div>
+                        <div class="form-group"><label>Contract</label><select id="f_Contract"><option value="">Select...</option><option>Month-to-month</option><option>One year</option><option>Two year</option></select></div>
+                        <div class="form-group"><label>Paperless Billing</label><select id="f_PaperlessBilling"><option value="">Select...</option><option>Yes</option><option>No</option></select></div>
+                        <div class="form-group" style="grid-column:span 2"><label>Payment Method</label><select id="f_PaymentMethod"><option value="">Select...</option><option>Electronic check</option><option>Mailed check</option><option>Bank transfer (automatic)</option><option>Credit card (automatic)</option></select></div>
+                        <div class="form-group"><label>Monthly Charges ($)</label><input type="number" id="f_MonthlyCharges" placeholder="e.g. 65.50" step="0.01" min="0"></div>
+                        <div class="form-group"><label>Total Charges ($)</label><input type="number" id="f_TotalCharges" placeholder="e.g. 1200.00" step="0.01" min="0"></div>
                     </div>
-                    <div class="tier-badge tier-Low" id="result-tier-badge">LOW</div>
+                    <button type="button" id="predict-btn" class="predict-btn" onclick="submitPrediction()">🔍 Analyze Churn Risk</button>
+                </form>
+            </div>
+
+            <!-- Result -->
+            <div class="card result-card">
+                <div class="card-title">🎯 Risk Analysis Result</div>
+                <div id="result-placeholder" class="result-placeholder">
+                    <div style="font-size:44px;opacity:0.25">🛡️</div>
+                    <div style="font-size:14px;font-weight:600;color:var(--text-sec)">Ready to Analyze</div>
+                    <div style="font-size:12px;color:var(--text-muted);text-align:center;max-width:180px">Fill in customer details and click Analyze</div>
                 </div>
-                <div style="background:var(--bg-secondary);border-radius:8px;padding:12px;margin:14px 0;font-size:12px;color:var(--text-sec);line-height:1.6;border-left:3px solid var(--blue)" id="result-interpretation"></div>
-                <div class="result-details">
-                    <div class="result-detail"><div class="result-detail-lbl">Risk Score</div><div class="result-detail-val" id="result-score">—</div></div>
-                    <div class="result-detail"><div class="result-detail-lbl">Risk Tier</div><div class="result-detail-val" id="result-tier">—</div></div>
-                    <div class="result-detail"><div class="result-detail-lbl">Anomaly Status</div><div class="result-detail-val" id="result-anomaly">—</div></div>
-                    <div class="result-detail"><div class="result-detail-lbl">Analyzed At</div><div class="result-detail-val" id="result-time">—</div></div>
-                    <div class="result-detail" style="grid-column:span 2"><div class="result-detail-lbl">Model Version</div><div class="result-detail-val" style="font-size:11px;word-break:break-all" id="result-model">—</div></div>
+                <div id="result-content" class="result-content">
+                    <div class="risk-meter-wrap">
+                        <div class="risk-meter">
+                            <canvas id="riskMeterCanvas" width="190" height="105"></canvas>
+                            <div class="risk-score-display"><div class="risk-num" id="risk-score-number">0</div><div class="risk-lbl">Risk Score</div></div>
+                        </div>
+                        <div class="tier-badge tier-Low" id="result-tier-badge">LOW</div>
+                    </div>
+                    <div style="background:var(--bg-secondary);border-radius:8px;padding:12px;margin:14px 0;font-size:12px;color:var(--text-sec);line-height:1.6;border-left:3px solid var(--blue)" id="result-interpretation"></div>
+                    <div class="result-details">
+                        <div class="result-detail"><div class="result-detail-lbl">Risk Score</div><div class="result-detail-val" id="result-score">—</div></div>
+                        <div class="result-detail"><div class="result-detail-lbl">Risk Tier</div><div class="result-detail-val" id="result-tier">—</div></div>
+                        <div class="result-detail"><div class="result-detail-lbl">Anomaly Status</div><div class="result-detail-val" id="result-anomaly">—</div></div>
+                        <div class="result-detail"><div class="result-detail-lbl">Analyzed At</div><div class="result-detail-val" id="result-time">—</div></div>
+                        <div class="result-detail" style="grid-column:span 2"><div class="result-detail-lbl">Model Version</div><div class="result-detail-val" style="font-size:11px;word-break:break-all" id="result-model">—</div></div>
+                    </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- ── FEATURE 5: TIMELINE SIMULATION ── appears below predict layout after result -->
+        <div id="timeline-wrap" class="timeline-wrap">
+            <div class="card">
+                <div class="timeline-header">
+                    <div class="card-title" style="margin-bottom:0">📅 12-Month Churn Risk Simulation</div>
+                    <div class="timeline-scenarios">
+                        <span class="scenario-chip scenario-chip-mtm">● Month-to-month (current)</span>
+                        <span class="scenario-chip scenario-chip-1yr">● Switch to 1-Year</span>
+                        <span class="scenario-chip scenario-chip-2yr">● Switch to 2-Year</span>
+                    </div>
+                </div>
+                <div style="margin-top:14px">
+                    <div class="chart-box" style="height:260px"><canvas id="timelineChart"></canvas></div>
+                </div>
+                <div id="timeline-insight" class="timeline-insight"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── FEATURE 3: BATCH CSV UPLOAD TAB ── -->
+    <div id="tab-batch" style="display:none">
+
+        <!-- Drop Zone -->
+        <div id="batch-upload-zone">
+            <div class="drop-zone" id="dropZone"
+                 ondragover="handleDragOver(event)"
+                 ondragleave="handleDragLeave(event)"
+                 ondrop="handleDrop(event)">
+                <div class="drop-zone-icon">📂</div>
+                <div class="drop-zone-text">Drop your CSV file here</div>
+                <div class="drop-zone-sub">Must have same columns as the IBM Telco dataset · Max 5,000 rows</div>
+                <button class="drop-zone-btn" onclick="document.getElementById('csvFileInput').click()">Browse File</button>
+                <input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="handleFileSelect(event)">
+            </div>
+
+            <!-- CSV format helper -->
+            <div style="margin-top:14px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 18px;">
+                <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Required CSV Columns</div>
+                <div style="font-size:11px;color:var(--text-muted);line-height:1.9;font-family:monospace">
+                    gender, SeniorCitizen, Partner, Dependents, tenure, PhoneService, MultipleLines,<br>
+                    InternetService, OnlineSecurity, OnlineBackup, DeviceProtection, TechSupport,<br>
+                    StreamingTV, StreamingMovies, Contract, PaperlessBilling, PaymentMethod,<br>
+                    MonthlyCharges, TotalCharges
+                </div>
+                <button onclick="downloadSampleCSV()" style="margin-top:10px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);color:var(--blue);padding:5px 14px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;font-family:Inter,sans-serif">⬇ Download Sample CSV</button>
+            </div>
+        </div>
+
+        <!-- Processing State -->
+        <div id="batch-processing" style="display:none;text-align:center;padding:48px">
+            <div class="spinner" style="margin:0 auto 16px"></div>
+            <div style="font-size:14px;font-weight:600;color:var(--text-sec)" id="batch-progress-text">Processing customers...</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:6px" id="batch-progress-sub">This may take a moment for large files</div>
+        </div>
+
+        <!-- Results -->
+        <div id="batch-results" style="display:none">
+            <!-- Summary cards -->
+            <div class="batch-summary" id="batch-summary-cards"></div>
+
+            <!-- Donut chart + action bar -->
+            <div style="display:grid;grid-template-columns:280px 1fr;gap:18px;margin-bottom:18px;align-items:start">
+                <div class="card" style="padding:16px">
+                    <div class="card-title">Risk Distribution</div>
+                    <div style="height:180px;position:relative"><canvas id="batchDonutChart"></canvas></div>
+                </div>
+                <div class="card" style="padding:16px">
+                    <div class="card-title">Batch Summary</div>
+                    <div id="batch-text-summary" style="font-size:13px;color:var(--text-sec);line-height:1.9"></div>
+                    <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+                        <button class="download-btn" onclick="downloadBatchResults()">⬇ Download Results CSV</button>
+                        <button onclick="resetBatchUpload()" style="background:rgba(71,85,105,0.2);border:1px solid #2d3748;color:#94a3b8;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;font-family:Inter,sans-serif">🔄 Upload New File</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results table -->
+            <div class="card">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+                    <div class="card-title" style="margin-bottom:0">📋 Individual Results</div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap">
+                        <select id="batch-filter" onchange="filterBatchTable()" style="background:var(--bg-secondary);border:1px solid var(--border-bright);border-radius:6px;padding:5px 10px;color:var(--text);font-size:12px;font-family:Inter,sans-serif;outline:none">
+                            <option value="all">All Tiers</option>
+                            <option value="Critical">🔴 Critical</option>
+                            <option value="High">🟠 High</option>
+                            <option value="Medium">🟡 Medium</option>
+                            <option value="Low">🟢 Low</option>
+                        </select>
+                        <select id="batch-sort" onchange="sortBatchTable()" style="background:var(--bg-secondary);border:1px solid var(--border-bright);border-radius:6px;padding:5px 10px;color:var(--text);font-size:12px;font-family:Inter,sans-serif;outline:none">
+                            <option value="score-desc">Highest Risk First</option>
+                            <option value="score-asc">Lowest Risk First</option>
+                            <option value="row-asc">Original Order</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>#</th><th>Contract</th><th>Tenure</th><th>Monthly $</th><th>Internet</th><th>Risk Score</th><th>Risk Tier</th><th>Status</th></tr></thead>
+                        <tbody id="batch-table-body"></tbody>
+                    </table>
+                </div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:10px;text-align:right" id="batch-showing-label"></div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- ══ MONITORING ══ -->
+<!-- ══════════════════════════════════════
+     MONITORING PAGE
+══════════════════════════════════════ -->
 <div id="page-monitoring" class="page">
     <div class="page-title gradient-text">Model Monitoring</div>
     <div class="page-sub">Track model performance, drift detection and health over time</div>
@@ -283,21 +443,11 @@
         <div class="card"><div class="card-title">📈 Anomaly Trend</div><div class="chart-box"><canvas id="anomalyTrendChart"></canvas></div></div>
         <div class="card"><div class="card-title">🟢 Status History</div><div class="chart-box"><canvas id="statusHistoryChart"></canvas></div></div>
     </div>
-
     <div class="card" style="margin-bottom:20px"><div class="card-title">🔬 KS Drift vs Trend Score</div><div class="chart-box" style="height:210px"><canvas id="scoreDistChart"></canvas></div></div>
-
-    <!-- NEW MONITORING CHARTS -->
     <div class="charts-grid" style="margin-bottom:20px">
-        <div class="card">
-            <div class="card-title">📐 Score Volatility (Std Dev Over Time)</div>
-            <div class="chart-box"><canvas id="volatilityChart"></canvas></div>
-        </div>
-        <div class="card">
-            <div class="card-title">🗃️ Records Processed Per Run</div>
-            <div class="chart-box"><canvas id="recordsProcessedChart"></canvas></div>
-        </div>
+        <div class="card"><div class="card-title">📐 Score Volatility (Std Dev Over Time)</div><div class="chart-box"><canvas id="volatilityChart"></canvas></div></div>
+        <div class="card"><div class="card-title">🗃️ Records Processed Per Run</div><div class="chart-box"><canvas id="recordsProcessedChart"></canvas></div></div>
     </div>
-
     <div class="card">
         <div class="card-title">📋 Metrics History</div>
         <div class="table-wrap">
@@ -309,7 +459,9 @@
     </div>
 </div>
 
-<!-- ══ REGISTRY ══ -->
+<!-- ══════════════════════════════════════
+     REGISTRY PAGE
+══════════════════════════════════════ -->
 <div id="page-registry" class="page">
     <div class="page-title gradient-text">Model Registry</div>
     <div class="page-sub">All trained model versions with activation and rollback controls</div>
@@ -332,6 +484,9 @@
 
 </main>
 
+<!-- ══════════════════════════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════════════════════════ -->
 <script>
 // ══════════════════════════════════════════════════════════════
 //  NAVIGATION
@@ -382,127 +537,70 @@ function animateCount(id, target) {
     const el = document.getElementById(id); if (!el) return;
     let cur = 0;
     const step = Math.max(1, Math.ceil(target/60));
-    const t = setInterval(() => { cur += step; if (cur >= target) { cur = target; clearInterval(t); } el.textContent = cur.toLocaleString(); }, 16);
+    const t = setInterval(() => { cur+=step; if(cur>=target){cur=target;clearInterval(t);} el.textContent=cur.toLocaleString(); }, 16);
 }
 
 function renderRiskDonut(dist) {
-    const ctx = document.getElementById('riskDonutChart'); if (!ctx) return;
-    if (riskDonutChart) riskDonutChart.destroy();
-    riskDonutChart = new Chart(ctx, {
-        type:'doughnut',
-        data:{ labels:['Critical','High','Medium','Low'], datasets:[{ data:[dist.Critical||0,dist.High||0,dist.Medium||0,dist.Low||0], backgroundColor:['rgba(239,68,68,0.85)','rgba(249,115,22,0.85)','rgba(245,158,11,0.85)','rgba(16,185,129,0.85)'], borderColor:['#ef4444','#f97316','#f59e0b','#10b981'], borderWidth:2, hoverOffset:8 }] },
-        options:{ responsive:true, maintainAspectRatio:false, cutout:'70%',
-            plugins:{ legend:{position:'bottom',labels:{color:'#94a3b8',padding:14,font:{size:11,family:'Inter'},usePointStyle:true}},
-                tooltip:{backgroundColor:'#1a2235',titleColor:'#f1f5f9',bodyColor:'#94a3b8',borderColor:'#2d3748',borderWidth:1,callbacks:{label:c=>` ${c.label}: ${c.raw} customers`}} },
-            animation:{animateRotate:true,duration:1000} }
-    });
+    const ctx=document.getElementById('riskDonutChart'); if(!ctx) return;
+    if(riskDonutChart) riskDonutChart.destroy();
+    riskDonutChart=new Chart(ctx,{type:'doughnut',data:{labels:['Critical','High','Medium','Low'],datasets:[{data:[dist.Critical||0,dist.High||0,dist.Medium||0,dist.Low||0],backgroundColor:['rgba(239,68,68,0.85)','rgba(249,115,22,0.85)','rgba(245,158,11,0.85)','rgba(16,185,129,0.85)'],borderColor:['#ef4444','#f97316','#f59e0b','#10b981'],borderWidth:2,hoverOffset:8}]},options:{responsive:true,maintainAspectRatio:false,cutout:'70%',plugins:{legend:{position:'bottom',labels:{color:'#94a3b8',padding:14,font:{size:11,family:'Inter'},usePointStyle:true}},tooltip:{backgroundColor:'#1a2235',titleColor:'#f1f5f9',bodyColor:'#94a3b8',borderColor:'#2d3748',borderWidth:1,callbacks:{label:c=>` ${c.label}: ${c.raw} customers`}}},animation:{animateRotate:true,duration:1000}}});
 }
 
 function renderTrendLine(trendData) {
-    const ctx = document.getElementById('trendLineChart'); if (!ctx||!trendData||!trendData.length) return;
-    if (trendLineChart) trendLineChart.destroy();
-    const rev = [...trendData].reverse();
-    trendLineChart = new Chart(ctx, {
-        type:'line',
-        data:{ labels:rev.map(d=>d.date.substring(0,16)), datasets:[
-            {label:'Mean Risk Score',data:rev.map(d=>(parseFloat(d.mean_anomaly_score)*100).toFixed(2)),borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.08)',tension:0.4,fill:true,pointRadius:5,pointBackgroundColor:'#3b82f6'},
-            {label:'Anomaly Rate %',data:rev.map(d=>parseFloat(d.anomaly_rate).toFixed(2)),borderColor:'#f97316',backgroundColor:'rgba(249,115,22,0.08)',tension:0.4,fill:true,pointRadius:5,pointBackgroundColor:'#f97316'}
-        ]},
-        options:{ responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
-            plugins:{legend:{labels:{color:'#94a3b8',font:{size:11,family:'Inter'},usePointStyle:true}},tooltip:{backgroundColor:'#1a2235',titleColor:'#f1f5f9',bodyColor:'#94a3b8',borderColor:'#2d3748',borderWidth:1}},
-            scales:{x:{ticks:{color:'#475569',font:{size:10}},grid:{color:'rgba(255,255,255,0.03)'}},y:{ticks:{color:'#475569',font:{size:10}},grid:{color:'rgba(255,255,255,0.05)'}}} }
-    });
+    const ctx=document.getElementById('trendLineChart'); if(!ctx||!trendData||!trendData.length) return;
+    if(trendLineChart) trendLineChart.destroy();
+    const rev=[...trendData].reverse();
+    trendLineChart=new Chart(ctx,{type:'line',data:{labels:rev.map(d=>d.date.substring(0,16)),datasets:[{label:'Mean Risk Score',data:rev.map(d=>(parseFloat(d.mean_anomaly_score)*100).toFixed(2)),borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.08)',tension:0.4,fill:true,pointRadius:5,pointBackgroundColor:'#3b82f6'},{label:'Anomaly Rate %',data:rev.map(d=>parseFloat(d.anomaly_rate).toFixed(2)),borderColor:'#f97316',backgroundColor:'rgba(249,115,22,0.08)',tension:0.4,fill:true,pointRadius:5,pointBackgroundColor:'#f97316'}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{color:'#94a3b8',font:{size:11,family:'Inter'},usePointStyle:true}},tooltip:{backgroundColor:'#1a2235',titleColor:'#f1f5f9',bodyColor:'#94a3b8',borderColor:'#2d3748',borderWidth:1}},scales:{x:{ticks:{color:'#475569',font:{size:10}},grid:{color:'rgba(255,255,255,0.03)'}},y:{ticks:{color:'#475569',font:{size:10}},grid:{color:'rgba(255,255,255,0.05)'}}}}});
 }
 
 function renderKSChart(trendData) {
-    const ctx = document.getElementById('ksDistanceChart'); if (!ctx||!trendData||!trendData.length) return;
-    if (ksDistanceChart) ksDistanceChart.destroy();
-    const rev = [...trendData].reverse();
-    const ks  = rev.map(d=>parseFloat(d.ks_distance).toFixed(4));
-    ksDistanceChart = new Chart(ctx, {
-        type:'bar',
-        data:{ labels:rev.map(d=>d.date.substring(0,16)), datasets:[{ label:'KS Distance',data:ks,borderRadius:6,borderWidth:1,
-            backgroundColor:ks.map(v=>v>0.30?'rgba(239,68,68,0.7)':v>0.15?'rgba(245,158,11,0.7)':'rgba(16,185,129,0.7)'),
-            borderColor:ks.map(v=>v>0.30?'#ef4444':v>0.15?'#f59e0b':'#10b981') }] },
-        options:{ responsive:true, maintainAspectRatio:false,
-            plugins:{legend:{labels:{color:'#94a3b8',font:{family:'Inter',size:11}}},tooltip:{backgroundColor:'#1a2235',titleColor:'#f1f5f9',bodyColor:'#94a3b8',borderColor:'#2d3748',borderWidth:1}},
-            scales:{x:{ticks:{color:'#475569',font:{size:10}},grid:{color:'rgba(255,255,255,0.03)'}},y:{min:0,max:0.5,ticks:{color:'#475569',font:{size:10}},grid:{color:'rgba(255,255,255,0.05)'}}} }
-    });
+    const ctx=document.getElementById('ksDistanceChart'); if(!ctx||!trendData||!trendData.length) return;
+    if(ksDistanceChart) ksDistanceChart.destroy();
+    const rev=[...trendData].reverse();
+    const ks=rev.map(d=>parseFloat(d.ks_distance).toFixed(4));
+    ksDistanceChart=new Chart(ctx,{type:'bar',data:{labels:rev.map(d=>d.date.substring(0,16)),datasets:[{label:'KS Distance',data:ks,borderRadius:6,borderWidth:1,backgroundColor:ks.map(v=>v>0.30?'rgba(239,68,68,0.7)':v>0.15?'rgba(245,158,11,0.7)':'rgba(16,185,129,0.7)'),borderColor:ks.map(v=>v>0.30?'#ef4444':v>0.15?'#f59e0b':'#10b981')}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',font:{family:'Inter',size:11}}},tooltip:{backgroundColor:'#1a2235',titleColor:'#f1f5f9',bodyColor:'#94a3b8',borderColor:'#2d3748',borderWidth:1}},scales:{x:{ticks:{color:'#475569',font:{size:10}},grid:{color:'rgba(255,255,255,0.03)'}},y:{min:0,max:0.5,ticks:{color:'#475569',font:{size:10}},grid:{color:'rgba(255,255,255,0.05)'}}}}});
 }
 
-// ── NEW: Risk Score Distribution Histogram ──
 function renderScoreHistogram(buckets) {
-    const ctx = document.getElementById('scoreHistogramChart'); if (!ctx) return;
-    if (scoreHistogramChart) scoreHistogramChart.destroy();
-    const labels = buckets ? buckets.map(b => b.range) : ['0-10','10-20','20-30','30-40','40-50','50-60','60-70','70-80','80-90','90-100'];
-    const values = buckets ? buckets.map(b => b.count) : new Array(10).fill(0);
-    const barColors = labels.map(l => {
-        const low = parseInt(l.split('-')[0]);
-        if (low >= 75) return 'rgba(239,68,68,0.75)';
-        if (low >= 50) return 'rgba(249,115,22,0.75)';
-        if (low >= 25) return 'rgba(245,158,11,0.75)';
-        return 'rgba(16,185,129,0.75)';
-    });
-    scoreHistogramChart = new Chart(ctx, {
-        type:'bar',
-        data:{ labels, datasets:[{ label:'Number of Customers', data:values, backgroundColor:barColors, borderColor:barColors.map(c=>c.replace('0.75','1')), borderWidth:1, borderRadius:5 }] },
-        options:{ responsive:true, maintainAspectRatio:false,
-            plugins:{ legend:{labels:{color:'#94a3b8',font:{size:11,family:'Inter'}}},
-                tooltip:{backgroundColor:'#1a2235',titleColor:'#f1f5f9',bodyColor:'#94a3b8',borderColor:'#2d3748',borderWidth:1,
-                    callbacks:{title:t=>`Risk Score: ${t[0].label}%`,label:c=>` ${c.raw} customers in this range`}} },
-            scales:{
-                x:{ticks:{color:'#475569',font:{size:10}},grid:{color:'rgba(255,255,255,0.03)'},title:{display:true,text:'Risk Score Range (%)',color:'#475569',font:{size:10}}},
-                y:{ticks:{color:'#475569',font:{size:10}},grid:{color:'rgba(255,255,255,0.05)'},title:{display:true,text:'Customer Count',color:'#475569',font:{size:10}}}
-            }, animation:{duration:800} }
-    });
+    const ctx=document.getElementById('scoreHistogramChart'); if(!ctx) return;
+    if(scoreHistogramChart) scoreHistogramChart.destroy();
+    const labels=buckets?buckets.map(b=>b.range):['0-10','10-20','20-30','30-40','40-50','50-60','60-70','70-80','80-90','90-100'];
+    const values=buckets?buckets.map(b=>b.count):new Array(10).fill(0);
+    const barColors=labels.map(l=>{const low=parseInt(l.split('-')[0]);if(low>=75)return'rgba(239,68,68,0.75)';if(low>=50)return'rgba(249,115,22,0.75)';if(low>=25)return'rgba(245,158,11,0.75)';return'rgba(16,185,129,0.75)';});
+    scoreHistogramChart=new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'Number of Customers',data:values,backgroundColor:barColors,borderColor:barColors.map(c=>c.replace('0.75','1')),borderWidth:1,borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',font:{size:11,family:'Inter'}}},tooltip:{backgroundColor:'#1a2235',titleColor:'#f1f5f9',bodyColor:'#94a3b8',borderColor:'#2d3748',borderWidth:1,callbacks:{title:t=>`Risk Score: ${t[0].label}%`,label:c=>` ${c.raw} customers in this range`}}},scales:{x:{ticks:{color:'#475569',font:{size:10}},grid:{color:'rgba(255,255,255,0.03)'},title:{display:true,text:'Risk Score Range (%)',color:'#475569',font:{size:10}}},y:{ticks:{color:'#475569',font:{size:10}},grid:{color:'rgba(255,255,255,0.05)'},title:{display:true,text:'Customer Count',color:'#475569',font:{size:10}}}},animation:{duration:800}}});
 }
 
-// ── NEW: Contract Type Risk Breakdown ──
 function renderContractRiskBars(contractData) {
-    const container = document.getElementById('contractRiskBars'); if (!container) return;
-    if (!contractData || contractData.length === 0) {
-        container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted);font-size:13px">No contract data available</div>';
-        return;
-    }
-    const colors = {
-        'Month-to-month':{ bar:'linear-gradient(90deg,#ef4444,#f97316)', val:'#ef4444' },
-        'One year':      { bar:'linear-gradient(90deg,#f59e0b,#eab308)', val:'#f59e0b' },
-        'Two year':      { bar:'linear-gradient(90deg,#10b981,#06b6d4)', val:'#10b981' }
-    };
-    container.innerHTML = contractData.map(c => {
-        const col  = colors[c.contract] || { bar:'linear-gradient(90deg,#3b82f6,#8b5cf6)', val:'#3b82f6' };
-        const tier = c.avg_risk>=75?'Critical':c.avg_risk>=50?'High':c.avg_risk>=25?'Medium':'Low';
-        const pct  = Math.min(c.avg_risk, 100).toFixed(0);
-        return `<div class="contract-bar-row">
-            <div class="contract-bar-header">
-                <span class="contract-bar-label">${c.contract}</span>
-                <span class="contract-bar-value" style="color:${col.val}">${c.avg_risk.toFixed(1)}% avg risk</span>
-            </div>
-            <div class="contract-bar-track">
-                <div class="contract-bar-fill" style="width:${pct}%;background:${col.bar}"></div>
-            </div>
-            <div class="contract-bar-meta">${c.customer_count.toLocaleString()} customers &nbsp;·&nbsp; <span style="color:${col.val};font-weight:600">${tier} Risk</span></div>
-        </div>`;
-    }).join('');
+    const container=document.getElementById('contractRiskBars'); if(!container) return;
+    if(!contractData||contractData.length===0){container.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted);font-size:13px">No contract data available</div>';return;}
+    const colors={'Month-to-month':{bar:'linear-gradient(90deg,#ef4444,#f97316)',val:'#ef4444'},'One year':{bar:'linear-gradient(90deg,#f59e0b,#eab308)',val:'#f59e0b'},'Two year':{bar:'linear-gradient(90deg,#10b981,#06b6d4)',val:'#10b981'}};
+    container.innerHTML=contractData.map(c=>{const col=colors[c.contract]||{bar:'linear-gradient(90deg,#3b82f6,#8b5cf6)',val:'#3b82f6'};const tier=c.avg_risk>=75?'Critical':c.avg_risk>=50?'High':c.avg_risk>=25?'Medium':'Low';const pct=Math.min(c.avg_risk,100).toFixed(0);return`<div class="contract-bar-row"><div class="contract-bar-header"><span class="contract-bar-label">${c.contract}</span><span class="contract-bar-value" style="color:${col.val}">${c.avg_risk.toFixed(1)}% avg risk</span></div><div class="contract-bar-track"><div class="contract-bar-fill" style="width:${pct}%;background:${col.bar}"></div></div><div class="contract-bar-meta">${c.customer_count.toLocaleString()} customers &nbsp;·&nbsp; <span style="color:${col.val};font-weight:600">${tier} Risk</span></div></div>`;}).join('');
 }
 
 // ══════════════════════════════════════════════════════════════
-//  PREDICT
+//  PREDICT — TAB SWITCHING
 // ══════════════════════════════════════════════════════════════
-let riskMeterChart = null;
+function switchPredictTab(tab, el) {
+    document.querySelectorAll('.batch-tab').forEach(t=>t.classList.remove('active'));
+    if(el) el.classList.add('active');
+    document.getElementById('tab-single').style.display = tab==='single' ? 'block' : 'none';
+    document.getElementById('tab-batch').style.display  = tab==='batch'  ? 'block' : 'none';
+    if(tab==='single') initRiskMeter();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  PREDICT — SINGLE
+// ══════════════════════════════════════════════════════════════
+let riskMeterChart=null, timelineChart=null;
 
 function initRiskMeter() {
-    const ctx = document.getElementById('riskMeterCanvas'); if (!ctx) return;
-    if (riskMeterChart) riskMeterChart.destroy();
-    riskMeterChart = new Chart(ctx, {
-        type:'doughnut',
-        data:{datasets:[{data:[0,100],backgroundColor:['rgba(59,130,246,0.3)','rgba(255,255,255,0.03)'],borderWidth:0,circumference:180,rotation:270}]},
-        options:{responsive:true,maintainAspectRatio:false,cutout:'75%',plugins:{legend:{display:false},tooltip:{enabled:false}}}
-    });
+    const ctx=document.getElementById('riskMeterCanvas'); if(!ctx) return;
+    if(riskMeterChart) riskMeterChart.destroy();
+    riskMeterChart=new Chart(ctx,{type:'doughnut',data:{datasets:[{data:[0,100],backgroundColor:['rgba(59,130,246,0.3)','rgba(255,255,255,0.03)'],borderWidth:0,circumference:180,rotation:270}]},options:{responsive:true,maintainAspectRatio:false,cutout:'75%',plugins:{legend:{display:false},tooltip:{enabled:false}}}});
 }
 
 function updateRiskMeter(score, tier) {
-    if (!riskMeterChart) return;
+    if(!riskMeterChart) return;
     const colors={Critical:['rgba(239,68,68,0.9)','rgba(239,68,68,0.12)'],High:['rgba(249,115,22,0.9)','rgba(249,115,22,0.12)'],Medium:['rgba(245,158,11,0.9)','rgba(245,158,11,0.12)'],Low:['rgba(16,185,129,0.9)','rgba(16,185,129,0.12)']};
     const textC={Critical:'#ef4444',High:'#f97316',Medium:'#f59e0b',Low:'#10b981'};
     const col=colors[tier]||colors.Low;
@@ -514,14 +612,17 @@ function updateRiskMeter(score, tier) {
 }
 
 async function submitPrediction() {
-    const btn = document.getElementById('predict-btn');
+    const btn=document.getElementById('predict-btn');
     btn.disabled=true; btn.textContent='⏳ Analyzing...';
     try {
         const payload=collectFormData();
         if(!payload){btn.disabled=false;btn.textContent='🔍 Analyze Churn Risk';return;}
         const res=await fetch('/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
         if(!res.ok){const e=await res.json();throw new Error(e.detail||'Prediction failed');}
-        displayResult(await res.json());
+        const result=await res.json();
+        displayResult(result);
+        // After result shown, fetch and render timeline simulation
+        await renderTimeline(result, payload);
     } catch(e){alert('❌ Error: '+e.message);}
     finally{btn.disabled=false;btn.textContent='🔍 Analyze Churn Risk';}
 }
@@ -564,6 +665,7 @@ function resetForm() {
     document.getElementById('predict-form').reset();
     document.getElementById('result-placeholder').style.display='flex';
     document.getElementById('result-content').style.display='none';
+    document.getElementById('timeline-wrap').classList.remove('visible');
     initRiskMeter();
 }
 
@@ -577,6 +679,282 @@ function fillSampleData(type) {
 }
 
 // ══════════════════════════════════════════════════════════════
+//  FEATURE 5 — TIMELINE SIMULATION
+// ══════════════════════════════════════════════════════════════
+async function renderTimeline(predResult, formData) {
+    try {
+        // Call API for simulation data
+        const res = await fetch('/simulate-timeline', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({
+                churn_risk_score : predResult.churn_risk_score,
+                contract         : formData.Contract,
+                tenure           : formData.tenure,
+                monthly_charges  : formData.MonthlyCharges
+            })
+        });
+        if(!res.ok) return;
+        const sim = await res.json();
+        drawTimelineChart(sim);
+
+        // Show wrap
+        document.getElementById('timeline-wrap').classList.add('visible');
+
+        // Generate insight text
+        const currentFinal = sim.current[11];
+        const oneYrFinal   = sim.one_year[11];
+        const twoYrFinal   = sim.two_year[11];
+        const saving1      = (currentFinal - oneYrFinal).toFixed(1);
+        const saving2      = (currentFinal - twoYrFinal).toFixed(1);
+        const insightEl    = document.getElementById('timeline-insight');
+        insightEl.innerHTML = `
+            <strong>📊 Simulation Insight:</strong> On their current <strong>${formData.Contract}</strong> contract,
+            this customer's projected risk after 12 months is <strong>${currentFinal.toFixed(1)}%</strong>.
+            ${saving1 > 0
+                ? `Upgrading to a <strong>1-year contract</strong> could reduce risk by <strong>${saving1}%</strong>, and a <strong>2-year contract</strong> by <strong>${saving2}%</strong>.`
+                : `The customer is already on a long-term contract — risk is projected to continue declining naturally.`
+            }
+            ${predResult.risk_tier === 'Critical' || predResult.risk_tier === 'High'
+                ? ` <strong>⚡ Recommended action:</strong> Proactively offer a contract upgrade or loyalty discount.`
+                : ``
+            }
+        `;
+    } catch(e) { console.warn('Timeline simulation error:', e); }
+}
+
+function drawTimelineChart(sim) {
+    const ctx=document.getElementById('timelineChart'); if(!ctx) return;
+    if(timelineChart) timelineChart.destroy();
+    const months=['Month 1','Month 2','Month 3','Month 4','Month 5','Month 6','Month 7','Month 8','Month 9','Month 10','Month 11','Month 12'];
+    timelineChart=new Chart(ctx,{
+        type:'line',
+        data:{
+            labels:months,
+            datasets:[
+                {label:'Current Contract',data:sim.current,borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,0.06)',tension:0.4,fill:true,pointRadius:4,pointBackgroundColor:'#ef4444',borderWidth:2.5},
+                {label:'Switch to 1-Year',data:sim.one_year,borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,0.06)',tension:0.4,fill:true,pointRadius:4,pointBackgroundColor:'#f59e0b',borderWidth:2,borderDash:[6,3]},
+                {label:'Switch to 2-Year',data:sim.two_year,borderColor:'#10b981',backgroundColor:'rgba(16,185,129,0.06)',tension:0.4,fill:true,pointRadius:4,pointBackgroundColor:'#10b981',borderWidth:2,borderDash:[3,3]}
+            ]
+        },
+        options:{
+            responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+            plugins:{
+                legend:{labels:{color:'#94a3b8',font:{size:11,family:'Inter'},usePointStyle:true,padding:16}},
+                tooltip:{backgroundColor:'#1a2235',titleColor:'#f1f5f9',bodyColor:'#94a3b8',borderColor:'#2d3748',borderWidth:1,
+                    callbacks:{label:c=>` ${c.dataset.label}: ${parseFloat(c.raw).toFixed(1)}% risk`}}
+            },
+            scales:{
+                x:{ticks:{color:'#475569',font:{size:10}},grid:{color:'rgba(255,255,255,0.03)'}},
+                y:{min:0,max:100,ticks:{color:'#475569',font:{size:10},callback:v=>v+'%'},grid:{color:'rgba(255,255,255,0.05)'},title:{display:true,text:'Churn Risk (%)',color:'#475569',font:{size:10}}}
+            }
+        }
+    });
+}
+
+// ══════════════════════════════════════════════════════════════
+//  FEATURE 3 — BATCH CSV UPLOAD
+// ══════════════════════════════════════════════════════════════
+let batchResults = [];   // stores all scored rows for filtering/export
+let batchDonutChart = null;
+
+// Drag and drop handlers
+function handleDragOver(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('drag-over'); }
+function handleDragLeave(e) { document.getElementById('dropZone').classList.remove('drag-over'); }
+function handleDrop(e) {
+    e.preventDefault();
+    document.getElementById('dropZone').classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if(file && file.name.endsWith('.csv')) processBatchFile(file);
+    else showToast('❌ Please upload a CSV file', 'error');
+}
+function handleFileSelect(e) {
+    const file = e.target.files[0];
+    if(file) processBatchFile(file);
+}
+
+async function processBatchFile(file) {
+    // Show processing state
+    document.getElementById('batch-upload-zone').style.display = 'none';
+    document.getElementById('batch-processing').style.display  = 'block';
+    document.getElementById('batch-results').style.display     = 'none';
+    document.getElementById('batch-progress-text').textContent = `Reading ${file.name}...`;
+
+    try {
+        // Parse CSV in browser
+        const text = await file.text();
+        const rows = parseCSV(text);
+        if(rows.length === 0) throw new Error('No valid rows found in CSV');
+        if(rows.length > 5000) throw new Error('File exceeds 5,000 row limit');
+
+        document.getElementById('batch-progress-text').textContent = `Scoring ${rows.length} customers...`;
+        document.getElementById('batch-progress-sub').textContent  = `Sending to ChurnGuard AI model`;
+
+        // Send to API
+        const res = await fetch('/predict-batch', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ customers: rows })
+        });
+        if(!res.ok) { const e=await res.json(); throw new Error(e.detail||'Batch prediction failed'); }
+        const data = await res.json();
+
+        // Merge input rows with prediction results
+        batchResults = data.predictions.map((pred, i) => ({
+            row         : i + 1,
+            contract    : rows[i].Contract    || '—',
+            tenure      : rows[i].tenure      || '—',
+            monthly     : rows[i].MonthlyCharges || '—',
+            internet    : rows[i].InternetService || '—',
+            score       : pred.churn_risk_score,
+            tier        : pred.risk_tier,
+            is_anomaly  : pred.is_anomaly,
+            // keep original row for CSV export
+            original    : rows[i]
+        }));
+
+        showBatchResults(data, file.name);
+    } catch(e) {
+        document.getElementById('batch-upload-zone').style.display = 'block';
+        document.getElementById('batch-processing').style.display  = 'none';
+        showToast('❌ ' + e.message, 'error');
+    }
+}
+
+// Lightweight CSV parser — handles quoted fields
+function parseCSV(text) {
+    const lines = text.trim().split('\n');
+    if(lines.length < 2) return [];
+    const headers = lines[0].split(',').map(h => h.trim().replace(/"/g,''));
+    const rows = [];
+    for(let i=1; i<lines.length; i++) {
+        const vals = lines[i].split(',').map(v => v.trim().replace(/"/g,''));
+        if(vals.length < headers.length) continue;
+        const obj = {};
+        headers.forEach((h,j) => obj[h] = vals[j] || '');
+        // Type coerce
+        if(obj.SeniorCitizen !== undefined) obj.SeniorCitizen = parseInt(obj.SeniorCitizen)||0;
+        if(obj.tenure        !== undefined) obj.tenure        = parseInt(obj.tenure)||0;
+        if(obj.MonthlyCharges!== undefined) obj.MonthlyCharges= parseFloat(obj.MonthlyCharges)||0;
+        if(obj.TotalCharges  !== undefined) obj.TotalCharges  = parseFloat(obj.TotalCharges)||0;
+        rows.push(obj);
+    }
+    return rows;
+}
+
+function showBatchResults(data, filename) {
+    document.getElementById('batch-processing').style.display = 'none';
+    document.getElementById('batch-results').style.display    = 'block';
+
+    // Count tiers
+    const counts = {Critical:0,High:0,Medium:0,Low:0};
+    batchResults.forEach(r => counts[r.tier]++);
+    const total = batchResults.length;
+    const critPct = ((counts.Critical/total)*100).toFixed(1);
+
+    // Summary cards
+    document.getElementById('batch-summary-cards').innerHTML = `
+        <div class="batch-summary-card"><div class="batch-summary-val" style="color:var(--blue)">${total}</div><div class="batch-summary-lbl">Total Scored</div></div>
+        <div class="batch-summary-card"><div class="batch-summary-val" style="color:var(--red)">${counts.Critical}</div><div class="batch-summary-lbl">Critical Risk</div></div>
+        <div class="batch-summary-card"><div class="batch-summary-val" style="color:var(--orange)">${counts.High}</div><div class="batch-summary-lbl">High Risk</div></div>
+        <div class="batch-summary-card"><div class="batch-summary-val" style="color:var(--green)">${counts.Low}</div><div class="batch-summary-lbl">Low Risk</div></div>
+    `;
+
+    // Text summary
+    const avgScore = (batchResults.reduce((s,r)=>s+r.score,0)/total).toFixed(1);
+    document.getElementById('batch-text-summary').innerHTML = `
+        📁 <strong style="color:var(--text)">${filename}</strong> processed successfully.<br>
+        Average risk score across all customers: <strong style="color:var(--blue)">${avgScore}%</strong><br>
+        ${critPct}% of customers are in the Critical risk tier — <strong style="color:${counts.Critical>0?'var(--red)':'var(--green)'}">${counts.Critical > 0 ? 'immediate action recommended' : 'no critical cases'}</strong>.<br>
+        Model version: <strong style="color:var(--cyan)">${data.model_version||'N/A'}</strong>
+    `;
+
+    // Donut chart
+    const dCtx = document.getElementById('batchDonutChart');
+    if(batchDonutChart) batchDonutChart.destroy();
+    batchDonutChart = new Chart(dCtx, {
+        type:'doughnut',
+        data:{labels:['Critical','High','Medium','Low'],datasets:[{data:[counts.Critical,counts.High,counts.Medium,counts.Low],backgroundColor:['rgba(239,68,68,0.85)','rgba(249,115,22,0.85)','rgba(245,158,11,0.85)','rgba(16,185,129,0.85)'],borderColor:['#ef4444','#f97316','#f59e0b','#10b981'],borderWidth:2,hoverOffset:6}]},
+        options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{color:'#94a3b8',font:{size:10,family:'Inter'},usePointStyle:true,padding:10}},tooltip:{backgroundColor:'#1a2235',titleColor:'#f1f5f9',bodyColor:'#94a3b8',borderColor:'#2d3748',borderWidth:1}},animation:{animateRotate:true,duration:800}}
+    });
+
+    renderBatchTable(batchResults);
+}
+
+function renderBatchTable(rows) {
+    const tbody = document.getElementById('batch-table-body');
+    const tierColor = {Critical:'var(--red)',High:'var(--orange)',Medium:'var(--yellow)',Low:'var(--green)'};
+    const tierEmoji = {Critical:'🔴',High:'🟠',Medium:'🟡',Low:'🟢'};
+    tbody.innerHTML = rows.map(r => `
+        <tr class="batch-result-row-${r.tier}">
+            <td style="color:var(--text-muted)">#${r.row}</td>
+            <td style="color:var(--text-sec)">${r.contract}</td>
+            <td>${r.tenure} mo</td>
+            <td>$${parseFloat(r.monthly).toFixed(2)}</td>
+            <td>${r.internet}</td>
+            <td><strong style="color:${tierColor[r.tier]}">${parseFloat(r.score).toFixed(1)}%</strong></td>
+            <td><span class="badge badge-${r.tier.toLowerCase()}">${tierEmoji[r.tier]} ${r.tier}</span></td>
+            <td style="color:${r.is_anomaly?'var(--red)':'var(--green)'}">${r.is_anomaly?'⚠️ Anomaly':'✅ Normal'}</td>
+        </tr>`).join('');
+    document.getElementById('batch-showing-label').textContent = `Showing ${rows.length} of ${batchResults.length} customers`;
+}
+
+function filterBatchTable() {
+    const filter = document.getElementById('batch-filter').value;
+    const filtered = filter==='all' ? batchResults : batchResults.filter(r=>r.tier===filter);
+    renderBatchTable(applySortToBatch(filtered));
+}
+
+function sortBatchTable() { filterBatchTable(); }
+
+function applySortToBatch(rows) {
+    const sort = document.getElementById('batch-sort').value;
+    const r = [...rows];
+    if(sort==='score-desc') r.sort((a,b)=>b.score-a.score);
+    else if(sort==='score-asc') r.sort((a,b)=>a.score-b.score);
+    else r.sort((a,b)=>a.row-b.row);
+    return r;
+}
+
+function downloadBatchResults() {
+    const header = 'Row,Contract,Tenure,MonthlyCharges,InternetService,ChurnRiskScore,RiskTier,IsAnomaly\n';
+    const rows = batchResults.map(r =>
+        `${r.row},"${r.contract}",${r.tenure},${r.monthly},"${r.internet}",${r.score.toFixed(2)},${r.tier},${r.is_anomaly}`
+    ).join('\n');
+    const blob = new Blob([header+rows], {type:'text/csv'});
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href=url; a.download='churn_batch_results.csv'; a.click();
+    URL.revokeObjectURL(url);
+    showToast('✅ Results downloaded', 'success');
+}
+
+function downloadSampleCSV() {
+    const header = 'gender,SeniorCitizen,Partner,Dependents,tenure,PhoneService,MultipleLines,InternetService,OnlineSecurity,OnlineBackup,DeviceProtection,TechSupport,StreamingTV,StreamingMovies,Contract,PaperlessBilling,PaymentMethod,MonthlyCharges,TotalCharges\n';
+    const rows = [
+        'Female,1,No,No,1,Yes,No,Fiber optic,No,No,No,No,Yes,Yes,Month-to-month,Yes,Electronic check,95.75,95.75',
+        'Male,0,Yes,Yes,60,Yes,Yes,DSL,Yes,Yes,Yes,Yes,No,No,Two year,No,Bank transfer (automatic),65.50,3930.00',
+        'Female,0,No,No,12,Yes,No,Fiber optic,No,Yes,No,No,No,No,Month-to-month,Yes,Electronic check,70.35,844.20',
+        'Male,1,Yes,No,24,No,No phone service,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,One year,No,Mailed check,20.05,481.20'
+    ].join('\n');
+    const blob=new Blob([header+rows],{type:'text/csv'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download='sample_customers.csv'; a.click();
+    URL.revokeObjectURL(url);
+}
+
+function resetBatchUpload() {
+    batchResults=[];
+    document.getElementById('batch-upload-zone').style.display='block';
+    document.getElementById('batch-results').style.display='none';
+    document.getElementById('batch-processing').style.display='none';
+    document.getElementById('csvFileInput').value='';
+    document.getElementById('batch-filter').value='all';
+    document.getElementById('batch-sort').value='score-desc';
+}
+
+// ══════════════════════════════════════════════════════════════
 //  MONITORING
 // ══════════════════════════════════════════════════════════════
 let anomalyTrendChart=null, statusHistoryChart=null, scoreDistChart=null;
@@ -586,10 +964,10 @@ async function loadMonitoring() {
     try {
         const tbody=document.getElementById('monitoring-table-body');
         if(tbody) tbody.innerHTML='<tr><td colspan="9" class="text-center"><div class="spinner"></div></td></tr>';
-        const res  = await fetch('/monitoring?days=30');
-        const data = await res.json();
+        const res=await fetch('/monitoring?days=30');
+        const data=await res.json();
         if(!data.metrics||data.metrics.length===0){
-            if(tbody) tbody.innerHTML='<tr><td colspan="9" class="text-center" style="color:var(--text-muted);padding:32px">No metrics logged yet.</td></tr>';
+            if(tbody) tbody.innerHTML='<tr><td colspan="9" class="text-center" style="color:var(--text-muted);padding:32px">No metrics logged yet. Run the pipeline first.</td></tr>';
             return;
         }
         renderMetricsTable(data.metrics);
@@ -637,14 +1015,7 @@ function renderAnomalyTrend(metrics) {
     const ctx=document.getElementById('anomalyTrendChart'); if(!ctx) return;
     if(anomalyTrendChart) anomalyTrendChart.destroy();
     const rev=[...metrics].reverse();
-    anomalyTrendChart=new Chart(ctx,{
-        type:'line',
-        data:{labels:rev.map(m=>m.logged_at?m.logged_at.substring(0,16):''),datasets:[
-            {label:'Mean Risk Score (%)',data:rev.map(m=>(parseFloat(m.mean_anomaly_score)*100).toFixed(2)),borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.08)',tension:0.4,fill:true,pointRadius:5,pointBackgroundColor:'#3b82f6'},
-            {label:'Anomaly Rate (%)',data:rev.map(m=>parseFloat(m.anomaly_rate_pct).toFixed(2)),borderColor:'#f97316',backgroundColor:'rgba(249,115,22,0.08)',tension:0.4,fill:true,pointRadius:5,pointBackgroundColor:'#f97316'}
-        ]},
-        options:monChartOptions()
-    });
+    anomalyTrendChart=new Chart(ctx,{type:'line',data:{labels:rev.map(m=>m.logged_at?m.logged_at.substring(0,16):''),datasets:[{label:'Mean Risk Score (%)',data:rev.map(m=>(parseFloat(m.mean_anomaly_score)*100).toFixed(2)),borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.08)',tension:0.4,fill:true,pointRadius:5,pointBackgroundColor:'#3b82f6'},{label:'Anomaly Rate (%)',data:rev.map(m=>parseFloat(m.anomaly_rate_pct).toFixed(2)),borderColor:'#f97316',backgroundColor:'rgba(249,115,22,0.08)',tension:0.4,fill:true,pointRadius:5,pointBackgroundColor:'#f97316'}]},options:monChartOptions()});
 }
 
 function renderStatusHistory(metrics) {
@@ -652,92 +1023,34 @@ function renderStatusHistory(metrics) {
     if(statusHistoryChart) statusHistoryChart.destroy();
     const rev=[...metrics].reverse();
     const nums=rev.map(m=>m.status==='GOOD'?3:m.status==='WARNING'?2:1);
-    statusHistoryChart=new Chart(ctx,{
-        type:'bar',
-        data:{labels:rev.map(m=>m.logged_at?m.logged_at.substring(0,10):''),datasets:[{label:'Model Status',data:nums,borderRadius:6,borderWidth:0,
-            backgroundColor:rev.map(m=>m.status==='GOOD'?'rgba(16,185,129,0.7)':m.status==='WARNING'?'rgba(245,158,11,0.7)':'rgba(239,68,68,0.7)')}]},
-        options:{responsive:true,maintainAspectRatio:false,
-            plugins:{legend:{labels:{color:'#94a3b8',font:{family:'Inter',size:11}}},
-                tooltip:{backgroundColor:'#1a2235',titleColor:'#f1f5f9',bodyColor:'#94a3b8',borderColor:'#2d3748',borderWidth:1,
-                    callbacks:{label:c=>` Status: ${{3:'GOOD',2:'WARNING',1:'DEGRADED'}[c.raw]||c.raw}`}}},
-            scales:{x:{ticks:{color:'#475569',font:{size:10}},grid:{color:'rgba(255,255,255,0.03)'}},
-                    y:{min:0,max:4,ticks:{color:'#475569',font:{size:10},callback:v=>({1:'DEG',2:'WARN',3:'GOOD'}[v]||'')},grid:{color:'rgba(255,255,255,0.05)'}}}}
-    });
+    statusHistoryChart=new Chart(ctx,{type:'bar',data:{labels:rev.map(m=>m.logged_at?m.logged_at.substring(0,10):''),datasets:[{label:'Model Status',data:nums,borderRadius:6,borderWidth:0,backgroundColor:rev.map(m=>m.status==='GOOD'?'rgba(16,185,129,0.7)':m.status==='WARNING'?'rgba(245,158,11,0.7)':'rgba(239,68,68,0.7)')}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',font:{family:'Inter',size:11}}},tooltip:{backgroundColor:'#1a2235',titleColor:'#f1f5f9',bodyColor:'#94a3b8',borderColor:'#2d3748',borderWidth:1,callbacks:{label:c=>` Status: ${{3:'GOOD',2:'WARNING',1:'DEGRADED'}[c.raw]||c.raw}`}}},scales:{x:{ticks:{color:'#475569',font:{size:10}},grid:{color:'rgba(255,255,255,0.03)'}},y:{min:0,max:4,ticks:{color:'#475569',font:{size:10},callback:v=>({1:'DEG',2:'WARN',3:'GOOD'}[v]||'')},grid:{color:'rgba(255,255,255,0.05)'}}}}});
 }
 
 function renderScoreDist(metrics) {
     const ctx=document.getElementById('scoreDistChart'); if(!ctx) return;
     if(scoreDistChart) scoreDistChart.destroy();
     const rev=[...metrics].reverse();
-    scoreDistChart=new Chart(ctx,{
-        type:'line',
-        data:{labels:rev.map(m=>m.logged_at?m.logged_at.substring(0,10):''),datasets:[
-            {label:'KS Distance',data:rev.map(m=>parseFloat(m.ks_distance).toFixed(4)),borderColor:'#8b5cf6',backgroundColor:'rgba(139,92,246,0.08)',tension:0.4,fill:true,pointRadius:5,pointBackgroundColor:'#8b5cf6',yAxisID:'y'},
-            {label:'Trend Score',data:rev.map(m=>parseFloat(m.trend_score).toFixed(2)),borderColor:'#06b6d4',backgroundColor:'rgba(6,182,212,0.08)',tension:0.4,fill:true,pointRadius:5,pointBackgroundColor:'#06b6d4',yAxisID:'y1'}
-        ]},
-        options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
-            plugins:{legend:{labels:{color:'#94a3b8',font:{size:11,family:'Inter'},usePointStyle:true}},tooltip:{backgroundColor:'#1a2235',titleColor:'#f1f5f9',bodyColor:'#94a3b8',borderColor:'#2d3748',borderWidth:1}},
-            scales:{x:{ticks:{color:'#475569',font:{size:10}},grid:{color:'rgba(255,255,255,0.03)'}},
-                    y:{type:'linear',position:'left',ticks:{color:'#8b5cf6',font:{size:10}},grid:{color:'rgba(255,255,255,0.05)'}},
-                    y1:{type:'linear',position:'right',ticks:{color:'#06b6d4',font:{size:10}},grid:{drawOnChartArea:false}}}}
-    });
+    scoreDistChart=new Chart(ctx,{type:'line',data:{labels:rev.map(m=>m.logged_at?m.logged_at.substring(0,10):''),datasets:[{label:'KS Distance',data:rev.map(m=>parseFloat(m.ks_distance).toFixed(4)),borderColor:'#8b5cf6',backgroundColor:'rgba(139,92,246,0.08)',tension:0.4,fill:true,pointRadius:5,pointBackgroundColor:'#8b5cf6',yAxisID:'y'},{label:'Trend Score',data:rev.map(m=>parseFloat(m.trend_score).toFixed(2)),borderColor:'#06b6d4',backgroundColor:'rgba(6,182,212,0.08)',tension:0.4,fill:true,pointRadius:5,pointBackgroundColor:'#06b6d4',yAxisID:'y1'}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{color:'#94a3b8',font:{size:11,family:'Inter'},usePointStyle:true}},tooltip:{backgroundColor:'#1a2235',titleColor:'#f1f5f9',bodyColor:'#94a3b8',borderColor:'#2d3748',borderWidth:1}},scales:{x:{ticks:{color:'#475569',font:{size:10}},grid:{color:'rgba(255,255,255,0.03)'}},y:{type:'linear',position:'left',ticks:{color:'#8b5cf6',font:{size:10}},grid:{color:'rgba(255,255,255,0.05)'}},y1:{type:'linear',position:'right',ticks:{color:'#06b6d4',font:{size:10}},grid:{drawOnChartArea:false}}}}});
 }
 
-// ── NEW: Score Volatility Chart ──
 function renderVolatilityChart(metrics) {
     const ctx=document.getElementById('volatilityChart'); if(!ctx) return;
     if(volatilityChart) volatilityChart.destroy();
     const rev=[...metrics].reverse();
     const stdVals=rev.map(m=>(parseFloat(m.std_anomaly_score)*100).toFixed(2));
-    volatilityChart=new Chart(ctx,{
-        type:'line',
-        data:{labels:rev.map(m=>m.logged_at?m.logged_at.substring(0,16):''),datasets:[{
-            label:'Score Std Dev (%)',data:stdVals,
-            borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,0.08)',
-            tension:0.4,fill:true,
-            pointRadius:6,
-            pointBackgroundColor:stdVals.map(v=>parseFloat(v)>35?'#ef4444':parseFloat(v)>25?'#f59e0b':'#10b981'),
-            pointBorderColor:'#1a2235',pointBorderWidth:2
-        }]},
-        options:{responsive:true,maintainAspectRatio:false,
-            plugins:{legend:{labels:{color:'#94a3b8',font:{size:11,family:'Inter'},usePointStyle:true}},
-                tooltip:{backgroundColor:'#1a2235',titleColor:'#f1f5f9',bodyColor:'#94a3b8',borderColor:'#2d3748',borderWidth:1,
-                    callbacks:{label:c=>` Std Dev: ${c.raw}% — ${parseFloat(c.raw)>35?'⚠️ High volatility':parseFloat(c.raw)>25?'🟡 Moderate':'✅ Stable'}`}}},
-            scales:{
-                x:{ticks:{color:'#475569',font:{size:10},maxRotation:45},grid:{color:'rgba(255,255,255,0.03)'}},
-                y:{ticks:{color:'#475569',font:{size:10},callback:v=>v+'%'},grid:{color:'rgba(255,255,255,0.05)'},title:{display:true,text:'Std Deviation (%)',color:'#475569',font:{size:10}}}
-            }}
-    });
+    volatilityChart=new Chart(ctx,{type:'line',data:{labels:rev.map(m=>m.logged_at?m.logged_at.substring(0,16):''),datasets:[{label:'Score Std Dev (%)',data:stdVals,borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,0.08)',tension:0.4,fill:true,pointRadius:6,pointBackgroundColor:stdVals.map(v=>parseFloat(v)>35?'#ef4444':parseFloat(v)>25?'#f59e0b':'#10b981'),pointBorderColor:'#1a2235',pointBorderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',font:{size:11,family:'Inter'},usePointStyle:true}},tooltip:{backgroundColor:'#1a2235',titleColor:'#f1f5f9',bodyColor:'#94a3b8',borderColor:'#2d3748',borderWidth:1,callbacks:{label:c=>` Std Dev: ${c.raw}% — ${parseFloat(c.raw)>35?'⚠️ High volatility':parseFloat(c.raw)>25?'🟡 Moderate':'✅ Stable'}`}}},scales:{x:{ticks:{color:'#475569',font:{size:10},maxRotation:45},grid:{color:'rgba(255,255,255,0.03)'}},y:{ticks:{color:'#475569',font:{size:10},callback:v=>v+'%'},grid:{color:'rgba(255,255,255,0.05)'},title:{display:true,text:'Std Deviation (%)',color:'#475569',font:{size:10}}}}}});
 }
 
-// ── NEW: Records Processed Per Run Chart ──
 function renderRecordsProcessedChart(metrics) {
     const ctx=document.getElementById('recordsProcessedChart'); if(!ctx) return;
     if(recordsProcessedChart) recordsProcessedChart.destroy();
     const rev=[...metrics].reverse();
     const records=rev.map(m=>parseInt(m.total_records_scored));
-    recordsProcessedChart=new Chart(ctx,{
-        type:'bar',
-        data:{labels:rev.map(m=>m.logged_at?m.logged_at.substring(0,16):''),datasets:[{
-            label:'Records Scored',data:records,
-            backgroundColor:records.map((_,i)=>{const a=(0.45+(i/records.length)*0.45).toFixed(2);return `rgba(6,182,212,${a})`;} ),
-            borderColor:'#06b6d4',borderWidth:1,borderRadius:6
-        }]},
-        options:{responsive:true,maintainAspectRatio:false,
-            plugins:{legend:{labels:{color:'#94a3b8',font:{size:11,family:'Inter'}}},
-                tooltip:{backgroundColor:'#1a2235',titleColor:'#f1f5f9',bodyColor:'#94a3b8',borderColor:'#2d3748',borderWidth:1,
-                    callbacks:{label:c=>` ${parseInt(c.raw).toLocaleString()} records processed`}}},
-            scales:{
-                x:{ticks:{color:'#475569',font:{size:10},maxRotation:45},grid:{color:'rgba(255,255,255,0.03)'}},
-                y:{ticks:{color:'#475569',font:{size:10},callback:v=>v.toLocaleString()},grid:{color:'rgba(255,255,255,0.05)'},title:{display:true,text:'Records Count',color:'#475569',font:{size:10}}}
-            },animation:{duration:900}}
-    });
+    recordsProcessedChart=new Chart(ctx,{type:'bar',data:{labels:rev.map(m=>m.logged_at?m.logged_at.substring(0,16):''),datasets:[{label:'Records Scored',data:records,backgroundColor:records.map((_,i)=>{const a=(0.45+(i/records.length)*0.45).toFixed(2);return`rgba(6,182,212,${a})`;}),borderColor:'#06b6d4',borderWidth:1,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',font:{size:11,family:'Inter'}}},tooltip:{backgroundColor:'#1a2235',titleColor:'#f1f5f9',bodyColor:'#94a3b8',borderColor:'#2d3748',borderWidth:1,callbacks:{label:c=>` ${parseInt(c.raw).toLocaleString()} records processed`}}},scales:{x:{ticks:{color:'#475569',font:{size:10},maxRotation:45},grid:{color:'rgba(255,255,255,0.03)'}},y:{ticks:{color:'#475569',font:{size:10},callback:v=>v.toLocaleString()},grid:{color:'rgba(255,255,255,0.05)'},title:{display:true,text:'Records Count',color:'#475569',font:{size:10}}}},animation:{duration:900}}});
 }
 
 function monChartOptions() {
-    return {responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
-        plugins:{legend:{labels:{color:'#94a3b8',font:{size:11,family:'Inter'},usePointStyle:true}},tooltip:{backgroundColor:'#1a2235',titleColor:'#f1f5f9',bodyColor:'#94a3b8',borderColor:'#2d3748',borderWidth:1}},
-        scales:{x:{ticks:{color:'#475569',font:{size:10},maxRotation:45},grid:{color:'rgba(255,255,255,0.03)'}},y:{ticks:{color:'#475569',font:{size:10}},grid:{color:'rgba(255,255,255,0.05)'}}}};
+    return {responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{color:'#94a3b8',font:{size:11,family:'Inter'},usePointStyle:true}},tooltip:{backgroundColor:'#1a2235',titleColor:'#f1f5f9',bodyColor:'#94a3b8',borderColor:'#2d3748',borderWidth:1}},scales:{x:{ticks:{color:'#475569',font:{size:10},maxRotation:45},grid:{color:'rgba(255,255,255,0.03)'}},y:{ticks:{color:'#475569',font:{size:10}},grid:{color:'rgba(255,255,255,0.05)'}}}}; 
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -749,10 +1062,7 @@ async function loadRegistry() {
         if(tbody) tbody.innerHTML='<tr><td colspan="7" class="text-center"><div class="spinner"></div></td></tr>';
         const res=await fetch('/registry');
         const data=await res.json();
-        if(!data.models||data.models.length===0){
-            if(tbody) tbody.innerHTML='<tr><td colspan="7" class="text-center" style="color:var(--text-muted);padding:32px">No models registered yet.</td></tr>';
-            return;
-        }
+        if(!data.models||data.models.length===0){if(tbody)tbody.innerHTML='<tr><td colspan="7" class="text-center" style="color:var(--text-muted);padding:32px">No models registered yet.</td></tr>';return;}
         updateRegistrySummary(data.models);
         renderRegistryTable(data.models);
     } catch(e){console.error('Registry error:',e);}
@@ -770,42 +1080,33 @@ function updateRegistrySummary(models) {
 function renderRegistryTable(models) {
     const tbody=document.getElementById('registry-table-body'); if(!tbody) return;
     tbody.innerHTML=models.map(m=>`<tr>
-        <td><div style="display:flex;align-items:center;gap:7px">
-            <span style="width:7px;height:7px;border-radius:50%;background:${m.is_active?'#10b981':'#475569'};display:inline-block;${m.is_active?'box-shadow:0 0 7px #10b981':''}"></span>
-            <span style="color:var(--blue);font-weight:600;font-size:11px;font-family:monospace">${m.model_version}</span>
-        </div></td>
+        <td><div style="display:flex;align-items:center;gap:7px"><span style="width:7px;height:7px;border-radius:50%;background:${m.is_active?'#10b981':'#475569'};display:inline-block;${m.is_active?'box-shadow:0 0 7px #10b981':''}"></span><span style="color:var(--blue);font-weight:600;font-size:11px;font-family:monospace">${m.model_version}</span></div></td>
         <td>${m.is_active?'<span class="badge badge-active">● Active</span>':'<span class="badge" style="background:rgba(71,85,105,0.15);color:#475569;border:1px solid #1e293b">Inactive</span>'}</td>
         <td style="color:var(--text-sec)">${m.training_date?m.training_date.substring(0,16):'N/A'}</td>
         <td style="color:var(--text-sec)">${m.trained_on_records?parseInt(m.trained_on_records).toLocaleString():'N/A'}</td>
         <td style="font-size:10px;color:var(--text-muted);font-family:monospace;word-break:break-all;max-width:180px">${m.model_path?'...'+m.model_path.slice(-35):'N/A'}</td>
         <td style="color:var(--text-muted);font-size:11px">${m.notes||'—'}</td>
-        <td>${m.is_active
-            ?`<button onclick="reloadModel()" style="background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.28);color:#10b981;padding:4px 11px;border-radius:6px;cursor:pointer;font-size:11px;font-family:Inter,sans-serif">🔄 Reload</button>`
-            :`<button onclick="activateModel('${m.model_version}','${m.model_path}',${m.trained_on_records})" style="background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.28);color:#3b82f6;padding:4px 11px;border-radius:6px;cursor:pointer;font-size:11px;font-family:Inter,sans-serif">⚡ Activate</button>`
-        }</td>
+        <td>${m.is_active?`<button onclick="reloadModel()" style="background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.28);color:#10b981;padding:4px 11px;border-radius:6px;cursor:pointer;font-size:11px;font-family:Inter,sans-serif">🔄 Reload</button>`:`<button onclick="activateModel('${m.model_version}','${m.model_path}',${m.trained_on_records})" style="background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.28);color:#3b82f6;padding:4px 11px;border-radius:6px;cursor:pointer;font-size:11px;font-family:Inter,sans-serif">⚡ Activate</button>`}</td>
     </tr>`).join('');
 }
 
 async function reloadModel() {
-    try { const res=await fetch('/reload-model',{method:'POST'}); const d=await res.json(); showToast('✅ '+d.message,'success'); loadRegistry(); }
+    try{const res=await fetch('/reload-model',{method:'POST'});const d=await res.json();showToast('✅ '+d.message,'success');loadRegistry();}
     catch(e){showToast('❌ Failed to reload','error');}
 }
 
 async function activateModel(version,path,records) {
     if(!confirm(`Activate model: ${version}?`)) return;
-    try {
-        const res=await fetch('/activate-model',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model_version:version,model_path:path,trained_on_records:records})});
-        if(!res.ok) throw new Error('Failed');
-        showToast('✅ Activated: '+version,'success'); loadRegistry();
-    } catch(e){showToast('❌ Failed to activate','error');}
+    try{const res=await fetch('/activate-model',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model_version:version,model_path:path,trained_on_records:records})});if(!res.ok)throw new Error('Failed');showToast('✅ Activated: '+version,'success');loadRegistry();}
+    catch(e){showToast('❌ Failed to activate','error');}
 }
 
 function showToast(msg,type='success') {
-    const ex=document.getElementById('toast'); if(ex) ex.remove();
-    const t=document.createElement('div'); t.id='toast';
+    const ex=document.getElementById('toast');if(ex)ex.remove();
+    const t=document.createElement('div');t.id='toast';
     const c={success:{bg:'rgba(16,185,129,0.12)',border:'rgba(16,185,129,0.35)',color:'#10b981'},error:{bg:'rgba(239,68,68,0.12)',border:'rgba(239,68,68,0.35)',color:'#ef4444'}}[type]||{bg:'rgba(59,130,246,0.12)',border:'rgba(59,130,246,0.35)',color:'#3b82f6'};
     t.style.cssText=`position:fixed;bottom:28px;right:28px;background:${c.bg};border:1px solid ${c.border};color:${c.color};padding:12px 20px;border-radius:9px;font-size:13px;font-weight:600;font-family:Inter,sans-serif;z-index:9999;box-shadow:0 8px 28px rgba(0,0,0,0.3)`;
-    t.textContent=msg; document.body.appendChild(t);
+    t.textContent=msg;document.body.appendChild(t);
     setTimeout(()=>t.remove(),3200);
 }
 

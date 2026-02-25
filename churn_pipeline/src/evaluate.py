@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
 def evaluate(oif, X: np.ndarray, model_version: str):
     """
     Compute all evaluation metrics after training and log to DB.
-    
+
     Metrics computed:
     1. Mean anomaly score        — average risk across all customers
     2. Std anomaly score         — spread/consistency of scores
@@ -118,14 +118,12 @@ def compute_ks_distance(oif, X: np.ndarray, current_scores: np.ndarray):
     KS distance = 1    → completely different (severe drift)
     """
     try:
-        # Fetch last metric entry to get previous scores reference
         prev_metrics = db.fetch_last_n_metrics(n=1)
 
         if prev_metrics.empty:
             logger.info("  No previous metrics found. KS distance = 0.0 (first run)")
             return 0.0
 
-        # Get previous mean and std to simulate previous distribution
         prev_mean = float(prev_metrics.iloc[0]["mean_anomaly_score"])
         prev_std  = float(prev_metrics.iloc[0]["std_anomaly_score"])
         prev_n    = int(prev_metrics.iloc[0]["total_records_scored"])
@@ -135,7 +133,6 @@ def compute_ks_distance(oif, X: np.ndarray, current_scores: np.ndarray):
         prev_scores_simulated = np.random.normal(prev_mean, prev_std, prev_n)
         prev_scores_simulated = np.clip(prev_scores_simulated, 0, 1)
 
-        # Compute KS statistic
         ks_stat, _ = ks_2samp(current_scores, prev_scores_simulated)
         logger.info(f"  KS distance computed: {ks_stat:.4f}")
         return float(ks_stat)
@@ -160,7 +157,6 @@ def compute_trend_score():
         if recent.empty:
             return 1.0  # First run, assume healthy
 
-        # Map status to numeric scores
         status_map = {"GOOD": 1.0, "WARNING": 0.5, "DEGRADED": 0.0}
         scores     = recent["status"].map(status_map).fillna(0.5).tolist()
         trend      = float(np.mean(scores))
@@ -179,7 +175,7 @@ def compute_trend_score():
 def determine_status(ks_distance: float, anomaly_rate: float, trend_score: float):
     """
     Determine model health status based on all metrics.
-    
+
     Rules:
     - DEGRADED  : KS > critical threshold OR anomaly rate out of bounds
     - WARNING   : KS > warning threshold OR trend score < 0.5
@@ -190,7 +186,6 @@ def determine_status(ks_distance: float, anomaly_rate: float, trend_score: float
     min_rate    = cfg.EVAL_CONFIG["min_anomaly_rate"] * 100
     max_rate    = cfg.EVAL_CONFIG["max_anomaly_rate"] * 100
 
-    # Critical conditions
     if ks_distance > ks_critical:
         logger.warning(f"  ⚠️ DEGRADED: KS distance {ks_distance:.4f} > {ks_critical}")
         return "DEGRADED"
@@ -199,7 +194,6 @@ def determine_status(ks_distance: float, anomaly_rate: float, trend_score: float
         logger.warning(f"  ⚠️ DEGRADED: Anomaly rate {anomaly_rate:.2f}% out of bounds [{min_rate}%, {max_rate}%]")
         return "DEGRADED"
 
-    # Warning conditions
     if ks_distance > ks_warn:
         logger.warning(f"  ⚠️ WARNING: KS distance {ks_distance:.4f} > {ks_warn}")
         return "WARNING"
@@ -217,17 +211,26 @@ def determine_status(ks_distance: float, anomaly_rate: float, trend_score: float
 def handle_degraded_model(current_version: str):
     """
     If current model is DEGRADED, rollback to previous good model.
+
+    FIX 1: Uses update_model_registry() instead of register_model() so the
+            1-row design is preserved — no extra rows are inserted on rollback.
+    FIX 2: Operator precedence bug fixed — added parentheses around
+            (all_models["is_active"] == 0) so | binds correctly.
     """
     logger.warning(f"  🔄 Model {current_version} is DEGRADED. Attempting rollback...")
 
     try:
         all_models = db.get_all_models()
 
-        # Find last GOOD model that is not the current one
+        # FIX: wrap == comparison in parentheses to avoid operator precedence issue
+        # Original: notes.str.contains("GOOD") | is_active == 0  ← bug: | binds before ==
+        # Fixed:    notes.str.contains("GOOD") | (is_active == 0) ← correct
         good_models = all_models[
             (all_models["model_version"] != current_version) &
-            (all_models["notes"].str.contains("GOOD", na=False) |
-             all_models["is_active"] == 0)
+            (
+                all_models["notes"].str.contains("GOOD", na=False) |
+                (all_models["is_active"] == 0)
+            )
         ]
 
         if good_models.empty:
@@ -236,12 +239,15 @@ def handle_degraded_model(current_version: str):
 
         rollback_version = good_models.iloc[0]["model_version"]
         rollback_path    = good_models.iloc[0]["model_path"]
+        rollback_records = int(good_models.iloc[0]["trained_on_records"])
 
-        # Re-register previous model as active
-        db.register_model(
+        # FIX: use update_model_registry() instead of register_model()
+        # so rollback stays consistent with the 1-row upsert design —
+        # no duplicate rows are created in model_registry on rollback.
+        db.update_model_registry(
             model_version      = rollback_version,
             model_path         = rollback_path,
-            trained_on_records = int(good_models.iloc[0]["trained_on_records"]),
+            trained_on_records = rollback_records,
             notes              = "ROLLED BACK due to degradation"
         )
 
@@ -257,11 +263,9 @@ def handle_degraded_model(current_version: str):
 if __name__ == "__main__":
     prep = load_module("preprocessing", os.path.join(ROOT_DIR, "src", "preprocessing.py"))
 
-    # Use all processed data for evaluation
     X, feature_cols, scaler, _ = prep.preprocess(fetch_all=True)
 
     if X is not None:
-        # Load active model
         active = db.get_active_model()
         if active:
             oif, _, _, _ = train.load_model(active["model_path"])

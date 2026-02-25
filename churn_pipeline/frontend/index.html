@@ -1,903 +1,903 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ChurnGuard — AI Churn Detection</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-    <style>
-        :root {
-            --bg-primary   : #0a0e1a;
-            --bg-secondary : #111827;
-            --bg-card      : #1a2235;
-            --bg-hover     : #1e293b;
-            --blue         : #3b82f6;
-            --purple       : #8b5cf6;
-            --cyan         : #06b6d4;
-            --green        : #10b981;
-            --yellow       : #f59e0b;
-            --red          : #ef4444;
-            --orange       : #f97316;
-            --text         : #f1f5f9;
-            --text-sec     : #94a3b8;
-            --text-muted   : #475569;
-            --border       : #1e293b;
-            --border-bright: #2d3748;
-            --radius       : 14px;
-            --radius-sm    : 8px;
-            --shadow       : 0 4px 24px rgba(0,0,0,0.4);
-            --transition   : all 0.25s cubic-bezier(0.4,0,0.2,1);
-        }
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        html { scroll-behavior: smooth; }
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg-primary);
-            color: var(--text);
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: var(--bg-primary); }
-        ::-webkit-scrollbar-thumb { background: var(--blue); border-radius: 3px; }
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>ChurnGuard — AI Churn Detection</title>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+        <style>
+            :root {
+                --bg-primary   : #0a0e1a;
+                --bg-secondary : #111827;
+                --bg-card      : #1a2235;
+                --bg-hover     : #1e293b;
+                --blue         : #3b82f6;
+                --purple       : #8b5cf6;
+                --cyan         : #06b6d4;
+                --green        : #10b981;
+                --yellow       : #f59e0b;
+                --red          : #ef4444;
+                --orange       : #f97316;
+                --text         : #f1f5f9;
+                --text-sec     : #94a3b8;
+                --text-muted   : #475569;
+                --border       : #1e293b;
+                --border-bright: #2d3748;
+                --radius       : 14px;
+                --radius-sm    : 8px;
+                --shadow       : 0 4px 24px rgba(0,0,0,0.4);
+                --transition   : all 0.25s cubic-bezier(0.4,0,0.2,1);
+            }
+            *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+            html { scroll-behavior: smooth; }
+            body {
+                font-family: 'Inter', sans-serif;
+                background: var(--bg-primary);
+                color: var(--text);
+                min-height: 100vh;
+                overflow-x: hidden;
+            }
+            ::-webkit-scrollbar { width: 5px; }
+            ::-webkit-scrollbar-track { background: var(--bg-primary); }
+            ::-webkit-scrollbar-thumb { background: var(--blue); border-radius: 3px; }
 
-        /* ── SIDEBAR ── */
-        .sidebar {
-            position: fixed; left: 0; top: 0;
-            width: 255px; height: 100vh;
-            background: var(--bg-secondary);
-            border-right: 1px solid var(--border);
-            display: flex; flex-direction: column;
-            padding: 20px 14px; z-index: 100;
-        }
-        .logo-wrap {
-            display: flex; align-items: center; gap: 11px;
-            padding: 10px 14px; margin-bottom: 28px;
-        }
-        .logo-icon {
-            width: 38px; height: 38px;
-            background: linear-gradient(135deg, var(--blue), var(--purple));
-            border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 18px;
-        }
-        .logo-text {
-            font-size: 17px; font-weight: 700;
-            background: linear-gradient(135deg, var(--blue), var(--cyan));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        }
-        .logo-sub { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
-        .nav-label {
-            font-size: 10px; font-weight: 600; text-transform: uppercase;
-            letter-spacing: 1.5px; color: var(--text-muted);
-            padding: 0 14px; margin-bottom: 7px;
-        }
-        .nav-item {
-            display: flex; align-items: center; gap: 11px;
-            padding: 11px 14px; border-radius: var(--radius-sm);
-            cursor: pointer; transition: var(--transition);
-            color: var(--text-sec); font-size: 13.5px; font-weight: 500;
-            margin-bottom: 3px; border: 1px solid transparent;
-        }
-        .nav-item:hover { background: var(--bg-card); color: var(--text); }
-        .nav-item.active {
-            background: linear-gradient(135deg,rgba(59,130,246,0.15),rgba(139,92,246,0.15));
-            color: var(--blue); border-color: rgba(59,130,246,0.3);
-        }
-        .nav-icon { font-size: 17px; width: 22px; text-align: center; }
-        .sidebar-footer { margin-top: auto; padding: 14px; border-top: 1px solid var(--border); }
-        .model-badge {
-            background: linear-gradient(135deg,rgba(16,185,129,0.12),rgba(6,182,212,0.12));
-            border: 1px solid rgba(16,185,129,0.25);
-            border-radius: var(--radius-sm); padding: 9px 12px;
-        }
-        .model-badge-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
-        .model-badge-ver { font-size: 11px; color: var(--green); font-weight: 600; margin-top: 3px; word-break: break-all; }
+            /* ── SIDEBAR ── */
+            .sidebar {
+                position: fixed; left: 0; top: 0;
+                width: 255px; height: 100vh;
+                background: var(--bg-secondary);
+                border-right: 1px solid var(--border);
+                display: flex; flex-direction: column;
+                padding: 20px 14px; z-index: 100;
+            }
+            .logo-wrap {
+                display: flex; align-items: center; gap: 11px;
+                padding: 10px 14px; margin-bottom: 28px;
+            }
+            .logo-icon {
+                width: 38px; height: 38px;
+                background: linear-gradient(135deg, var(--blue), var(--purple));
+                border-radius: 10px;
+                display: flex; align-items: center; justify-content: center;
+                font-size: 18px;
+            }
+            .logo-text {
+                font-size: 17px; font-weight: 700;
+                background: linear-gradient(135deg, var(--blue), var(--cyan));
+                -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            }
+            .logo-sub { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+            .nav-label {
+                font-size: 10px; font-weight: 600; text-transform: uppercase;
+                letter-spacing: 1.5px; color: var(--text-muted);
+                padding: 0 14px; margin-bottom: 7px;
+            }
+            .nav-item {
+                display: flex; align-items: center; gap: 11px;
+                padding: 11px 14px; border-radius: var(--radius-sm);
+                cursor: pointer; transition: var(--transition);
+                color: var(--text-sec); font-size: 13.5px; font-weight: 500;
+                margin-bottom: 3px; border: 1px solid transparent;
+            }
+            .nav-item:hover { background: var(--bg-card); color: var(--text); }
+            .nav-item.active {
+                background: linear-gradient(135deg,rgba(59,130,246,0.15),rgba(139,92,246,0.15));
+                color: var(--blue); border-color: rgba(59,130,246,0.3);
+            }
+            .nav-icon { font-size: 17px; width: 22px; text-align: center; }
+            .sidebar-footer { margin-top: auto; padding: 14px; border-top: 1px solid var(--border); }
+            .model-badge {
+                background: linear-gradient(135deg,rgba(16,185,129,0.12),rgba(6,182,212,0.12));
+                border: 1px solid rgba(16,185,129,0.25);
+                border-radius: var(--radius-sm); padding: 9px 12px;
+            }
+            .model-badge-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+            .model-badge-ver { font-size: 11px; color: var(--green); font-weight: 600; margin-top: 3px; word-break: break-all; }
 
-        /* ── MAIN ── */
-        .main { margin-left: 255px; min-height: 100vh; padding: 28px 30px; }
-        .page { display: none; }
-        .page.active { display: block; animation: fadeUp 0.4s ease; }
-        @keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
+            /* ── MAIN ── */
+            .main { margin-left: 255px; min-height: 100vh; padding: 28px 30px; }
+            .page { display: none; }
+            .page.active { display: block; animation: fadeUp 0.4s ease; }
+            @keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
 
-        .page-title {
-            font-size: 26px; font-weight: 800;
-            background: linear-gradient(135deg, var(--text), var(--text-sec));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            margin-bottom: 4px;
-        }
-        .page-sub { color: var(--text-muted); font-size: 13px; margin-bottom: 24px; }
+            .page-title {
+                font-size: 26px; font-weight: 800;
+                background: linear-gradient(135deg, var(--text), var(--text-sec));
+                -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+                margin-bottom: 4px;
+            }
+            .page-sub { color: var(--text-muted); font-size: 13px; margin-bottom: 24px; }
 
-        /* ── CARDS ── */
-        .card {
-            background: var(--bg-card); border: 1px solid var(--border);
-            border-radius: var(--radius); padding: 20px 22px;
-            transition: var(--transition); box-shadow: var(--shadow);
-        }
-        .card:hover { border-color: var(--border-bright); transform: translateY(-2px); }
-        .card-title {
-            font-size: 12px; font-weight: 600; color: var(--text-sec);
-            text-transform: uppercase; letter-spacing: 1px;
-            margin-bottom: 14px; display: flex; align-items: center; gap: 7px;
-        }
+            /* ── CARDS ── */
+            .card {
+                background: var(--bg-card); border: 1px solid var(--border);
+                border-radius: var(--radius); padding: 20px 22px;
+                transition: var(--transition); box-shadow: var(--shadow);
+            }
+            .card:hover { border-color: var(--border-bright); transform: translateY(-2px); }
+            .card-title {
+                font-size: 12px; font-weight: 600; color: var(--text-sec);
+                text-transform: uppercase; letter-spacing: 1px;
+                margin-bottom: 14px; display: flex; align-items: center; gap: 7px;
+            }
 
-        /* ── STAT CARDS ── */
-        .stats-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
-            gap: 16px; margin-bottom: 24px;
-        }
-        .stat-card {
-            background: var(--bg-card); border: 1px solid var(--border);
-            border-radius: var(--radius); padding: 18px 20px;
-            display: flex; align-items: center; gap: 14px;
-            transition: var(--transition); position: relative; overflow: hidden;
-        }
-        .stat-card::before {
-            content: ''; position: absolute; top: 0; left: 0;
-            width: 100%; height: 3px;
-            background: var(--ac, var(--blue));
-        }
-        .stat-card:hover { transform: translateY(-3px); border-color: var(--border-bright); }
-        .stat-icon {
-            width: 44px; height: 44px; border-radius: 11px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 20px; background: var(--ic, rgba(59,130,246,0.15));
-            flex-shrink: 0;
-        }
-        .stat-val { font-size: 26px; font-weight: 800; line-height: 1; }
-        .stat-lbl { font-size: 11px; color: var(--text-muted); margin-top: 3px; font-weight: 500; }
+            /* ── STAT CARDS ── */
+            .stats-grid {
+                display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
+                gap: 16px; margin-bottom: 24px;
+            }
+            .stat-card {
+                background: var(--bg-card); border: 1px solid var(--border);
+                border-radius: var(--radius); padding: 18px 20px;
+                display: flex; align-items: center; gap: 14px;
+                transition: var(--transition); position: relative; overflow: hidden;
+            }
+            .stat-card::before {
+                content: ''; position: absolute; top: 0; left: 0;
+                width: 100%; height: 3px;
+                background: var(--ac, var(--blue));
+            }
+            .stat-card:hover { transform: translateY(-3px); border-color: var(--border-bright); }
+            .stat-icon {
+                width: 44px; height: 44px; border-radius: 11px;
+                display: flex; align-items: center; justify-content: center;
+                font-size: 20px; background: var(--ic, rgba(59,130,246,0.15));
+                flex-shrink: 0;
+            }
+            .stat-val { font-size: 26px; font-weight: 800; line-height: 1; }
+            .stat-lbl { font-size: 11px; color: var(--text-muted); margin-top: 3px; font-weight: 500; }
 
-        /* ── CHARTS ── */
-        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 22px; }
-        .chart-box { position: relative; height: 250px; }
+            /* ── CHARTS ── */
+            .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 22px; }
+            .chart-box { position: relative; height: 250px; }
 
-        /* ── PREDICT ── */
-        .predict-layout { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; align-items: start; }
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
-        .form-group { display: flex; flex-direction: column; gap: 5px; }
-        .form-group label { font-size: 11px; font-weight: 600; color: var(--text-sec); text-transform: uppercase; letter-spacing: 0.5px; }
-        .form-group input, .form-group select {
-            background: var(--bg-secondary); border: 1px solid var(--border-bright);
-            border-radius: var(--radius-sm); padding: 9px 12px;
-            color: var(--text); font-size: 13px; font-family: 'Inter',sans-serif;
-            transition: var(--transition); outline: none;
-        }
-        .form-group input:focus, .form-group select:focus {
-            border-color: var(--blue); box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
-        }
-        .form-group select option { background: var(--bg-secondary); }
-        .predict-btn {
-            width: 100%; padding: 13px;
-            background: linear-gradient(135deg, var(--blue), var(--purple));
-            border: none; border-radius: var(--radius-sm);
-            color: white; font-size: 14px; font-weight: 700;
-            cursor: pointer; transition: var(--transition); margin-top: 6px;
-        }
-        .predict-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(59,130,246,0.35); }
-        .predict-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-        .result-card { position: sticky; top: 28px; }
-        .result-placeholder {
-            display: flex; flex-direction: column; align-items: center;
-            justify-content: center; height: 280px; color: var(--text-muted); gap: 10px;
-        }
-        .result-content { display: none; }
-        .risk-meter-wrap { display: flex; flex-direction: column; align-items: center; padding: 16px; }
-        .risk-meter { position: relative; width: 190px; height: 105px; margin-bottom: 12px; }
-        .risk-meter canvas { position: absolute; top: 0; left: 0; }
-        .risk-score-display { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); text-align: center; }
-        .risk-num { font-size: 34px; font-weight: 800; line-height: 1; }
-        .risk-lbl { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
-        .tier-badge { padding: 5px 18px; border-radius: 20px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
-        .tier-Critical { background: rgba(239,68,68,0.18); color: var(--red); border: 1px solid rgba(239,68,68,0.35); }
-        .tier-High { background: rgba(249,115,22,0.18); color: var(--orange); border: 1px solid rgba(249,115,22,0.35); }
-        .tier-Medium { background: rgba(245,158,11,0.18); color: var(--yellow); border: 1px solid rgba(245,158,11,0.35); }
-        .tier-Low { background: rgba(16,185,129,0.18); color: var(--green); border: 1px solid rgba(16,185,129,0.35); }
-        .result-details { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
-        .result-detail { background: var(--bg-secondary); border-radius: var(--radius-sm); padding: 10px; }
-        .result-detail-lbl { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-        .result-detail-val { font-size: 14px; font-weight: 700; margin-top: 3px; }
+            /* ── PREDICT ── */
+            .predict-layout { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; align-items: start; }
+            .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
+            .form-group { display: flex; flex-direction: column; gap: 5px; }
+            .form-group label { font-size: 11px; font-weight: 600; color: var(--text-sec); text-transform: uppercase; letter-spacing: 0.5px; }
+            .form-group input, .form-group select {
+                background: var(--bg-secondary); border: 1px solid var(--border-bright);
+                border-radius: var(--radius-sm); padding: 9px 12px;
+                color: var(--text); font-size: 13px; font-family: 'Inter',sans-serif;
+                transition: var(--transition); outline: none;
+            }
+            .form-group input:focus, .form-group select:focus {
+                border-color: var(--blue); box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+            }
+            .form-group select option { background: var(--bg-secondary); }
+            .predict-btn {
+                width: 100%; padding: 13px;
+                background: linear-gradient(135deg, var(--blue), var(--purple));
+                border: none; border-radius: var(--radius-sm);
+                color: white; font-size: 14px; font-weight: 700;
+                cursor: pointer; transition: var(--transition); margin-top: 6px;
+            }
+            .predict-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(59,130,246,0.35); }
+            .predict-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+            .result-card { position: sticky; top: 28px; }
+            .result-placeholder {
+                display: flex; flex-direction: column; align-items: center;
+                justify-content: center; height: 280px; color: var(--text-muted); gap: 10px;
+            }
+            .result-content { display: none; }
+            .risk-meter-wrap { display: flex; flex-direction: column; align-items: center; padding: 16px; }
+            .risk-meter { position: relative; width: 190px; height: 105px; margin-bottom: 12px; }
+            .risk-meter canvas { position: absolute; top: 0; left: 0; }
+            .risk-score-display { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); text-align: center; }
+            .risk-num { font-size: 34px; font-weight: 800; line-height: 1; }
+            .risk-lbl { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+            .tier-badge { padding: 5px 18px; border-radius: 20px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+            .tier-Critical { background: rgba(239,68,68,0.18); color: var(--red); border: 1px solid rgba(239,68,68,0.35); }
+            .tier-High { background: rgba(249,115,22,0.18); color: var(--orange); border: 1px solid rgba(249,115,22,0.35); }
+            .tier-Medium { background: rgba(245,158,11,0.18); color: var(--yellow); border: 1px solid rgba(245,158,11,0.35); }
+            .tier-Low { background: rgba(16,185,129,0.18); color: var(--green); border: 1px solid rgba(16,185,129,0.35); }
+            .result-details { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+            .result-detail { background: var(--bg-secondary); border-radius: var(--radius-sm); padding: 10px; }
+            .result-detail-lbl { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+            .result-detail-val { font-size: 14px; font-weight: 700; margin-top: 3px; }
 
-        /* ── TABLE ── */
-        .table-wrap { overflow-x: auto; border-radius: var(--radius-sm); }
-        table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-        thead tr { background: var(--bg-secondary); border-bottom: 1px solid var(--border-bright); }
-        thead th { padding: 11px 14px; text-align: left; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); }
-        tbody tr { border-bottom: 1px solid var(--border); transition: var(--transition); }
-        tbody tr:hover { background: var(--bg-hover); }
-        tbody td { padding: 11px 14px; color: var(--text-sec); }
+            /* ── TABLE ── */
+            .table-wrap { overflow-x: auto; border-radius: var(--radius-sm); }
+            table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+            thead tr { background: var(--bg-secondary); border-bottom: 1px solid var(--border-bright); }
+            thead th { padding: 11px 14px; text-align: left; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); }
+            tbody tr { border-bottom: 1px solid var(--border); transition: var(--transition); }
+            tbody tr:hover { background: var(--bg-hover); }
+            tbody td { padding: 11px 14px; color: var(--text-sec); }
 
-        /* ── BADGES ── */
-        .badge { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-        .badge-good { background: rgba(16,185,129,0.12); color: var(--green); border: 1px solid rgba(16,185,129,0.28); }
-        .badge-warning { background: rgba(245,158,11,0.12); color: var(--yellow); border: 1px solid rgba(245,158,11,0.28); }
-        .badge-degraded { background: rgba(239,68,68,0.12); color: var(--red); border: 1px solid rgba(239,68,68,0.28); }
-        .badge-active { background: rgba(59,130,246,0.12); color: var(--blue); border: 1px solid rgba(59,130,246,0.28); }
+            /* ── BADGES ── */
+            .badge { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+            .badge-good { background: rgba(16,185,129,0.12); color: var(--green); border: 1px solid rgba(16,185,129,0.28); }
+            .badge-warning { background: rgba(245,158,11,0.12); color: var(--yellow); border: 1px solid rgba(245,158,11,0.28); }
+            .badge-degraded { background: rgba(239,68,68,0.12); color: var(--red); border: 1px solid rgba(239,68,68,0.28); }
+            .badge-active { background: rgba(59,130,246,0.12); color: var(--blue); border: 1px solid rgba(59,130,246,0.28); }
 
-        /* ── SPINNER ── */
-        .spinner { width: 36px; height: 36px; border: 3px solid var(--border-bright); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 32px auto; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+            /* ── SPINNER ── */
+            .spinner { width: 36px; height: 36px; border: 3px solid var(--border-bright); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 32px auto; }
+            @keyframes spin { to { transform: rotate(360deg); } }
 
-        .text-center { text-align: center; }
-        .mt-4 { margin-top: 16px; }
-        .mb-4 { margin-bottom: 16px; }
-        .gradient-text {
-            background: linear-gradient(135deg, var(--blue), var(--purple), var(--cyan));
-            background-size: 200% 200%;
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            animation: gshift 4s ease infinite;
-        }
-        @keyframes gshift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
-    </style>
-</head>
-<body>
+            .text-center { text-align: center; }
+            .mt-4 { margin-top: 16px; }
+            .mb-4 { margin-bottom: 16px; }
+            .gradient-text {
+                background: linear-gradient(135deg, var(--blue), var(--purple), var(--cyan));
+                background-size: 200% 200%;
+                -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+                animation: gshift 4s ease infinite;
+            }
+            @keyframes gshift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+        </style>
+    </head>
+    <body>
 
-<!-- SIDEBAR -->
-<aside class="sidebar">
-    <div class="logo-wrap">
-        <div class="logo-icon">🛡️</div>
-        <div>
-            <div class="logo-text">ChurnGuard</div>
-            <div class="logo-sub">AI Detection System</div>
-        </div>
-    </div>
-    <div class="nav-label">Navigation</div>
-    <div class="nav-item active" onclick="navigateTo('dashboard',this)">
-        <span class="nav-icon">📊</span><span>Dashboard</span>
-    </div>
-    <div class="nav-item" onclick="navigateTo('predict',this)">
-        <span class="nav-icon">🔍</span><span>Predict</span>
-    </div>
-    <div class="nav-item" onclick="navigateTo('monitoring',this)">
-        <span class="nav-icon">📈</span><span>Monitoring</span>
-    </div>
-    <div class="nav-item" onclick="navigateTo('registry',this)">
-        <span class="nav-icon">🗂️</span><span>Model Registry</span>
-    </div>
-    <div class="sidebar-footer">
-        <div class="model-badge">
-            <div class="model-badge-label">Active Model</div>
-            <div class="model-badge-ver" id="sidebar-model-version">Loading...</div>
-        </div>
-    </div>
-</aside>
-
-<!-- MAIN -->
-<main class="main">
-
-<!-- ══════════════════════════════════════
-     DASHBOARD PAGE
-══════════════════════════════════════ -->
-<div id="page-dashboard" class="page active">
-    <div class="page-title gradient-text">Customer Churn Dashboard</div>
-    <div class="page-sub">Real-time unsupervised churn detection using Online Isolation Forest</div>
-
-    <div class="stats-grid">
-        <div class="stat-card" style="--ac:#3b82f6;--ic:rgba(59,130,246,0.15)">
-            <div class="stat-icon">👥</div>
-            <div><div class="stat-val" id="stat-total-customers">—</div><div class="stat-lbl">Total Customers</div></div>
-        </div>
-        <div class="stat-card" style="--ac:#10b981;--ic:rgba(16,185,129,0.15)">
-            <div class="stat-icon">✅</div>
-            <div><div class="stat-val" id="stat-processed">—</div><div class="stat-lbl">Processed Records</div></div>
-        </div>
-        <div class="stat-card" style="--ac:#f97316;--ic:rgba(249,115,22,0.15)">
-            <div class="stat-icon">⚠️</div>
-            <div><div class="stat-val" id="stat-anomaly-rate">—</div><div class="stat-lbl">Anomaly Rate</div></div>
-        </div>
-        <div class="stat-card" style="--ac:#8b5cf6;--ic:rgba(139,92,246,0.15)">
-            <div class="stat-icon">🎯</div>
-            <div><div class="stat-val" id="stat-mean-score">—</div><div class="stat-lbl">Mean Risk Score</div></div>
-        </div>
-        <div class="stat-card" style="--ac:#ef4444;--ic:rgba(239,68,68,0.15)">
-            <div class="stat-icon">🔴</div>
-            <div><div class="stat-val" id="stat-critical">—</div><div class="stat-lbl">Critical Risk</div></div>
-        </div>
-        <div class="stat-card" style="--ac:#06b6d4;--ic:rgba(6,182,212,0.15)">
-            <div class="stat-icon">🤖</div>
-            <div><div class="stat-val"><span id="stat-status" class="badge badge-good">GOOD</span></div><div class="stat-lbl">Model Health</div></div>
-        </div>
-    </div>
-
-    <div class="charts-grid">
-        <div class="card"><div class="card-title">🍩 Risk Distribution</div><div class="chart-box"><canvas id="riskDonutChart"></canvas></div></div>
-        <div class="card"><div class="card-title">📈 Performance Trend</div><div class="chart-box"><canvas id="trendLineChart"></canvas></div></div>
-    </div>
-    <div class="card"><div class="card-title">📉 Model Drift (KS Distance)</div><div class="chart-box" style="height:210px"><canvas id="ksDistanceChart"></canvas></div></div>
-</div>
-
-<!-- ══════════════════════════════════════
-     PREDICT PAGE
-══════════════════════════════════════ -->
-<div id="page-predict" class="page">
-    <div class="page-title gradient-text">Churn Risk Predictor</div>
-    <div class="page-sub">Enter customer details to get real-time churn risk analysis</div>
-
-    <div style="display:flex;gap:10px;margin-bottom:18px">
-        <button onclick="fillSampleData('high_risk')" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#ef4444;padding:7px 14px;border-radius:7px;cursor:pointer;font-size:12px;font-family:Inter,sans-serif">🔴 High Risk Sample</button>
-        <button onclick="fillSampleData('low_risk')" style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);color:#10b981;padding:7px 14px;border-radius:7px;cursor:pointer;font-size:12px;font-family:Inter,sans-serif">🟢 Low Risk Sample</button>
-        <button onclick="resetForm()" style="background:rgba(71,85,105,0.2);border:1px solid #2d3748;color:#94a3b8;padding:7px 14px;border-radius:7px;cursor:pointer;font-size:12px;font-family:Inter,sans-serif">🔄 Reset</button>
-    </div>
-
-    <div class="predict-layout">
-        <div class="card">
-            <div class="card-title">📋 Customer Features</div>
-            <form id="predict-form">
-                <div class="form-grid">
-                    <div class="form-group"><label>Gender</label><select id="f_gender"><option value="">Select...</option><option>Male</option><option>Female</option></select></div>
-                    <div class="form-group"><label>Senior Citizen</label><select id="f_SeniorCitizen"><option value="">Select...</option><option value="0">No (0)</option><option value="1">Yes (1)</option></select></div>
-                    <div class="form-group"><label>Partner</label><select id="f_Partner"><option value="">Select...</option><option>Yes</option><option>No</option></select></div>
-                    <div class="form-group"><label>Dependents</label><select id="f_Dependents"><option value="">Select...</option><option>Yes</option><option>No</option></select></div>
-                    <div class="form-group"><label>Tenure (months)</label><input type="number" id="f_tenure" placeholder="e.g. 12" min="0" max="72"></div>
-                    <div class="form-group"><label>Phone Service</label><select id="f_PhoneService"><option value="">Select...</option><option>Yes</option><option>No</option></select></div>
-                    <div class="form-group"><label>Multiple Lines</label><select id="f_MultipleLines"><option value="">Select...</option><option>Yes</option><option>No</option><option>No phone service</option></select></div>
-                    <div class="form-group"><label>Internet Service</label><select id="f_InternetService"><option value="">Select...</option><option>DSL</option><option>Fiber optic</option><option>No</option></select></div>
-                    <div class="form-group"><label>Online Security</label><select id="f_OnlineSecurity"><option value="">Select...</option><option>Yes</option><option>No</option><option>No internet service</option></select></div>
-                    <div class="form-group"><label>Online Backup</label><select id="f_OnlineBackup"><option value="">Select...</option><option>Yes</option><option>No</option><option>No internet service</option></select></div>
-                    <div class="form-group"><label>Device Protection</label><select id="f_DeviceProtection"><option value="">Select...</option><option>Yes</option><option>No</option><option>No internet service</option></select></div>
-                    <div class="form-group"><label>Tech Support</label><select id="f_TechSupport"><option value="">Select...</option><option>Yes</option><option>No</option><option>No internet service</option></select></div>
-                    <div class="form-group"><label>Streaming TV</label><select id="f_StreamingTV"><option value="">Select...</option><option>Yes</option><option>No</option><option>No internet service</option></select></div>
-                    <div class="form-group"><label>Streaming Movies</label><select id="f_StreamingMovies"><option value="">Select...</option><option>Yes</option><option>No</option><option>No internet service</option></select></div>
-                    <div class="form-group"><label>Contract</label><select id="f_Contract"><option value="">Select...</option><option>Month-to-month</option><option>One year</option><option>Two year</option></select></div>
-                    <div class="form-group"><label>Paperless Billing</label><select id="f_PaperlessBilling"><option value="">Select...</option><option>Yes</option><option>No</option></select></div>
-                    <div class="form-group" style="grid-column:span 2"><label>Payment Method</label><select id="f_PaymentMethod"><option value="">Select...</option><option>Electronic check</option><option>Mailed check</option><option>Bank transfer (automatic)</option><option>Credit card (automatic)</option></select></div>
-                    <div class="form-group"><label>Monthly Charges ($)</label><input type="number" id="f_MonthlyCharges" placeholder="e.g. 65.50" step="0.01" min="0"></div>
-                    <div class="form-group"><label>Total Charges ($)</label><input type="number" id="f_TotalCharges" placeholder="e.g. 1200.00" step="0.01" min="0"></div>
-                </div>
-                <button type="button" id="predict-btn" class="predict-btn" onclick="submitPrediction()">🔍 Analyze Churn Risk</button>
-            </form>
-        </div>
-
-        <div class="card result-card">
-            <div class="card-title">🎯 Risk Analysis Result</div>
-            <div id="result-placeholder" class="result-placeholder">
-                <div style="font-size:44px;opacity:0.25">🛡️</div>
-                <div style="font-size:14px;font-weight:600;color:var(--text-sec)">Ready to Analyze</div>
-                <div style="font-size:12px;color:var(--text-muted);text-align:center;max-width:180px">Fill in customer details and click Analyze</div>
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="logo-wrap">
+            <div class="logo-icon">🛡️</div>
+            <div>
+                <div class="logo-text">ChurnGuard</div>
+                <div class="logo-sub">AI Detection System</div>
             </div>
-            <div id="result-content" class="result-content">
-                <div class="risk-meter-wrap">
-                    <div class="risk-meter">
-                        <canvas id="riskMeterCanvas" width="190" height="105"></canvas>
-                        <div class="risk-score-display">
-                            <div class="risk-num" id="risk-score-number">0</div>
-                            <div class="risk-lbl" id="risk-score-label">Risk Score</div>
-                        </div>
+        </div>
+        <div class="nav-label">Navigation</div>
+        <div class="nav-item active" onclick="navigateTo('dashboard',this)">
+            <span class="nav-icon">📊</span><span>Dashboard</span>
+        </div>
+        <div class="nav-item" onclick="navigateTo('predict',this)">
+            <span class="nav-icon">🔍</span><span>Predict</span>
+        </div>
+        <div class="nav-item" onclick="navigateTo('monitoring',this)">
+            <span class="nav-icon">📈</span><span>Monitoring</span>
+        </div>
+        <div class="nav-item" onclick="navigateTo('registry',this)">
+            <span class="nav-icon">🗂️</span><span>Model Registry</span>
+        </div>
+        <div class="sidebar-footer">
+            <div class="model-badge">
+                <div class="model-badge-label">Active Model</div>
+                <div class="model-badge-ver" id="sidebar-model-version">Loading...</div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+
+    <!-- ══════════════════════════════════════
+        DASHBOARD PAGE
+    ══════════════════════════════════════ -->
+    <div id="page-dashboard" class="page active">
+        <div class="page-title gradient-text">Customer Churn Dashboard</div>
+        <div class="page-sub">Real-time unsupervised churn detection using Online Isolation Forest</div>
+
+        <div class="stats-grid">
+            <div class="stat-card" style="--ac:#3b82f6;--ic:rgba(59,130,246,0.15)">
+                <div class="stat-icon">👥</div>
+                <div><div class="stat-val" id="stat-total-customers">—</div><div class="stat-lbl">Total Customers</div></div>
+            </div>
+            <div class="stat-card" style="--ac:#10b981;--ic:rgba(16,185,129,0.15)">
+                <div class="stat-icon">✅</div>
+                <div><div class="stat-val" id="stat-processed">—</div><div class="stat-lbl">Processed Records</div></div>
+            </div>
+            <div class="stat-card" style="--ac:#f97316;--ic:rgba(249,115,22,0.15)">
+                <div class="stat-icon">⚠️</div>
+                <div><div class="stat-val" id="stat-anomaly-rate">—</div><div class="stat-lbl">Anomaly Rate</div></div>
+            </div>
+            <div class="stat-card" style="--ac:#8b5cf6;--ic:rgba(139,92,246,0.15)">
+                <div class="stat-icon">🎯</div>
+                <div><div class="stat-val" id="stat-mean-score">—</div><div class="stat-lbl">Mean Risk Score</div></div>
+            </div>
+            <div class="stat-card" style="--ac:#ef4444;--ic:rgba(239,68,68,0.15)">
+                <div class="stat-icon">🔴</div>
+                <div><div class="stat-val" id="stat-critical">—</div><div class="stat-lbl">Critical Risk</div></div>
+            </div>
+            <div class="stat-card" style="--ac:#06b6d4;--ic:rgba(6,182,212,0.15)">
+                <div class="stat-icon">🤖</div>
+                <div><div class="stat-val"><span id="stat-status" class="badge badge-good">GOOD</span></div><div class="stat-lbl">Model Health</div></div>
+            </div>
+        </div>
+
+        <div class="charts-grid">
+            <div class="card"><div class="card-title">🍩 Risk Distribution</div><div class="chart-box"><canvas id="riskDonutChart"></canvas></div></div>
+            <div class="card"><div class="card-title">📈 Performance Trend</div><div class="chart-box"><canvas id="trendLineChart"></canvas></div></div>
+        </div>
+        <div class="card"><div class="card-title">📉 Model Drift (KS Distance)</div><div class="chart-box" style="height:210px"><canvas id="ksDistanceChart"></canvas></div></div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+        PREDICT PAGE
+    ══════════════════════════════════════ -->
+    <div id="page-predict" class="page">
+        <div class="page-title gradient-text">Churn Risk Predictor</div>
+        <div class="page-sub">Enter customer details to get real-time churn risk analysis</div>
+
+        <div style="display:flex;gap:10px;margin-bottom:18px">
+            <button onclick="fillSampleData('high_risk')" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#ef4444;padding:7px 14px;border-radius:7px;cursor:pointer;font-size:12px;font-family:Inter,sans-serif">🔴 High Risk Sample</button>
+            <button onclick="fillSampleData('low_risk')" style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);color:#10b981;padding:7px 14px;border-radius:7px;cursor:pointer;font-size:12px;font-family:Inter,sans-serif">🟢 Low Risk Sample</button>
+            <button onclick="resetForm()" style="background:rgba(71,85,105,0.2);border:1px solid #2d3748;color:#94a3b8;padding:7px 14px;border-radius:7px;cursor:pointer;font-size:12px;font-family:Inter,sans-serif">🔄 Reset</button>
+        </div>
+
+        <div class="predict-layout">
+            <div class="card">
+                <div class="card-title">📋 Customer Features</div>
+                <form id="predict-form">
+                    <div class="form-grid">
+                        <div class="form-group"><label>Gender</label><select id="f_gender"><option value="">Select...</option><option>Male</option><option>Female</option></select></div>
+                        <div class="form-group"><label>Senior Citizen</label><select id="f_SeniorCitizen"><option value="">Select...</option><option value="0">No (0)</option><option value="1">Yes (1)</option></select></div>
+                        <div class="form-group"><label>Partner</label><select id="f_Partner"><option value="">Select...</option><option>Yes</option><option>No</option></select></div>
+                        <div class="form-group"><label>Dependents</label><select id="f_Dependents"><option value="">Select...</option><option>Yes</option><option>No</option></select></div>
+                        <div class="form-group"><label>Tenure (months)</label><input type="number" id="f_tenure" placeholder="e.g. 12" min="0" max="72"></div>
+                        <div class="form-group"><label>Phone Service</label><select id="f_PhoneService"><option value="">Select...</option><option>Yes</option><option>No</option></select></div>
+                        <div class="form-group"><label>Multiple Lines</label><select id="f_MultipleLines"><option value="">Select...</option><option>Yes</option><option>No</option><option>No phone service</option></select></div>
+                        <div class="form-group"><label>Internet Service</label><select id="f_InternetService"><option value="">Select...</option><option>DSL</option><option>Fiber optic</option><option>No</option></select></div>
+                        <div class="form-group"><label>Online Security</label><select id="f_OnlineSecurity"><option value="">Select...</option><option>Yes</option><option>No</option><option>No internet service</option></select></div>
+                        <div class="form-group"><label>Online Backup</label><select id="f_OnlineBackup"><option value="">Select...</option><option>Yes</option><option>No</option><option>No internet service</option></select></div>
+                        <div class="form-group"><label>Device Protection</label><select id="f_DeviceProtection"><option value="">Select...</option><option>Yes</option><option>No</option><option>No internet service</option></select></div>
+                        <div class="form-group"><label>Tech Support</label><select id="f_TechSupport"><option value="">Select...</option><option>Yes</option><option>No</option><option>No internet service</option></select></div>
+                        <div class="form-group"><label>Streaming TV</label><select id="f_StreamingTV"><option value="">Select...</option><option>Yes</option><option>No</option><option>No internet service</option></select></div>
+                        <div class="form-group"><label>Streaming Movies</label><select id="f_StreamingMovies"><option value="">Select...</option><option>Yes</option><option>No</option><option>No internet service</option></select></div>
+                        <div class="form-group"><label>Contract</label><select id="f_Contract"><option value="">Select...</option><option>Month-to-month</option><option>One year</option><option>Two year</option></select></div>
+                        <div class="form-group"><label>Paperless Billing</label><select id="f_PaperlessBilling"><option value="">Select...</option><option>Yes</option><option>No</option></select></div>
+                        <div class="form-group" style="grid-column:span 2"><label>Payment Method</label><select id="f_PaymentMethod"><option value="">Select...</option><option>Electronic check</option><option>Mailed check</option><option>Bank transfer (automatic)</option><option>Credit card (automatic)</option></select></div>
+                        <div class="form-group"><label>Monthly Charges ($)</label><input type="number" id="f_MonthlyCharges" placeholder="e.g. 65.50" step="0.01" min="0"></div>
+                        <div class="form-group"><label>Total Charges ($)</label><input type="number" id="f_TotalCharges" placeholder="e.g. 1200.00" step="0.01" min="0"></div>
                     </div>
-                    <div class="tier-badge tier-Low" id="result-tier-badge">LOW</div>
+                    <button type="button" id="predict-btn" class="predict-btn" onclick="submitPrediction()">🔍 Analyze Churn Risk</button>
+                </form>
+            </div>
+
+            <div class="card result-card">
+                <div class="card-title">🎯 Risk Analysis Result</div>
+                <div id="result-placeholder" class="result-placeholder">
+                    <div style="font-size:44px;opacity:0.25">🛡️</div>
+                    <div style="font-size:14px;font-weight:600;color:var(--text-sec)">Ready to Analyze</div>
+                    <div style="font-size:12px;color:var(--text-muted);text-align:center;max-width:180px">Fill in customer details and click Analyze</div>
                 </div>
-                <div style="background:var(--bg-secondary);border-radius:8px;padding:12px;margin:14px 0;font-size:12px;color:var(--text-sec);line-height:1.6;border-left:3px solid var(--blue)" id="result-interpretation"></div>
-                <div class="result-details">
-                    <div class="result-detail"><div class="result-detail-lbl">Risk Score</div><div class="result-detail-val" id="result-score">—</div></div>
-                    <div class="result-detail"><div class="result-detail-lbl">Risk Tier</div><div class="result-detail-val" id="result-tier">—</div></div>
-                    <div class="result-detail"><div class="result-detail-lbl">Anomaly Status</div><div class="result-detail-val" id="result-anomaly">—</div></div>
-                    <div class="result-detail"><div class="result-detail-lbl">Analyzed At</div><div class="result-detail-val" id="result-time">—</div></div>
-                    <div class="result-detail" style="grid-column:span 2"><div class="result-detail-lbl">Model Version</div><div class="result-detail-val" style="font-size:11px;word-break:break-all" id="result-model">—</div></div>
+                <div id="result-content" class="result-content">
+                    <div class="risk-meter-wrap">
+                        <div class="risk-meter">
+                            <canvas id="riskMeterCanvas" width="190" height="105"></canvas>
+                            <div class="risk-score-display">
+                                <div class="risk-num" id="risk-score-number">0</div>
+                                <div class="risk-lbl" id="risk-score-label">Risk Score</div>
+                            </div>
+                        </div>
+                        <div class="tier-badge tier-Low" id="result-tier-badge">LOW</div>
+                    </div>
+                    <div style="background:var(--bg-secondary);border-radius:8px;padding:12px;margin:14px 0;font-size:12px;color:var(--text-sec);line-height:1.6;border-left:3px solid var(--blue)" id="result-interpretation"></div>
+                    <div class="result-details">
+                        <div class="result-detail"><div class="result-detail-lbl">Risk Score</div><div class="result-detail-val" id="result-score">—</div></div>
+                        <div class="result-detail"><div class="result-detail-lbl">Risk Tier</div><div class="result-detail-val" id="result-tier">—</div></div>
+                        <div class="result-detail"><div class="result-detail-lbl">Anomaly Status</div><div class="result-detail-val" id="result-anomaly">—</div></div>
+                        <div class="result-detail"><div class="result-detail-lbl">Analyzed At</div><div class="result-detail-val" id="result-time">—</div></div>
+                        <div class="result-detail" style="grid-column:span 2"><div class="result-detail-lbl">Model Version</div><div class="result-detail-val" style="font-size:11px;word-break:break-all" id="result-model">—</div></div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- ══════════════════════════════════════
-     MONITORING PAGE
-══════════════════════════════════════ -->
-<div id="page-monitoring" class="page">
-    <div class="page-title gradient-text">Model Monitoring</div>
-    <div class="page-sub">Track model performance, drift detection and health over time</div>
+    <!-- ══════════════════════════════════════
+        MONITORING PAGE
+    ══════════════════════════════════════ -->
+    <div id="page-monitoring" class="page">
+        <div class="page-title gradient-text">Model Monitoring</div>
+        <div class="page-sub">Track model performance, drift detection and health over time</div>
 
-    <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
-        <div class="stat-card" style="--ac:#3b82f6;--ic:rgba(59,130,246,0.15)"><div class="stat-icon">🔁</div><div><div class="stat-val" id="mon-total-runs">—</div><div class="stat-lbl">Total Training Runs</div></div></div>
-        <div class="stat-card" style="--ac:#10b981;--ic:rgba(16,185,129,0.15)"><div class="stat-icon">✅</div><div><div class="stat-val" id="mon-good-runs">—</div><div class="stat-lbl">Good Runs</div></div></div>
-        <div class="stat-card" style="--ac:#8b5cf6;--ic:rgba(139,92,246,0.15)"><div class="stat-icon">📊</div><div><div class="stat-val"><span id="mon-latest-status" class="badge badge-good">GOOD</span></div><div class="stat-lbl">Latest Status</div><div style="font-size:11px;margin-top:4px;color:var(--text-muted)" id="mon-trend-direction"></div></div></div>
-        <div class="stat-card" style="--ac:#f97316;--ic:rgba(249,115,22,0.15)"><div class="stat-icon">🎯</div><div><div class="stat-val" id="mon-latest-score">—</div><div class="stat-lbl">Latest Risk Score</div></div></div>
-        <div class="stat-card" style="--ac:#ef4444;--ic:rgba(239,68,68,0.15)"><div class="stat-icon">📉</div><div><div class="stat-val" id="mon-latest-ks">—</div><div class="stat-lbl">KS Distance</div></div></div>
-        <div class="stat-card" style="--ac:#06b6d4;--ic:rgba(6,182,212,0.15)"><div class="stat-icon">⚠️</div><div><div class="stat-val" id="mon-anomaly-rate">—</div><div class="stat-lbl">Anomaly Rate</div></div></div>
-    </div>
+        <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+            <div class="stat-card" style="--ac:#3b82f6;--ic:rgba(59,130,246,0.15)"><div class="stat-icon">🔁</div><div><div class="stat-val" id="mon-total-runs">—</div><div class="stat-lbl">Total Training Runs</div></div></div>
+            <div class="stat-card" style="--ac:#10b981;--ic:rgba(16,185,129,0.15)"><div class="stat-icon">✅</div><div><div class="stat-val" id="mon-good-runs">—</div><div class="stat-lbl">Good Runs</div></div></div>
+            <div class="stat-card" style="--ac:#8b5cf6;--ic:rgba(139,92,246,0.15)"><div class="stat-icon">📊</div><div><div class="stat-val"><span id="mon-latest-status" class="badge badge-good">GOOD</span></div><div class="stat-lbl">Latest Status</div><div style="font-size:11px;margin-top:4px;color:var(--text-muted)" id="mon-trend-direction"></div></div></div>
+            <div class="stat-card" style="--ac:#f97316;--ic:rgba(249,115,22,0.15)"><div class="stat-icon">🎯</div><div><div class="stat-val" id="mon-latest-score">—</div><div class="stat-lbl">Latest Risk Score</div></div></div>
+            <div class="stat-card" style="--ac:#ef4444;--ic:rgba(239,68,68,0.15)"><div class="stat-icon">📉</div><div><div class="stat-val" id="mon-latest-ks">—</div><div class="stat-lbl">KS Distance</div></div></div>
+            <div class="stat-card" style="--ac:#06b6d4;--ic:rgba(6,182,212,0.15)"><div class="stat-icon">⚠️</div><div><div class="stat-val" id="mon-anomaly-rate">—</div><div class="stat-lbl">Anomaly Rate</div></div></div>
+        </div>
 
-    <div class="charts-grid mb-4">
-        <div class="card"><div class="card-title">📈 Anomaly Trend</div><div class="chart-box"><canvas id="anomalyTrendChart"></canvas></div></div>
-        <div class="card"><div class="card-title">🟢 Status History</div><div class="chart-box"><canvas id="statusHistoryChart"></canvas></div></div>
-    </div>
-    <div class="card mb-4" style="margin-bottom:20px"><div class="card-title">🔬 KS Drift vs Trend Score</div><div class="chart-box" style="height:210px"><canvas id="scoreDistChart"></canvas></div></div>
+        <div class="charts-grid mb-4">
+            <div class="card"><div class="card-title">📈 Anomaly Trend</div><div class="chart-box"><canvas id="anomalyTrendChart"></canvas></div></div>
+            <div class="card"><div class="card-title">🟢 Status History</div><div class="chart-box"><canvas id="statusHistoryChart"></canvas></div></div>
+        </div>
+        <div class="card mb-4" style="margin-bottom:20px"><div class="card-title">🔬 KS Drift vs Trend Score</div><div class="chart-box" style="height:210px"><canvas id="scoreDistChart"></canvas></div></div>
 
-    <div class="card">
-        <div class="card-title">📋 Metrics History</div>
-        <div class="table-wrap">
-            <table>
-                <thead><tr><th>Model Version</th><th>Mean Score</th><th>Std Score</th><th>Anomaly Rate</th><th>KS Distance</th><th>Trend Score</th><th>Records</th><th>Status</th><th>Logged At</th></tr></thead>
-                <tbody id="monitoring-table-body"><tr><td colspan="9" class="text-center"><div class="spinner"></div></td></tr></tbody>
-            </table>
+        <div class="card">
+            <div class="card-title">📋 Metrics History</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Model Version</th><th>Mean Score</th><th>Std Score</th><th>Anomaly Rate</th><th>KS Distance</th><th>Trend Score</th><th>Records</th><th>Status</th><th>Logged At</th></tr></thead>
+                    <tbody id="monitoring-table-body"><tr><td colspan="9" class="text-center"><div class="spinner"></div></td></tr></tbody>
+                </table>
+            </div>
         </div>
     </div>
-</div>
 
-<!-- ══════════════════════════════════════
-     REGISTRY PAGE
-══════════════════════════════════════ -->
-<div id="page-registry" class="page">
-    <div class="page-title gradient-text">Model Registry</div>
-    <div class="page-sub">All trained model versions with activation and rollback controls</div>
+    <!-- ══════════════════════════════════════
+        REGISTRY PAGE
+    ══════════════════════════════════════ -->
+    <div id="page-registry" class="page">
+        <div class="page-title gradient-text">Model Registry</div>
+        <div class="page-sub">All trained model versions with activation and rollback controls</div>
 
-    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px">
-        <div class="stat-card" style="--ac:#3b82f6;--ic:rgba(59,130,246,0.15)"><div class="stat-icon">📦</div><div><div class="stat-val" id="reg-total-versions">—</div><div class="stat-lbl">Total Versions</div></div></div>
-        <div class="stat-card" style="--ac:#10b981;--ic:rgba(16,185,129,0.15)"><div class="stat-icon">✅</div><div><div class="stat-val" style="font-size:13px" id="reg-active-version">—</div><div class="stat-lbl">Active Version</div></div></div>
-        <div class="stat-card" style="--ac:#8b5cf6;--ic:rgba(139,92,246,0.15)"><div class="stat-icon">📅</div><div><div class="stat-val" style="font-size:15px" id="reg-latest-date">—</div><div class="stat-lbl">Latest Training</div></div></div>
-        <div class="stat-card" style="--ac:#f97316;--ic:rgba(249,115,22,0.15)"><div class="stat-icon">🗃️</div><div><div class="stat-val" id="reg-total-records">—</div><div class="stat-lbl">Records Trained</div></div></div>
-    </div>
+        <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px">
+            <div class="stat-card" style="--ac:#3b82f6;--ic:rgba(59,130,246,0.15)"><div class="stat-icon">📦</div><div><div class="stat-val" id="reg-total-versions">—</div><div class="stat-lbl">Total Versions</div></div></div>
+            <div class="stat-card" style="--ac:#10b981;--ic:rgba(16,185,129,0.15)"><div class="stat-icon">✅</div><div><div class="stat-val" style="font-size:13px" id="reg-active-version">—</div><div class="stat-lbl">Active Version</div></div></div>
+            <div class="stat-card" style="--ac:#8b5cf6;--ic:rgba(139,92,246,0.15)"><div class="stat-icon">📅</div><div><div class="stat-val" style="font-size:15px" id="reg-latest-date">—</div><div class="stat-lbl">Latest Training</div></div></div>
+            <div class="stat-card" style="--ac:#f97316;--ic:rgba(249,115,22,0.15)"><div class="stat-icon">🗃️</div><div><div class="stat-val" id="reg-total-records">—</div><div class="stat-lbl">Records Trained</div></div></div>
+        </div>
 
-    <div class="card">
-        <div class="card-title">🗂️ All Model Versions</div>
-        <div class="table-wrap">
-            <table>
-                <thead><tr><th>Version</th><th>Status</th><th>Training Date</th><th>Records</th><th>File Path</th><th>Notes</th><th>Action</th></tr></thead>
-                <tbody id="registry-table-body"><tr><td colspan="7" class="text-center"><div class="spinner"></div></td></tr></tbody>
-            </table>
+        <div class="card">
+            <div class="card-title">🗂️ All Model Versions</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Version</th><th>Status</th><th>Training Date</th><th>Records</th><th>File Path</th><th>Notes</th><th>Action</th></tr></thead>
+                    <tbody id="registry-table-body"><tr><td colspan="7" class="text-center"><div class="spinner"></div></td></tr></tbody>
+                </table>
+            </div>
         </div>
     </div>
-</div>
 
-</main>
+    </main>
 
-<script>
-// ══════════════════════════════════════════════════════════════
-//  NAVIGATION
-// ══════════════════════════════════════════════════════════════
-function navigateTo(page, el) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    document.getElementById('page-' + page).classList.add('active');
-    if (el) el.classList.add('active');
-    if (page === 'dashboard')  loadDashboard();
-    if (page === 'predict')    initRiskMeter();
-    if (page === 'monitoring') loadMonitoring();
-    if (page === 'registry')   loadRegistry();
-}
+    <script>
+    // ══════════════════════════════════════════════════════════════
+    //  NAVIGATION
+    // ══════════════════════════════════════════════════════════════
+    function navigateTo(page, el) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById('page-' + page).classList.add('active');
+        if (el) el.classList.add('active');
+        if (page === 'dashboard')  loadDashboard();
+        if (page === 'predict')    initRiskMeter();
+        if (page === 'monitoring') loadMonitoring();
+        if (page === 'registry')   loadRegistry();
+    }
 
-// ══════════════════════════════════════════════════════════════
-//  DASHBOARD
-// ══════════════════════════════════════════════════════════════
-let riskDonutChart = null, trendLineChart = null, ksDistanceChart = null;
+    // ══════════════════════════════════════════════════════════════
+    //  DASHBOARD
+    // ══════════════════════════════════════════════════════════════
+    let riskDonutChart = null, trendLineChart = null, ksDistanceChart = null;
 
-async function loadDashboard() {
-    try {
-        const res  = await fetch('/dashboard-stats');
-        const data = await res.json();
-        animateCount('stat-total-customers', data.total_customers);
-        animateCount('stat-processed', data.processed_customers);
-        const latest = data.trend_data && data.trend_data.length > 0 ? data.trend_data[0] : null;
-        if (latest) {
-            const a = document.getElementById('stat-anomaly-rate');
-            const s = document.getElementById('stat-mean-score');
-            if (a) a.textContent = parseFloat(latest.anomaly_rate).toFixed(1) + '%';
-            if (s) s.textContent = (parseFloat(latest.mean_anomaly_score) * 100).toFixed(1);
-        }
-        const stEl = document.getElementById('stat-status');
-        if (stEl) { stEl.textContent = data.latest_status || 'GOOD'; stEl.className = 'badge badge-' + (data.latest_status || 'GOOD').toLowerCase(); }
-        if (data.risk_distribution) {
-            animateCount('stat-critical', data.risk_distribution.Critical || 0);
-        }
-        const mv = document.getElementById('sidebar-model-version');
-        if (mv) mv.textContent = data.model_version || 'N/A';
-        renderRiskDonut(data.risk_distribution);
-        renderTrendLine(data.trend_data);
-        renderKSChart(data.trend_data);
-    } catch(e) { console.error('Dashboard error:', e); }
-}
+    async function loadDashboard() {
+        try {
+            const res  = await fetch('/dashboard-stats');
+            const data = await res.json();
+            animateCount('stat-total-customers', data.total_customers);
+            animateCount('stat-processed', data.processed_customers);
+            const latest = data.trend_data && data.trend_data.length > 0 ? data.trend_data[0] : null;
+            if (latest) {
+                const a = document.getElementById('stat-anomaly-rate');
+                const s = document.getElementById('stat-mean-score');
+                if (a) a.textContent = parseFloat(latest.anomaly_rate).toFixed(1) + '%';
+                if (s) s.textContent = (parseFloat(latest.mean_anomaly_score) * 100).toFixed(1);
+            }
+            const stEl = document.getElementById('stat-status');
+            if (stEl) { stEl.textContent = data.latest_status || 'GOOD'; stEl.className = 'badge badge-' + (data.latest_status || 'GOOD').toLowerCase(); }
+            if (data.risk_distribution) {
+                animateCount('stat-critical', data.risk_distribution.Critical || 0);
+            }
+            const mv = document.getElementById('sidebar-model-version');
+            if (mv) mv.textContent = data.model_version || 'N/A';
+            renderRiskDonut(data.risk_distribution);
+            renderTrendLine(data.trend_data);
+            renderKSChart(data.trend_data);
+        } catch(e) { console.error('Dashboard error:', e); }
+    }
 
-function animateCount(id, target) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    let cur = 0;
-    const step = Math.max(1, Math.ceil(target / 60));
-    const t = setInterval(() => {
-        cur += step;
-        if (cur >= target) { cur = target; clearInterval(t); }
-        el.textContent = cur.toLocaleString();
-    }, 16);
-}
+    function animateCount(id, target) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        let cur = 0;
+        const step = Math.max(1, Math.ceil(target / 60));
+        const t = setInterval(() => {
+            cur += step;
+            if (cur >= target) { cur = target; clearInterval(t); }
+            el.textContent = cur.toLocaleString();
+        }, 16);
+    }
 
-function renderRiskDonut(dist) {
-    const ctx = document.getElementById('riskDonutChart');
-    if (!ctx) return;
-    if (riskDonutChart) riskDonutChart.destroy();
-    riskDonutChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Critical','High','Medium','Low'],
-            datasets: [{
-                data: [dist.Critical||0, dist.High||0, dist.Medium||0, dist.Low||0],
-                backgroundColor: ['rgba(239,68,68,0.85)','rgba(249,115,22,0.85)','rgba(245,158,11,0.85)','rgba(16,185,129,0.85)'],
-                borderColor: ['#ef4444','#f97316','#f59e0b','#10b981'],
-                borderWidth: 2, hoverOffset: 8
-            }]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false, cutout: '70%',
-            plugins: {
-                legend: { position: 'bottom', labels: { color: '#94a3b8', padding: 14, font: { size: 11, family: 'Inter' }, usePointStyle: true } },
-                tooltip: { backgroundColor: '#1a2235', titleColor: '#f1f5f9', bodyColor: '#94a3b8', borderColor: '#2d3748', borderWidth: 1,
-                    callbacks: { label: c => ` ${c.label}: ${c.raw} customers` } }
+    function renderRiskDonut(dist) {
+        const ctx = document.getElementById('riskDonutChart');
+        if (!ctx) return;
+        if (riskDonutChart) riskDonutChart.destroy();
+        riskDonutChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Critical','High','Medium','Low'],
+                datasets: [{
+                    data: [dist.Critical||0, dist.High||0, dist.Medium||0, dist.Low||0],
+                    backgroundColor: ['rgba(239,68,68,0.85)','rgba(249,115,22,0.85)','rgba(245,158,11,0.85)','rgba(16,185,129,0.85)'],
+                    borderColor: ['#ef4444','#f97316','#f59e0b','#10b981'],
+                    borderWidth: 2, hoverOffset: 8
+                }]
             },
-            animation: { animateRotate: true, duration: 1000 }
-        }
-    });
-}
-
-function renderTrendLine(trendData) {
-    const ctx = document.getElementById('trendLineChart');
-    if (!ctx || !trendData || !trendData.length) return;
-    if (trendLineChart) trendLineChart.destroy();
-    const rev = [...trendData].reverse();
-    trendLineChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: rev.map(d => d.date.substring(0,16)),
-            datasets: [
-                { label: 'Mean Risk Score', data: rev.map(d => (parseFloat(d.mean_anomaly_score)*100).toFixed(2)),
-                  borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.08)', tension: 0.4, fill: true, pointRadius: 5, pointBackgroundColor: '#3b82f6' },
-                { label: 'Anomaly Rate %', data: rev.map(d => parseFloat(d.anomaly_rate).toFixed(2)),
-                  borderColor: '#f97316', backgroundColor: 'rgba(249,115,22,0.08)', tension: 0.4, fill: true, pointRadius: 5, pointBackgroundColor: '#f97316' }
-            ]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
-            plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11, family: 'Inter' }, usePointStyle: true } },
-                tooltip: { backgroundColor: '#1a2235', titleColor: '#f1f5f9', bodyColor: '#94a3b8', borderColor: '#2d3748', borderWidth: 1 } },
-            scales: { x: { ticks: { color: '#475569', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.03)' } },
-                      y: { ticks: { color: '#475569', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } } }
-        }
-    });
-}
-
-function renderKSChart(trendData) {
-    const ctx = document.getElementById('ksDistanceChart');
-    if (!ctx || !trendData || !trendData.length) return;
-    if (ksDistanceChart) ksDistanceChart.destroy();
-    const rev = [...trendData].reverse();
-    const ks  = rev.map(d => parseFloat(d.ks_distance).toFixed(4));
-    ksDistanceChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: rev.map(d => d.date.substring(0,16)),
-            datasets: [{
-                label: 'KS Distance', data: ks, borderRadius: 6, borderWidth: 1,
-                backgroundColor: ks.map(v => v>0.30?'rgba(239,68,68,0.7)':v>0.15?'rgba(245,158,11,0.7)':'rgba(16,185,129,0.7)'),
-                borderColor: ks.map(v => v>0.30?'#ef4444':v>0.15?'#f59e0b':'#10b981')
-            }]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { labels: { color: '#94a3b8', font: { family: 'Inter', size: 11 } } },
-                tooltip: { backgroundColor: '#1a2235', titleColor: '#f1f5f9', bodyColor: '#94a3b8', borderColor: '#2d3748', borderWidth: 1 } },
-            scales: { x: { ticks: { color: '#475569', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.03)' } },
-                      y: { min: 0, max: 0.5, ticks: { color: '#475569', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } } }
-        }
-    });
-}
-
-// ══════════════════════════════════════════════════════════════
-//  PREDICT
-// ══════════════════════════════════════════════════════════════
-let riskMeterChart = null;
-
-function initRiskMeter() {
-    const ctx = document.getElementById('riskMeterCanvas');
-    if (!ctx) return;
-    if (riskMeterChart) riskMeterChart.destroy();
-    riskMeterChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: { datasets: [{ data: [0,100], backgroundColor: ['rgba(59,130,246,0.3)','rgba(255,255,255,0.03)'], borderWidth: 0, circumference: 180, rotation: 270 }] },
-        options: { responsive: true, maintainAspectRatio: false, cutout: '75%',
-            plugins: { legend: { display: false }, tooltip: { enabled: false } } }
-    });
-}
-
-function updateRiskMeter(score, tier) {
-    if (!riskMeterChart) return;
-    const colors = { Critical:['rgba(239,68,68,0.9)','rgba(239,68,68,0.12)'], High:['rgba(249,115,22,0.9)','rgba(249,115,22,0.12)'], Medium:['rgba(245,158,11,0.9)','rgba(245,158,11,0.12)'], Low:['rgba(16,185,129,0.9)','rgba(16,185,129,0.12)'] };
-    const textC  = { Critical:'#ef4444', High:'#f97316', Medium:'#f59e0b', Low:'#10b981' };
-    const col = colors[tier] || colors.Low;
-    riskMeterChart.data.datasets[0].data = [score, 100-score];
-    riskMeterChart.data.datasets[0].backgroundColor = [col[0], col[1]];
-    riskMeterChart.update();
-    const sn = document.getElementById('risk-score-number');
-    if (sn) { sn.textContent = score.toFixed(1); sn.style.color = textC[tier]||'#f1f5f9'; }
-}
-
-async function submitPrediction() {
-    const btn = document.getElementById('predict-btn');
-    btn.disabled = true; btn.textContent = '⏳ Analyzing...';
-    try {
-        const payload = collectFormData();
-        if (!payload) { btn.disabled = false; btn.textContent = '🔍 Analyze Churn Risk'; return; }
-        const res = await fetch('/predict', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-        if (!res.ok) { const e = await res.json(); throw new Error(e.detail||'Prediction failed'); }
-        displayResult(await res.json());
-    } catch(e) { alert('❌ Error: ' + e.message); }
-    finally { btn.disabled = false; btn.textContent = '🔍 Analyze Churn Risk'; }
-}
-
-function collectFormData() {
-    const fields = ['gender','SeniorCitizen','Partner','Dependents','tenure','PhoneService','MultipleLines','InternetService','OnlineSecurity','OnlineBackup','DeviceProtection','TechSupport','StreamingTV','StreamingMovies','Contract','PaperlessBilling','PaymentMethod','MonthlyCharges','TotalCharges'];
-    const payload = {};
-    for (const f of fields) {
-        const el = document.getElementById('f_' + f);
-        if (!el) continue;
-        const val = el.value.trim();
-        if (val === '') { alert(`Please fill in: ${f}`); return null; }
-        if (['SeniorCitizen','tenure'].includes(f)) payload[f] = parseInt(val);
-        else if (['MonthlyCharges','TotalCharges'].includes(f)) payload[f] = parseFloat(val);
-        else payload[f] = val;
+            options: {
+                responsive: true, maintainAspectRatio: false, cutout: '70%',
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: '#94a3b8', padding: 14, font: { size: 11, family: 'Inter' }, usePointStyle: true } },
+                    tooltip: { backgroundColor: '#1a2235', titleColor: '#f1f5f9', bodyColor: '#94a3b8', borderColor: '#2d3748', borderWidth: 1,
+                        callbacks: { label: c => ` ${c.label}: ${c.raw} customers` } }
+                },
+                animation: { animateRotate: true, duration: 1000 }
+            }
+        });
     }
-    return payload;
-}
 
-function displayResult(data) {
-    document.getElementById('result-placeholder').style.display = 'none';
-    const rc = document.getElementById('result-content');
-    rc.style.display = 'block';
-    const score = data.churn_risk_score, tier = data.risk_tier;
-    updateRiskMeter(score, tier);
-    const tb = document.getElementById('result-tier-badge');
-    if (tb) { tb.textContent = tier; tb.className = `tier-badge tier-${tier}`; }
-    setV('result-score',   score.toFixed(1) + '%');
-    setV('result-tier',    tier);
-    setV('result-anomaly', data.is_anomaly ? '⚠️ Anomaly' : '✅ Normal');
-    setV('result-model',   data.model_version || 'N/A');
-    setV('result-time',    new Date(data.timestamp).toLocaleTimeString());
-    const msgs = { Critical:'🔴 Very high churn probability. Immediate intervention recommended.', High:'🟠 High churn risk detected. Consider proactive outreach.', Medium:'🟡 Moderate churn risk. Monitor and engage.', Low:'🟢 Low churn risk. Customer appears stable.' };
-    setV('result-interpretation', msgs[tier]||'');
-    const ae = document.getElementById('result-anomaly');
-    if (ae) ae.style.color = data.is_anomaly ? '#ef4444' : '#10b981';
-}
+    function renderTrendLine(trendData) {
+        const ctx = document.getElementById('trendLineChart');
+        if (!ctx || !trendData || !trendData.length) return;
+        if (trendLineChart) trendLineChart.destroy();
+        const rev = [...trendData].reverse();
+        trendLineChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: rev.map(d => d.date.substring(0,16)),
+                datasets: [
+                    { label: 'Mean Risk Score', data: rev.map(d => (parseFloat(d.mean_anomaly_score)*100).toFixed(2)),
+                    borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.08)', tension: 0.4, fill: true, pointRadius: 5, pointBackgroundColor: '#3b82f6' },
+                    { label: 'Anomaly Rate %', data: rev.map(d => parseFloat(d.anomaly_rate).toFixed(2)),
+                    borderColor: '#f97316', backgroundColor: 'rgba(249,115,22,0.08)', tension: 0.4, fill: true, pointRadius: 5, pointBackgroundColor: '#f97316' }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+                plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11, family: 'Inter' }, usePointStyle: true } },
+                    tooltip: { backgroundColor: '#1a2235', titleColor: '#f1f5f9', bodyColor: '#94a3b8', borderColor: '#2d3748', borderWidth: 1 } },
+                scales: { x: { ticks: { color: '#475569', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.03)' } },
+                        y: { ticks: { color: '#475569', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } } }
+            }
+        });
+    }
 
-function setV(id, val) { const e = document.getElementById(id); if (e) e.textContent = val; }
+    function renderKSChart(trendData) {
+        const ctx = document.getElementById('ksDistanceChart');
+        if (!ctx || !trendData || !trendData.length) return;
+        if (ksDistanceChart) ksDistanceChart.destroy();
+        const rev = [...trendData].reverse();
+        const ks  = rev.map(d => parseFloat(d.ks_distance).toFixed(4));
+        ksDistanceChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: rev.map(d => d.date.substring(0,16)),
+                datasets: [{
+                    label: 'KS Distance', data: ks, borderRadius: 6, borderWidth: 1,
+                    backgroundColor: ks.map(v => v>0.30?'rgba(239,68,68,0.7)':v>0.15?'rgba(245,158,11,0.7)':'rgba(16,185,129,0.7)'),
+                    borderColor: ks.map(v => v>0.30?'#ef4444':v>0.15?'#f59e0b':'#10b981')
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: '#94a3b8', font: { family: 'Inter', size: 11 } } },
+                    tooltip: { backgroundColor: '#1a2235', titleColor: '#f1f5f9', bodyColor: '#94a3b8', borderColor: '#2d3748', borderWidth: 1 } },
+                scales: { x: { ticks: { color: '#475569', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.03)' } },
+                        y: { min: 0, max: 0.5, ticks: { color: '#475569', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } } }
+            }
+        });
+    }
 
-function resetForm() {
-    document.getElementById('predict-form').reset();
-    document.getElementById('result-placeholder').style.display = 'flex';
-    document.getElementById('result-content').style.display = 'none';
-    initRiskMeter();
-}
+    // ══════════════════════════════════════════════════════════════
+    //  PREDICT
+    // ══════════════════════════════════════════════════════════════
+    let riskMeterChart = null;
 
-function fillSampleData(type) {
-    const s = {
-        high_risk: { gender:'Female',SeniorCitizen:1,Partner:'No',Dependents:'No',tenure:1,PhoneService:'Yes',MultipleLines:'No',InternetService:'Fiber optic',OnlineSecurity:'No',OnlineBackup:'No',DeviceProtection:'No',TechSupport:'No',StreamingTV:'Yes',StreamingMovies:'Yes',Contract:'Month-to-month',PaperlessBilling:'Yes',PaymentMethod:'Electronic check',MonthlyCharges:95.75,TotalCharges:95.75 },
-        low_risk:  { gender:'Male',SeniorCitizen:0,Partner:'Yes',Dependents:'Yes',tenure:60,PhoneService:'Yes',MultipleLines:'Yes',InternetService:'DSL',OnlineSecurity:'Yes',OnlineBackup:'Yes',DeviceProtection:'Yes',TechSupport:'Yes',StreamingTV:'No',StreamingMovies:'No',Contract:'Two year',PaperlessBilling:'No',PaymentMethod:'Bank transfer (automatic)',MonthlyCharges:65.50,TotalCharges:3930.0 }
-    };
-    const sample = s[type]; if (!sample) return;
-    for (const [k, v] of Object.entries(sample)) { const el = document.getElementById('f_'+k); if (el) el.value = v; }
-}
+    function initRiskMeter() {
+        const ctx = document.getElementById('riskMeterCanvas');
+        if (!ctx) return;
+        if (riskMeterChart) riskMeterChart.destroy();
+        riskMeterChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: { datasets: [{ data: [0,100], backgroundColor: ['rgba(59,130,246,0.3)','rgba(255,255,255,0.03)'], borderWidth: 0, circumference: 180, rotation: 270 }] },
+            options: { responsive: true, maintainAspectRatio: false, cutout: '75%',
+                plugins: { legend: { display: false }, tooltip: { enabled: false } } }
+        });
+    }
 
-// ══════════════════════════════════════════════════════════════
-//  MONITORING
-// ══════════════════════════════════════════════════════════════
-let anomalyTrendChart = null, statusHistoryChart = null, scoreDistChart = null;
+    function updateRiskMeter(score, tier) {
+        if (!riskMeterChart) return;
+        const colors = { Critical:['rgba(239,68,68,0.9)','rgba(239,68,68,0.12)'], High:['rgba(249,115,22,0.9)','rgba(249,115,22,0.12)'], Medium:['rgba(245,158,11,0.9)','rgba(245,158,11,0.12)'], Low:['rgba(16,185,129,0.9)','rgba(16,185,129,0.12)'] };
+        const textC  = { Critical:'#ef4444', High:'#f97316', Medium:'#f59e0b', Low:'#10b981' };
+        const col = colors[tier] || colors.Low;
+        riskMeterChart.data.datasets[0].data = [score, 100-score];
+        riskMeterChart.data.datasets[0].backgroundColor = [col[0], col[1]];
+        riskMeterChart.update();
+        const sn = document.getElementById('risk-score-number');
+        if (sn) { sn.textContent = score.toFixed(1); sn.style.color = textC[tier]||'#f1f5f9'; }
+    }
 
-async function loadMonitoring() {
-    try {
+    async function submitPrediction() {
+        const btn = document.getElementById('predict-btn');
+        btn.disabled = true; btn.textContent = '⏳ Analyzing...';
+        try {
+            const payload = collectFormData();
+            if (!payload) { btn.disabled = false; btn.textContent = '🔍 Analyze Churn Risk'; return; }
+            const res = await fetch('/predict', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            if (!res.ok) { const e = await res.json(); throw new Error(e.detail||'Prediction failed'); }
+            displayResult(await res.json());
+        } catch(e) { alert('❌ Error: ' + e.message); }
+        finally { btn.disabled = false; btn.textContent = '🔍 Analyze Churn Risk'; }
+    }
+
+    function collectFormData() {
+        const fields = ['gender','SeniorCitizen','Partner','Dependents','tenure','PhoneService','MultipleLines','InternetService','OnlineSecurity','OnlineBackup','DeviceProtection','TechSupport','StreamingTV','StreamingMovies','Contract','PaperlessBilling','PaymentMethod','MonthlyCharges','TotalCharges'];
+        const payload = {};
+        for (const f of fields) {
+            const el = document.getElementById('f_' + f);
+            if (!el) continue;
+            const val = el.value.trim();
+            if (val === '') { alert(`Please fill in: ${f}`); return null; }
+            if (['SeniorCitizen','tenure'].includes(f)) payload[f] = parseInt(val);
+            else if (['MonthlyCharges','TotalCharges'].includes(f)) payload[f] = parseFloat(val);
+            else payload[f] = val;
+        }
+        return payload;
+    }
+
+    function displayResult(data) {
+        document.getElementById('result-placeholder').style.display = 'none';
+        const rc = document.getElementById('result-content');
+        rc.style.display = 'block';
+        const score = data.churn_risk_score, tier = data.risk_tier;
+        updateRiskMeter(score, tier);
+        const tb = document.getElementById('result-tier-badge');
+        if (tb) { tb.textContent = tier; tb.className = `tier-badge tier-${tier}`; }
+        setV('result-score',   score.toFixed(1) + '%');
+        setV('result-tier',    tier);
+        setV('result-anomaly', data.is_anomaly ? '⚠️ Anomaly' : '✅ Normal');
+        setV('result-model',   data.model_version || 'N/A');
+        setV('result-time',    new Date(data.timestamp).toLocaleTimeString());
+        const msgs = { Critical:'🔴 Very high churn probability. Immediate intervention recommended.', High:'🟠 High churn risk detected. Consider proactive outreach.', Medium:'🟡 Moderate churn risk. Monitor and engage.', Low:'🟢 Low churn risk. Customer appears stable.' };
+        setV('result-interpretation', msgs[tier]||'');
+        const ae = document.getElementById('result-anomaly');
+        if (ae) ae.style.color = data.is_anomaly ? '#ef4444' : '#10b981';
+    }
+
+    function setV(id, val) { const e = document.getElementById(id); if (e) e.textContent = val; }
+
+    function resetForm() {
+        document.getElementById('predict-form').reset();
+        document.getElementById('result-placeholder').style.display = 'flex';
+        document.getElementById('result-content').style.display = 'none';
+        initRiskMeter();
+    }
+
+    function fillSampleData(type) {
+        const s = {
+            high_risk: { gender:'Female',SeniorCitizen:1,Partner:'No',Dependents:'No',tenure:1,PhoneService:'Yes',MultipleLines:'No',InternetService:'Fiber optic',OnlineSecurity:'No',OnlineBackup:'No',DeviceProtection:'No',TechSupport:'No',StreamingTV:'Yes',StreamingMovies:'Yes',Contract:'Month-to-month',PaperlessBilling:'Yes',PaymentMethod:'Electronic check',MonthlyCharges:95.75,TotalCharges:95.75 },
+            low_risk:  { gender:'Male',SeniorCitizen:0,Partner:'Yes',Dependents:'Yes',tenure:60,PhoneService:'Yes',MultipleLines:'Yes',InternetService:'DSL',OnlineSecurity:'Yes',OnlineBackup:'Yes',DeviceProtection:'Yes',TechSupport:'Yes',StreamingTV:'No',StreamingMovies:'No',Contract:'Two year',PaperlessBilling:'No',PaymentMethod:'Bank transfer (automatic)',MonthlyCharges:65.50,TotalCharges:3930.0 }
+        };
+        const sample = s[type]; if (!sample) return;
+        for (const [k, v] of Object.entries(sample)) { const el = document.getElementById('f_'+k); if (el) el.value = v; }
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  MONITORING
+    // ══════════════════════════════════════════════════════════════
+    let anomalyTrendChart = null, statusHistoryChart = null, scoreDistChart = null;
+
+    async function loadMonitoring() {
+        try {
+            const tbody = document.getElementById('monitoring-table-body');
+            if (tbody) tbody.innerHTML = '<tr><td colspan="9" class="text-center"><div class="spinner"></div></td></tr>';
+            const res  = await fetch('/monitoring?days=30');
+            const data = await res.json();
+            if (!data.metrics || data.metrics.length === 0) {
+                if (tbody) tbody.innerHTML = '<tr><td colspan="9" class="text-center" style="color:var(--text-muted);padding:32px">No metrics logged yet. Run the pipeline first.</td></tr>';
+                return;
+            }
+            renderMetricsTable(data.metrics);
+            renderAnomalyTrend(data.metrics);
+            renderStatusHistory(data.metrics);
+            renderScoreDist(data.metrics);
+            updateMonitoringSummary(data.metrics);
+        } catch(e) { console.error('Monitoring error:', e); }
+    }
+
+    function updateMonitoringSummary(metrics) {
+        const latest = metrics[0]; if (!latest) return;
+        setV('mon-total-runs',    metrics.length);
+        setV('mon-good-runs',     metrics.filter(m => m.status==='GOOD').length + ' / ' + metrics.length);
+        setV('mon-latest-score',  (parseFloat(latest.mean_anomaly_score)*100).toFixed(1) + '%');
+        setV('mon-latest-ks',     parseFloat(latest.ks_distance).toFixed(4));
+        setV('mon-anomaly-rate',  parseFloat(latest.anomaly_rate_pct).toFixed(1) + '%');
+        const stEl = document.getElementById('mon-latest-status');
+        if (stEl) { stEl.textContent = latest.status; stEl.className = 'badge badge-' + latest.status.toLowerCase(); }
+        if (metrics.length >= 2) {
+            const diff = ((parseFloat(metrics[0].mean_anomaly_score) - parseFloat(metrics[1].mean_anomaly_score))*100).toFixed(2);
+            const tEl  = document.getElementById('mon-trend-direction');
+            if (tEl) { tEl.textContent = diff>0?`↑ +${diff}% vs last`:`↓ ${diff}% vs last`; tEl.style.color = diff>0?'#ef4444':'#10b981'; }
+        }
+    }
+
+    function renderMetricsTable(metrics) {
         const tbody = document.getElementById('monitoring-table-body');
-        if (tbody) tbody.innerHTML = '<tr><td colspan="9" class="text-center"><div class="spinner"></div></td></tr>';
-        const res  = await fetch('/monitoring?days=30');
-        const data = await res.json();
-        if (!data.metrics || data.metrics.length === 0) {
-            if (tbody) tbody.innerHTML = '<tr><td colspan="9" class="text-center" style="color:var(--text-muted);padding:32px">No metrics logged yet. Run the pipeline first.</td></tr>';
-            return;
-        }
-        renderMetricsTable(data.metrics);
-        renderAnomalyTrend(data.metrics);
-        renderStatusHistory(data.metrics);
-        renderScoreDist(data.metrics);
-        updateMonitoringSummary(data.metrics);
-    } catch(e) { console.error('Monitoring error:', e); }
-}
-
-function updateMonitoringSummary(metrics) {
-    const latest = metrics[0]; if (!latest) return;
-    setV('mon-total-runs',    metrics.length);
-    setV('mon-good-runs',     metrics.filter(m => m.status==='GOOD').length + ' / ' + metrics.length);
-    setV('mon-latest-score',  (parseFloat(latest.mean_anomaly_score)*100).toFixed(1) + '%');
-    setV('mon-latest-ks',     parseFloat(latest.ks_distance).toFixed(4));
-    setV('mon-anomaly-rate',  parseFloat(latest.anomaly_rate_pct).toFixed(1) + '%');
-    const stEl = document.getElementById('mon-latest-status');
-    if (stEl) { stEl.textContent = latest.status; stEl.className = 'badge badge-' + latest.status.toLowerCase(); }
-    if (metrics.length >= 2) {
-        const diff = ((parseFloat(metrics[0].mean_anomaly_score) - parseFloat(metrics[1].mean_anomaly_score))*100).toFixed(2);
-        const tEl  = document.getElementById('mon-trend-direction');
-        if (tEl) { tEl.textContent = diff>0?`↑ +${diff}% vs last`:`↓ ${diff}% vs last`; tEl.style.color = diff>0?'#ef4444':'#10b981'; }
+        if (!tbody) return;
+        tbody.innerHTML = metrics.map(m => `
+            <tr>
+                <td style="color:var(--blue);font-weight:600;font-size:11px">${m.model_version}</td>
+                <td>${(parseFloat(m.mean_anomaly_score)*100).toFixed(2)}%</td>
+                <td>${parseFloat(m.std_anomaly_score).toFixed(4)}</td>
+                <td>${parseFloat(m.anomaly_rate_pct).toFixed(2)}%</td>
+                <td style="color:${parseFloat(m.ks_distance)>0.30?'#ef4444':parseFloat(m.ks_distance)>0.15?'#f59e0b':'#10b981'}">${parseFloat(m.ks_distance).toFixed(4)}</td>
+                <td>${parseFloat(m.trend_score).toFixed(2)}</td>
+                <td>${parseInt(m.total_records_scored).toLocaleString()}</td>
+                <td><span class="badge badge-${m.status.toLowerCase()}">${m.status}</span></td>
+                <td style="color:var(--text-muted);font-size:11px">${m.logged_at?m.logged_at.substring(0,16):'N/A'}</td>
+            </tr>`).join('');
     }
-}
 
-function renderMetricsTable(metrics) {
-    const tbody = document.getElementById('monitoring-table-body');
-    if (!tbody) return;
-    tbody.innerHTML = metrics.map(m => `
-        <tr>
-            <td style="color:var(--blue);font-weight:600;font-size:11px">${m.model_version}</td>
-            <td>${(parseFloat(m.mean_anomaly_score)*100).toFixed(2)}%</td>
-            <td>${parseFloat(m.std_anomaly_score).toFixed(4)}</td>
-            <td>${parseFloat(m.anomaly_rate_pct).toFixed(2)}%</td>
-            <td style="color:${parseFloat(m.ks_distance)>0.30?'#ef4444':parseFloat(m.ks_distance)>0.15?'#f59e0b':'#10b981'}">${parseFloat(m.ks_distance).toFixed(4)}</td>
-            <td>${parseFloat(m.trend_score).toFixed(2)}</td>
-            <td>${parseInt(m.total_records_scored).toLocaleString()}</td>
-            <td><span class="badge badge-${m.status.toLowerCase()}">${m.status}</span></td>
-            <td style="color:var(--text-muted);font-size:11px">${m.logged_at?m.logged_at.substring(0,16):'N/A'}</td>
-        </tr>`).join('');
-}
+    function renderAnomalyTrend(metrics) {
+        const ctx = document.getElementById('anomalyTrendChart');
+        if (!ctx) return;
+        if (anomalyTrendChart) anomalyTrendChart.destroy();
+        const rev = [...metrics].reverse();
+        anomalyTrendChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: rev.map(m => m.logged_at?m.logged_at.substring(0,16):''),
+                datasets: [
+                    { label:'Mean Risk Score (%)', data: rev.map(m=>(parseFloat(m.mean_anomaly_score)*100).toFixed(2)),
+                    borderColor:'#3b82f6', backgroundColor:'rgba(59,130,246,0.08)', tension:0.4, fill:true, pointRadius:5, pointBackgroundColor:'#3b82f6' },
+                    { label:'Anomaly Rate (%)', data: rev.map(m=>parseFloat(m.anomaly_rate_pct).toFixed(2)),
+                    borderColor:'#f97316', backgroundColor:'rgba(249,115,22,0.08)', tension:0.4, fill:true, pointRadius:5, pointBackgroundColor:'#f97316' }
+                ]
+            },
+            options: monChartOptions()
+        });
+    }
 
-function renderAnomalyTrend(metrics) {
-    const ctx = document.getElementById('anomalyTrendChart');
-    if (!ctx) return;
-    if (anomalyTrendChart) anomalyTrendChart.destroy();
-    const rev = [...metrics].reverse();
-    anomalyTrendChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: rev.map(m => m.logged_at?m.logged_at.substring(0,16):''),
-            datasets: [
-                { label:'Mean Risk Score (%)', data: rev.map(m=>(parseFloat(m.mean_anomaly_score)*100).toFixed(2)),
-                  borderColor:'#3b82f6', backgroundColor:'rgba(59,130,246,0.08)', tension:0.4, fill:true, pointRadius:5, pointBackgroundColor:'#3b82f6' },
-                { label:'Anomaly Rate (%)', data: rev.map(m=>parseFloat(m.anomaly_rate_pct).toFixed(2)),
-                  borderColor:'#f97316', backgroundColor:'rgba(249,115,22,0.08)', tension:0.4, fill:true, pointRadius:5, pointBackgroundColor:'#f97316' }
-            ]
-        },
-        options: monChartOptions()
-    });
-}
+    function renderStatusHistory(metrics) {
+        const ctx = document.getElementById('statusHistoryChart');
+        if (!ctx) return;
+        if (statusHistoryChart) statusHistoryChart.destroy();
+        const rev = [...metrics].reverse();
+        const nums = rev.map(m => m.status==='GOOD'?3:m.status==='WARNING'?2:1);
+        statusHistoryChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: rev.map(m => m.logged_at?m.logged_at.substring(0,10):''),
+                datasets: [{
+                    label:'Model Status', data: nums, borderRadius:6, borderWidth:0,
+                    backgroundColor: rev.map(m => m.status==='GOOD'?'rgba(16,185,129,0.7)':m.status==='WARNING'?'rgba(245,158,11,0.7)':'rgba(239,68,68,0.7)')
+                }]
+            },
+            options: {
+                responsive:true, maintainAspectRatio:false,
+                plugins: { legend:{labels:{color:'#94a3b8',font:{family:'Inter',size:11}}},
+                    tooltip:{backgroundColor:'#1a2235',titleColor:'#f1f5f9',bodyColor:'#94a3b8',borderColor:'#2d3748',borderWidth:1,
+                        callbacks:{label:c=>` Status: ${{3:'GOOD',2:'WARNING',1:'DEGRADED'}[c.raw]||c.raw}`}} },
+                scales: { x:{ticks:{color:'#475569',font:{size:10}},grid:{color:'rgba(255,255,255,0.03)'}},
+                        y:{min:0,max:4,ticks:{color:'#475569',font:{size:10},callback:v=>({1:'DEG',2:'WARN',3:'GOOD'}[v]||'')},grid:{color:'rgba(255,255,255,0.05)'}} }
+            }
+        });
+    }
 
-function renderStatusHistory(metrics) {
-    const ctx = document.getElementById('statusHistoryChart');
-    if (!ctx) return;
-    if (statusHistoryChart) statusHistoryChart.destroy();
-    const rev = [...metrics].reverse();
-    const nums = rev.map(m => m.status==='GOOD'?3:m.status==='WARNING'?2:1);
-    statusHistoryChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: rev.map(m => m.logged_at?m.logged_at.substring(0,10):''),
-            datasets: [{
-                label:'Model Status', data: nums, borderRadius:6, borderWidth:0,
-                backgroundColor: rev.map(m => m.status==='GOOD'?'rgba(16,185,129,0.7)':m.status==='WARNING'?'rgba(245,158,11,0.7)':'rgba(239,68,68,0.7)')
-            }]
-        },
-        options: {
-            responsive:true, maintainAspectRatio:false,
-            plugins: { legend:{labels:{color:'#94a3b8',font:{family:'Inter',size:11}}},
-                tooltip:{backgroundColor:'#1a2235',titleColor:'#f1f5f9',bodyColor:'#94a3b8',borderColor:'#2d3748',borderWidth:1,
-                    callbacks:{label:c=>` Status: ${{3:'GOOD',2:'WARNING',1:'DEGRADED'}[c.raw]||c.raw}`}} },
-            scales: { x:{ticks:{color:'#475569',font:{size:10}},grid:{color:'rgba(255,255,255,0.03)'}},
-                      y:{min:0,max:4,ticks:{color:'#475569',font:{size:10},callback:v=>({1:'DEG',2:'WARN',3:'GOOD'}[v]||'')},grid:{color:'rgba(255,255,255,0.05)'}} }
-        }
-    });
-}
+    function renderScoreDist(metrics) {
+        const ctx = document.getElementById('scoreDistChart');
+        if (!ctx) return;
+        if (scoreDistChart) scoreDistChart.destroy();
+        const rev = [...metrics].reverse();
+        scoreDistChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: rev.map(m => m.logged_at?m.logged_at.substring(0,10):''),
+                datasets: [
+                    { label:'KS Distance', data: rev.map(m=>parseFloat(m.ks_distance).toFixed(4)),
+                    borderColor:'#8b5cf6', backgroundColor:'rgba(139,92,246,0.08)', tension:0.4, fill:true, pointRadius:5, pointBackgroundColor:'#8b5cf6', yAxisID:'y' },
+                    { label:'Trend Score', data: rev.map(m=>parseFloat(m.trend_score).toFixed(2)),
+                    borderColor:'#06b6d4', backgroundColor:'rgba(6,182,212,0.08)', tension:0.4, fill:true, pointRadius:5, pointBackgroundColor:'#06b6d4', yAxisID:'y1' }
+                ]
+            },
+            options: {
+                responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
+                plugins:{legend:{labels:{color:'#94a3b8',font:{size:11,family:'Inter'},usePointStyle:true}},
+                    tooltip:{backgroundColor:'#1a2235',titleColor:'#f1f5f9',bodyColor:'#94a3b8',borderColor:'#2d3748',borderWidth:1}},
+                scales:{
+                    x:{ticks:{color:'#475569',font:{size:10}},grid:{color:'rgba(255,255,255,0.03)'}},
+                    y:{type:'linear',position:'left',ticks:{color:'#8b5cf6',font:{size:10}},grid:{color:'rgba(255,255,255,0.05)'}},
+                    y1:{type:'linear',position:'right',ticks:{color:'#06b6d4',font:{size:10}},grid:{drawOnChartArea:false}}
+                }
+            }
+        });
+    }
 
-function renderScoreDist(metrics) {
-    const ctx = document.getElementById('scoreDistChart');
-    if (!ctx) return;
-    if (scoreDistChart) scoreDistChart.destroy();
-    const rev = [...metrics].reverse();
-    scoreDistChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: rev.map(m => m.logged_at?m.logged_at.substring(0,10):''),
-            datasets: [
-                { label:'KS Distance', data: rev.map(m=>parseFloat(m.ks_distance).toFixed(4)),
-                  borderColor:'#8b5cf6', backgroundColor:'rgba(139,92,246,0.08)', tension:0.4, fill:true, pointRadius:5, pointBackgroundColor:'#8b5cf6', yAxisID:'y' },
-                { label:'Trend Score', data: rev.map(m=>parseFloat(m.trend_score).toFixed(2)),
-                  borderColor:'#06b6d4', backgroundColor:'rgba(6,182,212,0.08)', tension:0.4, fill:true, pointRadius:5, pointBackgroundColor:'#06b6d4', yAxisID:'y1' }
-            ]
-        },
-        options: {
+    function monChartOptions() {
+        return {
             responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
             plugins:{legend:{labels:{color:'#94a3b8',font:{size:11,family:'Inter'},usePointStyle:true}},
                 tooltip:{backgroundColor:'#1a2235',titleColor:'#f1f5f9',bodyColor:'#94a3b8',borderColor:'#2d3748',borderWidth:1}},
-            scales:{
-                x:{ticks:{color:'#475569',font:{size:10}},grid:{color:'rgba(255,255,255,0.03)'}},
-                y:{type:'linear',position:'left',ticks:{color:'#8b5cf6',font:{size:10}},grid:{color:'rgba(255,255,255,0.05)'}},
-                y1:{type:'linear',position:'right',ticks:{color:'#06b6d4',font:{size:10}},grid:{drawOnChartArea:false}}
+            scales:{x:{ticks:{color:'#475569',font:{size:10},maxRotation:45},grid:{color:'rgba(255,255,255,0.03)'}},
+                    y:{ticks:{color:'#475569',font:{size:10}},grid:{color:'rgba(255,255,255,0.05)'}}}
+        };
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  REGISTRY
+    // ══════════════════════════════════════════════════════════════
+    async function loadRegistry() {
+        try {
+            const tbody = document.getElementById('registry-table-body');
+            if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="text-center"><div class="spinner"></div></td></tr>';
+            const res  = await fetch('/registry');
+            const data = await res.json();
+            if (!data.models || data.models.length === 0) {
+                if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="text-center" style="color:var(--text-muted);padding:32px">No models registered yet.</td></tr>';
+                return;
             }
-        }
-    });
-}
+            updateRegistrySummary(data.models);
+            renderRegistryTable(data.models);
+        } catch(e) { console.error('Registry error:', e); }
+    }
 
-function monChartOptions() {
-    return {
-        responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
-        plugins:{legend:{labels:{color:'#94a3b8',font:{size:11,family:'Inter'},usePointStyle:true}},
-            tooltip:{backgroundColor:'#1a2235',titleColor:'#f1f5f9',bodyColor:'#94a3b8',borderColor:'#2d3748',borderWidth:1}},
-        scales:{x:{ticks:{color:'#475569',font:{size:10},maxRotation:45},grid:{color:'rgba(255,255,255,0.03)'}},
-                y:{ticks:{color:'#475569',font:{size:10}},grid:{color:'rgba(255,255,255,0.05)'}}}
-    };
-}
+    function updateRegistrySummary(models) {
+        const active = models.find(m => m.is_active === 1);
+        const latest = models[0];
+        setV('reg-total-versions', models.length);
+        setV('reg-active-version', active ? active.model_version : 'None');
+        setV('reg-latest-date',    latest && latest.training_date ? latest.training_date.substring(0,16) : 'N/A');
+        setV('reg-total-records',  active ? parseInt(active.trained_on_records).toLocaleString() : 'N/A');
+    }
 
-// ══════════════════════════════════════════════════════════════
-//  REGISTRY
-// ══════════════════════════════════════════════════════════════
-async function loadRegistry() {
-    try {
+    function renderRegistryTable(models) {
         const tbody = document.getElementById('registry-table-body');
-        if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="text-center"><div class="spinner"></div></td></tr>';
-        const res  = await fetch('/registry');
-        const data = await res.json();
-        if (!data.models || data.models.length === 0) {
-            if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="text-center" style="color:var(--text-muted);padding:32px">No models registered yet.</td></tr>';
-            return;
-        }
-        updateRegistrySummary(data.models);
-        renderRegistryTable(data.models);
-    } catch(e) { console.error('Registry error:', e); }
-}
+        if (!tbody) return;
+        tbody.innerHTML = models.map(m => `
+            <tr>
+                <td>
+                    <div style="display:flex;align-items:center;gap:7px">
+                        <span style="width:7px;height:7px;border-radius:50%;background:${m.is_active?'#10b981':'#475569'};display:inline-block;${m.is_active?'box-shadow:0 0 7px #10b981':''}"></span>
+                        <span style="color:var(--blue);font-weight:600;font-size:11px;font-family:monospace">${m.model_version}</span>
+                    </div>
+                </td>
+                <td>${m.is_active?'<span class="badge badge-active">● Active</span>':'<span class="badge" style="background:rgba(71,85,105,0.15);color:#475569;border:1px solid #1e293b">Inactive</span>'}</td>
+                <td style="color:var(--text-sec)">${m.training_date?m.training_date.substring(0,16):'N/A'}</td>
+                <td style="color:var(--text-sec)">${m.trained_on_records?parseInt(m.trained_on_records).toLocaleString():'N/A'}</td>
+                <td style="font-size:10px;color:var(--text-muted);font-family:monospace;word-break:break-all;max-width:180px">${m.model_path?'...'+m.model_path.slice(-35):'N/A'}</td>
+                <td style="color:var(--text-muted);font-size:11px">${m.notes||'—'}</td>
+                <td>
+                    ${m.is_active
+                        ? `<button onclick="reloadModel()" style="background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.28);color:#10b981;padding:4px 11px;border-radius:6px;cursor:pointer;font-size:11px;font-family:Inter,sans-serif">🔄 Reload</button>`
+                        : `<button onclick="activateModel('${m.model_version}','${m.model_path}',${m.trained_on_records})" style="background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.28);color:#3b82f6;padding:4px 11px;border-radius:6px;cursor:pointer;font-size:11px;font-family:Inter,sans-serif">⚡ Activate</button>`
+                    }
+                </td>
+            </tr>`).join('');
+    }
 
-function updateRegistrySummary(models) {
-    const active = models.find(m => m.is_active === 1);
-    const latest = models[0];
-    setV('reg-total-versions', models.length);
-    setV('reg-active-version', active ? active.model_version : 'None');
-    setV('reg-latest-date',    latest && latest.training_date ? latest.training_date.substring(0,16) : 'N/A');
-    setV('reg-total-records',  active ? parseInt(active.trained_on_records).toLocaleString() : 'N/A');
-}
+    async function reloadModel() {
+        try {
+            const res = await fetch('/reload-model', { method: 'POST' });
+            const d   = await res.json();
+            showToast('✅ ' + d.message, 'success');
+            loadRegistry();
+        } catch(e) { showToast('❌ Failed to reload', 'error'); }
+    }
 
-function renderRegistryTable(models) {
-    const tbody = document.getElementById('registry-table-body');
-    if (!tbody) return;
-    tbody.innerHTML = models.map(m => `
-        <tr>
-            <td>
-                <div style="display:flex;align-items:center;gap:7px">
-                    <span style="width:7px;height:7px;border-radius:50%;background:${m.is_active?'#10b981':'#475569'};display:inline-block;${m.is_active?'box-shadow:0 0 7px #10b981':''}"></span>
-                    <span style="color:var(--blue);font-weight:600;font-size:11px;font-family:monospace">${m.model_version}</span>
-                </div>
-            </td>
-            <td>${m.is_active?'<span class="badge badge-active">● Active</span>':'<span class="badge" style="background:rgba(71,85,105,0.15);color:#475569;border:1px solid #1e293b">Inactive</span>'}</td>
-            <td style="color:var(--text-sec)">${m.training_date?m.training_date.substring(0,16):'N/A'}</td>
-            <td style="color:var(--text-sec)">${m.trained_on_records?parseInt(m.trained_on_records).toLocaleString():'N/A'}</td>
-            <td style="font-size:10px;color:var(--text-muted);font-family:monospace;word-break:break-all;max-width:180px">${m.model_path?'...'+m.model_path.slice(-35):'N/A'}</td>
-            <td style="color:var(--text-muted);font-size:11px">${m.notes||'—'}</td>
-            <td>
-                ${m.is_active
-                    ? `<button onclick="reloadModel()" style="background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.28);color:#10b981;padding:4px 11px;border-radius:6px;cursor:pointer;font-size:11px;font-family:Inter,sans-serif">🔄 Reload</button>`
-                    : `<button onclick="activateModel('${m.model_version}','${m.model_path}',${m.trained_on_records})" style="background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.28);color:#3b82f6;padding:4px 11px;border-radius:6px;cursor:pointer;font-size:11px;font-family:Inter,sans-serif">⚡ Activate</button>`
-                }
-            </td>
-        </tr>`).join('');
-}
+    async function activateModel(version, path, records) {
+        if (!confirm(`Activate model: ${version}?`)) return;
+        try {
+            const res = await fetch('/activate-model', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ model_version: version, model_path: path, trained_on_records: records })
+            });
+            if (!res.ok) throw new Error('Failed');
+            showToast('✅ Activated: ' + version, 'success');
+            loadRegistry();
+        } catch(e) { showToast('❌ Failed to activate', 'error'); }
+    }
 
-async function reloadModel() {
-    try {
-        const res = await fetch('/reload-model', { method: 'POST' });
-        const d   = await res.json();
-        showToast('✅ ' + d.message, 'success');
-        loadRegistry();
-    } catch(e) { showToast('❌ Failed to reload', 'error'); }
-}
+    function showToast(msg, type='success') {
+        const ex = document.getElementById('toast'); if (ex) ex.remove();
+        const t  = document.createElement('div'); t.id = 'toast';
+        const c  = { success:{bg:'rgba(16,185,129,0.12)',border:'rgba(16,185,129,0.35)',color:'#10b981'}, error:{bg:'rgba(239,68,68,0.12)',border:'rgba(239,68,68,0.35)',color:'#ef4444'} }[type]||{bg:'rgba(59,130,246,0.12)',border:'rgba(59,130,246,0.35)',color:'#3b82f6'};
+        t.style.cssText = `position:fixed;bottom:28px;right:28px;background:${c.bg};border:1px solid ${c.border};color:${c.color};padding:12px 20px;border-radius:9px;font-size:13px;font-weight:600;font-family:Inter,sans-serif;z-index:9999;box-shadow:0 8px 28px rgba(0,0,0,0.3)`;
+        t.textContent = msg; document.body.appendChild(t);
+        setTimeout(() => t.remove(), 3200);
+    }
 
-async function activateModel(version, path, records) {
-    if (!confirm(`Activate model: ${version}?`)) return;
-    try {
-        const res = await fetch('/activate-model', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ model_version: version, model_path: path, trained_on_records: records })
-        });
-        if (!res.ok) throw new Error('Failed');
-        showToast('✅ Activated: ' + version, 'success');
-        loadRegistry();
-    } catch(e) { showToast('❌ Failed to activate', 'error'); }
-}
-
-function showToast(msg, type='success') {
-    const ex = document.getElementById('toast'); if (ex) ex.remove();
-    const t  = document.createElement('div'); t.id = 'toast';
-    const c  = { success:{bg:'rgba(16,185,129,0.12)',border:'rgba(16,185,129,0.35)',color:'#10b981'}, error:{bg:'rgba(239,68,68,0.12)',border:'rgba(239,68,68,0.35)',color:'#ef4444'} }[type]||{bg:'rgba(59,130,246,0.12)',border:'rgba(59,130,246,0.35)',color:'#3b82f6'};
-    t.style.cssText = `position:fixed;bottom:28px;right:28px;background:${c.bg};border:1px solid ${c.border};color:${c.color};padding:12px 20px;border-radius:9px;font-size:13px;font-weight:600;font-family:Inter,sans-serif;z-index:9999;box-shadow:0 8px 28px rgba(0,0,0,0.3)`;
-    t.textContent = msg; document.body.appendChild(t);
-    setTimeout(() => t.remove(), 3200);
-}
-
-// ══════════════════════════════════════════════════════════════
-//  INIT
-// ══════════════════════════════════════════════════════════════
-window.addEventListener('load', () => { loadDashboard(); });
-</script>
-</body>
-</html>
+    // ══════════════════════════════════════════════════════════════
+    //  INIT
+    // ══════════════════════════════════════════════════════════════
+    window.addEventListener('load', () => { loadDashboard(); });
+    </script>
+    </body>
+    </html>

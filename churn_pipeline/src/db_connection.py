@@ -142,18 +142,24 @@ def register_model(model_version: str, model_path: str, trained_on_records: int,
 
 
 def update_model_registry(model_version: str, model_path: str, trained_on_records: int, notes: str = ""):
-    """Update existing active model row instead of inserting new one."""
+    """
+    Update existing active model row instead of inserting new one.
+    - If the version row exists  → UPDATE trained_on_records, training_date, notes
+    - If no row exists yet       → INSERT first row (first run only)
+    Result: model_registry always stays at 1 row no matter how many cron runs.
+    """
     try:
         engine = get_engine()
         with engine.begin() as conn:
-            # Check if any model exists with this version
+            # FIX: use [0] index instead of ["cnt"] — MySQL Row objects
+            # do not support string key access without mappings=True
             result = conn.execute(text(
-                "SELECT COUNT(*) as cnt FROM model_registry WHERE model_version = :v"
+                "SELECT COUNT(*) FROM model_registry WHERE model_version = :v"
             ), {"v": model_version})
-            count = result.fetchone()["cnt"]
+            count = result.fetchone()[0]
 
             if count > 0:
-                # Update existing row
+                # Row exists — update it in place
                 conn.execute(text("""
                     UPDATE model_registry
                     SET trained_on_records = :records,
@@ -163,7 +169,7 @@ def update_model_registry(model_version: str, model_path: str, trained_on_record
                 """), {"records": trained_on_records, "notes": notes, "v": model_version})
                 logger.info(f"✅ Model registry updated: {model_version}")
             else:
-                # First time — insert new row
+                # First run only — insert new row
                 conn.execute(text("""
                     INSERT INTO model_registry
                         (model_version, model_path, trained_on_records, is_active, notes)

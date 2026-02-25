@@ -1,0 +1,86 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+*.egg
+*.log
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Environments
+.env
+.venv/
+venv/
+env/
+ENV/
+*.env
+*.venv
+
+# VSCode
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data
+*.sqlite3
+*.db
+*.csv
+*.tsv
+*.bak
+*.tmp
+
+# Models
+*.pkl
+*.h5
+*.joblib
+*.sav
+
+# Misc
+*.swp
+*.swo
+*.orig
+
+# Ignore deployment and build artifacts
+build/
+dist/
+*.egg-info/
+*.manifest
+*.spec
+
+# Ignore logs
+logs/
+*.log
+
+# Ignore frontend build
+frontend/node_modules/
+frontend/dist/
+
+# Ignore test outputs
+htmlcov/
+.coverage
+.tox/
+
+# Ignore coverage reports
+.coverage
+coverage.xml
+
+# Ignore mypy
+.mypy_cache/
+.dmypy.json
+
+# Ignore pytest
+.pytest_cache/
+
+# Ignore temporary files
+*.tmp
+*.bak
+
+# Ignore database dumps
+*.sql
+*.dump

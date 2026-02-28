@@ -14,3 +14,4 @@ This project contains a churn prediction pipeline with the following structure:
 - **config.py**: All settings (DB credentials, paths, params).
 - **seed_database.py**: One-time script to load CSV into MySQL.
 - **requirements.txt**: Python dependencies.
+[text](http://localhost:8000)

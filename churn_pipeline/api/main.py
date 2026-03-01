@@ -714,6 +714,64 @@ async def dashboard_stats():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ── Top Risk Customers ────────────────────────────────────────
+@app.get("/top-risk-customers")
+async def top_risk_customers(limit: int = 20):
+    """
+    Returns the highest-risk processed customers for the retention team.
+    Scores up to 500 customers and returns the top N sorted by risk.
+    """
+    if MODEL_CACHE["oif"] is None:
+        if not load_active_model():
+            raise HTTPException(status_code=503, detail="Model not loaded")
+    try:
+        engine = db.get_engine()
+        raw_df = pd.read_sql(
+            "SELECT * FROM raw_customers WHERE is_processed=1 ORDER BY id DESC LIMIT 500",
+            engine
+        )
+        if raw_df.empty:
+            return {"customers": [], "total": 0}
+
+        # Preserve original columns before encoding
+        orig_df = raw_df.copy()
+        scores, _ = _encode_and_score(raw_df)
+
+        if scores is None:
+            return {"customers": [], "total": 0}
+
+        # Build result list
+        results = []
+        for i in range(len(scores)):
+            s = float(scores[i])
+            tier = MODEL_CACHE["oif"].get_risk_tier(s)
+            row = orig_df.iloc[i]
+            results.append({
+                "id"              : int(row["id"]) if "id" in orig_df.columns else i + 1,
+                "contract"        : str(row.get("Contract", "—")),
+                "tenure"          : int(row.get("tenure", 0)),
+                "monthly_charges" : float(row.get("MonthlyCharges", 0)),
+                "internet"        : str(row.get("InternetService", "—")),
+                "payment_method"  : str(row.get("PaymentMethod", "—")),
+                "risk_score"      : round(s * 100, 2),
+                "risk_tier"       : tier
+            })
+
+        # Sort by risk descending and take top N
+        results.sort(key=lambda x: x["risk_score"], reverse=True)
+        top = results[:limit]
+
+        return {
+            "customers"     : top,
+            "total_scored"  : len(results),
+            "total_returned": len(top),
+            "model_version" : MODEL_CACHE["version"]
+        }
+    except Exception as e:
+        logger.error(f"Top risk customers error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ── Reload Model ──────────────────────────────────────────────
 @app.post("/reload-model")
 async def reload_model():

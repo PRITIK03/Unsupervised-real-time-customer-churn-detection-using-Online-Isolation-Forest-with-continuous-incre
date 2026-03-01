@@ -350,11 +350,11 @@ function renderMicroChart(elementId, data, color) {
                 data,
                 borderColor: color,
                 backgroundColor: `${color}33`, // Add transparency for gradient
-                borderWidth: 2,
+                borderWidth: 3,
                 tension: 0.4,
                 fill: true,
                 pointRadius: 0,
-                pointHoverRadius: 0
+                pointHoverRadius: 6 // Highlight points on hover
             }]
         },
         options: {
@@ -362,16 +362,50 @@ function renderMicroChart(elementId, data, color) {
             maintainAspectRatio: false,
             plugins: {
                 legend: { display: false },
-                tooltip: { enabled: false }
+                tooltip: {
+                    enabled: true,
+                    backgroundColor: '#1a2235',
+                    titleColor: '#f1f5f9',
+                    bodyColor: '#94a3b8',
+                    borderColor: '#2d3748',
+                    borderWidth: 1
+                }
             },
             scales: {
                 x: { display: false },
                 y: { display: false }
             },
             animation: {
-                duration: 800,
+                duration: 1000,
                 easing: 'easeInOutQuart'
+            },
+            hover: {
+                mode: 'nearest',
+                intersect: true
             }
         }
     });
 }
+
+// ─────────────────────────────────────────
+//  SMOOTH UI TRANSITIONS
+// ─────────────────────────────────────────
+function applySmoothTransitions() {
+    const elements = document.querySelectorAll('.stat-card, canvas');
+    elements.forEach(el => {
+        el.style.transition = 'all 0.3s ease-in-out';
+        el.addEventListener('mouseover', () => {
+            el.style.transform = 'scale(1.05)';
+            el.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.2)';
+        });
+        el.addEventListener('mouseout', () => {
+            el.style.transform = 'scale(1)';
+            el.style.boxShadow = 'none';
+        });
+    });
+}
+
+// Call the function to apply transitions after the dashboard loads
+document.addEventListener('DOMContentLoaded', () => {
+    applySmoothTransitions();
+});

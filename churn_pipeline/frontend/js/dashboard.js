@@ -33,41 +33,41 @@ async function loadDashboard() {
 // ─────────────────────────────────────────
 function updateStatCards(data) {
     // Total Customers
-    animateCount('stat-total-customers', data.total_customers);
+    updateStatCard('stat-total-customers', 'Total Customers', data.total_customers, '✅');
 
-    // Processed
-    animateCount('stat-processed', data.processed_customers);
+    // Processed Records
+    updateStatCard('stat-processed', 'Processed Records', data.processed_customers, '⚠️');
 
-    // Anomaly Rate + Mean Score
+    // Anomaly Rate
     const latest = data.trend_data && data.trend_data.length > 0
         ? data.trend_data[0] : null;
 
     if (latest) {
-        const anomalyEl = document.getElementById('stat-anomaly-rate');
-        const scoreEl   = document.getElementById('stat-mean-score');
-        if (anomalyEl) anomalyEl.textContent =
-            parseFloat(latest.anomaly_rate).toFixed(1) + '%';
-        if (scoreEl) scoreEl.textContent =
-            (parseFloat(latest.mean_anomaly_score) * 100).toFixed(1);
+        updateStatCard('stat-anomaly-rate', 'Anomaly Rate', `${parseFloat(latest.anomaly_rate).toFixed(1)}%`, '⚠️', `▲ ${latest.anomaly_rate_change}% vs last`);
+        updateStatCard('stat-mean-score', 'Mean Risk Score', `${(parseFloat(latest.mean_anomaly_score) * 100).toFixed(1)}`, '🎯', `▲ ${latest.mean_score_change}% vs last`);
     }
 
-    // Status badge
-    const statusEl = document.getElementById('stat-status');
-    if (statusEl) {
-        const status         = data.latest_status || 'GOOD';
-        statusEl.textContent = status;
-        statusEl.className   = 'badge badge-' + status.toLowerCase();
-    }
-
-    // Risk counts
+    // Critical Risk
     const dist = data.risk_distribution;
     if (dist) {
-        animateCount('stat-critical', dist.Critical || 0);
-        animateCount('stat-high',     dist.High     || 0);
+        updateStatCard('stat-critical', 'Critical Risk', dist.Critical || 0, '🔴');
     }
 
     // Sidebar model version
     updateModelBadge(data.model_version);
+}
+
+function updateStatCard(elementId, label, value, icon, subtext = '') {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+
+    el.innerHTML = `
+        <div class="stat-card">
+            <div class="stat-value">${icon} ${value.toLocaleString()}</div>
+            <div class="stat-label">${label}</div>
+            ${subtext ? `<div class="stat-subtext">${subtext}</div>` : ''}
+        </div>
+    `;
 }
 
 // ─────────────────────────────────────────
@@ -106,6 +106,8 @@ function renderRiskDonut(dist) {
         dist.Low      || 0
     ];
 
+    const total = values.reduce((a, b) => a + b, 0);
+
     riskDonutChart = new Chart(ctx, {
         type: 'doughnut',
         data: {
@@ -118,11 +120,14 @@ function renderRiskDonut(dist) {
                     'rgba(245,158,11,0.85)',
                     'rgba(16,185,129,0.85)'
                 ],
-                borderColor    : [
-                    '#ef4444', '#f97316', '#f59e0b', '#10b981'
+                hoverBackgroundColor: [
+                    'rgba(239,68,68,1)',
+                    'rgba(249,115,22,1)',
+                    'rgba(245,158,11,1)',
+                    'rgba(16,185,129,1)'
                 ],
                 borderWidth    : 2,
-                hoverOffset    : 8
+                hoverOffset    : 10
             }]
         },
         options: {
@@ -147,13 +152,16 @@ function renderRiskDonut(dist) {
                     borderColor    : '#2d3748',
                     borderWidth    : 1,
                     callbacks      : {
-                        label: ctx => ` ${ctx.label}: ${ctx.raw} customers`
+                        label: ctx => {
+                            const percentage = ((ctx.raw / total) * 100).toFixed(1);
+                            return ` ${ctx.label}: ${ctx.raw} customers (${percentage}%)`;
+                        }
                     }
                 }
             },
             animation: {
                 animateRotate: true,
-                duration     : 1000,
+                duration     : 1500,
                 easing       : 'easeInOutQuart'
             }
         }
@@ -325,4 +333,45 @@ function renderKSChart(trendData) {
 function updateModelBadge(version) {
     const el = document.getElementById('sidebar-model-version');
     if (el && version) el.textContent = version;
+}
+
+// ─────────────────────────────────────────
+//  MICRO CHARTS (STOCK MARKET STYLE)
+// ─────────────────────────────────────────
+function renderMicroChart(elementId, data, color) {
+    const ctx = document.getElementById(elementId);
+    if (!ctx) return;
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.map((_, i) => i),
+            datasets: [{
+                data,
+                borderColor: color,
+                backgroundColor: `${color}33`, // Add transparency for gradient
+                borderWidth: 2,
+                tension: 0.4,
+                fill: true,
+                pointRadius: 0,
+                pointHoverRadius: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: { enabled: false }
+            },
+            scales: {
+                x: { display: false },
+                y: { display: false }
+            },
+            animation: {
+                duration: 800,
+                easing: 'easeInOutQuart'
+            }
+        }
+    });
 }

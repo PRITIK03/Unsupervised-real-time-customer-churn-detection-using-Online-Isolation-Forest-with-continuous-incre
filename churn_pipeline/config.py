@@ -30,7 +30,7 @@ RAW_CSV         = os.path.join(DATA_RAW_DIR, "telco_customers.csv")
 MODEL_PARAMS = {
     "n_estimators"  : 100,
     "contamination" : 0.15,
-    "window_size"   : 1000,
+    "window_size"   : 8000,
     "random_state"  : 42
 }
 

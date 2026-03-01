@@ -8,7 +8,7 @@ from datetime import datetime
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 from typing import List, Optional
 import importlib.util
 
@@ -95,28 +95,94 @@ app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
 
 
 # ─────────────────────────────────────────
-#  INPUT SCHEMAS
+#  VALID CATEGORY VALUES
+# ─────────────────────────────────────────
+VALID_GENDER           = ["Male", "Female"]
+VALID_YES_NO           = ["Yes", "No"]
+VALID_MULTIPLE_LINES   = ["Yes", "No", "No phone service"]
+VALID_INTERNET         = ["DSL", "Fiber optic", "No"]
+VALID_INTERNET_ADDON   = ["Yes", "No", "No internet service"]
+VALID_CONTRACT         = ["Month-to-month", "One year", "Two year"]
+VALID_PAYMENT_METHOD   = [
+    "Electronic check", "Mailed check",
+    "Bank transfer (automatic)", "Credit card (automatic)"
+]
+
+
+# ─────────────────────────────────────────
+#  INPUT SCHEMAS — with validation
 # ─────────────────────────────────────────
 class CustomerInput(BaseModel):
-    gender           : str
-    SeniorCitizen    : int
-    Partner          : str
-    Dependents       : str
-    tenure           : int
-    PhoneService     : str
-    MultipleLines    : str
-    InternetService  : str
-    OnlineSecurity   : str
-    OnlineBackup     : str
-    DeviceProtection : str
-    TechSupport      : str
-    StreamingTV      : str
-    StreamingMovies  : str
-    Contract         : str
-    PaperlessBilling : str
-    PaymentMethod    : str
-    MonthlyCharges   : float
-    TotalCharges     : float
+    gender           : str   = Field(..., description="Male or Female")
+    SeniorCitizen    : int   = Field(..., ge=0, le=1, description="0 or 1")
+    Partner          : str   = Field(..., description="Yes or No")
+    Dependents       : str   = Field(..., description="Yes or No")
+    tenure           : int   = Field(..., ge=0, le=120, description="Months with company (0–120)")
+    PhoneService     : str   = Field(..., description="Yes or No")
+    MultipleLines    : str   = Field(..., description="Yes, No, or No phone service")
+    InternetService  : str   = Field(..., description="DSL, Fiber optic, or No")
+    OnlineSecurity   : str   = Field(..., description="Yes, No, or No internet service")
+    OnlineBackup     : str   = Field(..., description="Yes, No, or No internet service")
+    DeviceProtection : str   = Field(..., description="Yes, No, or No internet service")
+    TechSupport      : str   = Field(..., description="Yes, No, or No internet service")
+    StreamingTV      : str   = Field(..., description="Yes, No, or No internet service")
+    StreamingMovies  : str   = Field(..., description="Yes, No, or No internet service")
+    Contract         : str   = Field(..., description="Month-to-month, One year, or Two year")
+    PaperlessBilling : str   = Field(..., description="Yes or No")
+    PaymentMethod    : str   = Field(..., description="Payment method")
+    MonthlyCharges   : float = Field(..., ge=0, le=500, description="Monthly bill ($0–$500)")
+    TotalCharges     : float = Field(..., ge=0, le=100000, description="Total charges ($0–$100,000)")
+
+    @field_validator("gender")
+    @classmethod
+    def validate_gender(cls, v):
+        if v not in VALID_GENDER:
+            raise ValueError(f"gender must be one of {VALID_GENDER}, got '{v}'")
+        return v
+
+    @field_validator("Partner", "Dependents", "PhoneService", "PaperlessBilling")
+    @classmethod
+    def validate_yes_no(cls, v):
+        if v not in VALID_YES_NO:
+            raise ValueError(f"Value must be one of {VALID_YES_NO}, got '{v}'")
+        return v
+
+    @field_validator("MultipleLines")
+    @classmethod
+    def validate_multiple_lines(cls, v):
+        if v not in VALID_MULTIPLE_LINES:
+            raise ValueError(f"MultipleLines must be one of {VALID_MULTIPLE_LINES}, got '{v}'")
+        return v
+
+    @field_validator("InternetService")
+    @classmethod
+    def validate_internet(cls, v):
+        if v not in VALID_INTERNET:
+            raise ValueError(f"InternetService must be one of {VALID_INTERNET}, got '{v}'")
+        return v
+
+    @field_validator("OnlineSecurity", "OnlineBackup", "DeviceProtection",
+                     "TechSupport", "StreamingTV", "StreamingMovies")
+    @classmethod
+    def validate_internet_addon(cls, v):
+        if v not in VALID_INTERNET_ADDON:
+            raise ValueError(f"Value must be one of {VALID_INTERNET_ADDON}, got '{v}'")
+        return v
+
+    @field_validator("Contract")
+    @classmethod
+    def validate_contract(cls, v):
+        if v not in VALID_CONTRACT:
+            raise ValueError(f"Contract must be one of {VALID_CONTRACT}, got '{v}'")
+        return v
+
+    @field_validator("PaymentMethod")
+    @classmethod
+    def validate_payment_method(cls, v):
+        if v not in VALID_PAYMENT_METHOD:
+            raise ValueError(f"PaymentMethod must be one of {VALID_PAYMENT_METHOD}, got '{v}'")
+        return v
+
 
 class BatchInput(BaseModel):
     customers: List[CustomerInput]
@@ -132,10 +198,17 @@ class TimelineInput(BaseModel):
     Uses the already-computed prediction score + customer context
     to project risk trajectories for 3 contract scenarios.
     """
-    churn_risk_score : float   # 0–100, from /predict response
-    contract         : str     # current contract type
-    tenure           : int     # months already with company
-    monthly_charges  : float   # current monthly bill
+    churn_risk_score : float = Field(..., ge=0, le=100, description="Risk score 0–100")
+    contract         : str   = Field(..., description="Current contract type")
+    tenure           : int   = Field(..., ge=0, le=120, description="Months with company")
+    monthly_charges  : float = Field(..., ge=0, le=500, description="Current monthly bill")
+
+    @field_validator("contract")
+    @classmethod
+    def validate_contract(cls, v):
+        if v not in VALID_CONTRACT:
+            raise ValueError(f"contract must be one of {VALID_CONTRACT}, got '{v}'")
+        return v
 
 
 # ─────────────────────────────────────────
@@ -210,6 +283,94 @@ def preprocess_input(data: dict) -> np.ndarray:
     df = df[cfg.FEATURE_COLUMNS]
     X  = MODEL_CACHE["scaler"].transform(df)
     return X
+
+
+# ─────────────────────────────────────────
+#  BUSINESS RULE POST-PROCESSING
+# ─────────────────────────────────────────
+def apply_business_rules(score: float, customer_data: dict) -> float:
+    """
+    Adjust anomaly score with domain knowledge to reduce false positives.
+
+    Isolation Forest flags 'different' as 'risky', but some unusual
+    profiles are actually loyal customers. This post-processor:
+
+    1. CAPS risk for loyal profiles:
+       - Long tenure (24+ months) + auto-pay + long contract
+       - These are stable, committed customers — even if the IF model
+         sees them as 'unusual', their churn risk should be limited.
+
+    2. FLOORS risk for classic churn profiles:
+       - Short tenure (<6 months) + month-to-month + electronic check
+       - These match well-known churn patterns — ensure minimum risk.
+
+    3. Service stickiness bonus:
+       - Customers using 3+ add-on services are invested in the platform.
+       - Reduces score to reflect lower real-world churn likelihood.
+
+    All adjustments are capped to [0.0, 1.0] range.
+    The function works on the 0-1 scale (before multiplying by 100).
+    """
+    tenure           = customer_data.get("tenure", 0)
+    contract         = customer_data.get("Contract", "")
+    payment_method   = customer_data.get("PaymentMethod", "")
+    monthly_charges  = customer_data.get("MonthlyCharges", 0)
+
+    # Count active add-on services
+    service_cols = [
+        "OnlineSecurity", "OnlineBackup", "DeviceProtection",
+        "TechSupport", "StreamingTV", "StreamingMovies"
+    ]
+    service_count = sum(
+        1 for col in service_cols
+        if customer_data.get(col) == "Yes"
+    )
+
+    is_auto_pay = payment_method in [
+        "Bank transfer (automatic)", "Credit card (automatic)"
+    ]
+    is_long_contract = contract in ["One year", "Two year"]
+
+    adjusted = score
+
+    # ── Rule 1: Loyal customer cap ────────
+    # Tenure 24+, auto-pay, one/two-year contract → cap at 0.35 (Medium at most)
+    if tenure >= 24 and is_auto_pay and is_long_contract:
+        loyalty_cap = 0.35
+        if adjusted > loyalty_cap:
+            logger.info(
+                f"  Business rule: loyal customer (tenure={tenure}, "
+                f"contract={contract}, payment={payment_method}) → "
+                f"score capped {adjusted:.4f} → {loyalty_cap:.4f}"
+            )
+            adjusted = loyalty_cap
+
+    # ── Rule 2: Classic churn floor ───────
+    # Short tenure + month-to-month + electronic check → minimum 0.40
+    if (tenure < 6
+            and contract == "Month-to-month"
+            and payment_method == "Electronic check"):
+        churn_floor = 0.40
+        if adjusted < churn_floor:
+            logger.info(
+                f"  Business rule: classic churn profile (tenure={tenure}, "
+                f"M2M, E-check) → score floored {adjusted:.4f} → {churn_floor:.4f}"
+            )
+            adjusted = churn_floor
+
+    # ── Rule 3: Service stickiness bonus ──
+    # 3+ add-on services → reduce score by up to 15%
+    if service_count >= 3:
+        reduction = min(service_count * 0.03, 0.15)  # 3%–15%
+        old = adjusted
+        adjusted = max(adjusted - reduction, 0.0)
+        if old != adjusted:
+            logger.info(
+                f"  Business rule: {service_count} services → "
+                f"score reduced {old:.4f} → {adjusted:.4f}"
+            )
+
+    return float(np.clip(adjusted, 0.0, 1.0))
 
 
 # ─────────────────────────────────────────
@@ -318,18 +479,25 @@ async def predict(customer: CustomerInput):
         if not load_active_model():
             raise HTTPException(status_code=503, detail="Model not loaded")
     try:
-        X              = preprocess_input(customer.dict())
+        customer_dict  = customer.dict()
+        X              = preprocess_input(customer_dict)
         labels, scores = MODEL_CACHE["oif"].predict(X)
-        score          = float(scores[0])
+        raw_score      = float(scores[0])
         label          = int(labels[0])
-        risk_tier      = MODEL_CACHE["oif"].get_risk_tier(score)
+
+        # Apply business rule adjustments
+        adjusted_score = apply_business_rules(raw_score, customer_dict)
+        risk_tier      = MODEL_CACHE["oif"].get_risk_tier(adjusted_score)
+
         return {
-            "churn_risk_score": round(score * 100, 2),
-            "risk_tier"       : risk_tier,
-            "anomaly_label"   : label,
-            "is_anomaly"      : label == -1,
-            "model_version"   : MODEL_CACHE["version"],
-            "timestamp"       : datetime.now().isoformat()
+            "churn_risk_score"    : round(adjusted_score * 100, 2),
+            "raw_model_score"     : round(raw_score * 100, 2),
+            "business_rules_applied": raw_score != adjusted_score,
+            "risk_tier"           : risk_tier,
+            "anomaly_label"       : label,
+            "is_anomaly"          : label == -1,
+            "model_version"       : MODEL_CACHE["version"],
+            "timestamp"           : datetime.now().isoformat()
         }
     except Exception as e:
         logger.error(f"Prediction error: {e}")
@@ -350,16 +518,23 @@ async def predict_batch(batch: BatchInput):
     try:
         results = []
         for customer in batch.customers:
-            X              = preprocess_input(customer.dict())
+            customer_dict  = customer.dict()
+            X              = preprocess_input(customer_dict)
             labels, scores = MODEL_CACHE["oif"].predict(X)
-            score          = float(scores[0])
+            raw_score      = float(scores[0])
             label          = int(labels[0])
-            risk_tier      = MODEL_CACHE["oif"].get_risk_tier(score)
+
+            # Apply business rule adjustments
+            adjusted_score = apply_business_rules(raw_score, customer_dict)
+            risk_tier      = MODEL_CACHE["oif"].get_risk_tier(adjusted_score)
+
             results.append({
-                "churn_risk_score": round(score * 100, 2),
-                "risk_tier"       : risk_tier,
-                "anomaly_label"   : label,
-                "is_anomaly"      : label == -1
+                "churn_risk_score"       : round(adjusted_score * 100, 2),
+                "raw_model_score"        : round(raw_score * 100, 2),
+                "business_rules_applied" : raw_score != adjusted_score,
+                "risk_tier"              : risk_tier,
+                "anomaly_label"          : label,
+                "is_anomaly"             : label == -1
             })
         return {
             "total"        : len(results),

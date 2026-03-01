@@ -702,6 +702,112 @@
             }
         }
 
+        /* ── SKELETON LOADER ── */
+        .skeleton {
+            background: linear-gradient(90deg, var(--bg-secondary) 25%, rgba(45, 55, 72, 0.6) 50%, var(--bg-secondary) 75%);
+            background-size: 200% 100%;
+            animation: skeleton-shimmer 1.5s ease infinite;
+            border-radius: 6px;
+        }
+
+        .skeleton-line {
+            height: 12px;
+            margin: 8px 0;
+        }
+
+        .skeleton-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+        }
+
+        .skeleton-bar {
+            height: 180px;
+            border-radius: var(--radius-sm);
+        }
+
+        @keyframes skeleton-shimmer {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        /* ── TABLE ROW ANIMATION ── */
+        tbody tr {
+            animation: row-fade 0.3s ease both;
+        }
+
+        @keyframes row-fade {
+            from {
+                opacity: 0;
+                transform: translateX(-8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        /* ── INPUT FOCUS GLOW ── */
+        select:focus,
+        input:focus {
+            outline: none;
+            border-color: rgba(59, 130, 246, 0.5) !important;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* ── BADGE GLOW ── */
+        .badge-critical,
+        .badge-degraded {
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.2);
+        }
+
+        .badge-high {
+            box-shadow: 0 0 8px rgba(249, 115, 22, 0.2);
+        }
+
+        /* ── LAST UPDATED ── */
+        .last-updated {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: -12px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .last-updated .dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--green);
+            animation: pulse-dot 2s ease infinite;
+        }
+
+        /* ── INLINE SCORE BAR ── */
+        .inline-bar {
+            display: inline-block;
+            width: 50px;
+            height: 4px;
+            background: var(--bg-primary);
+            border-radius: 2px;
+            vertical-align: middle;
+            margin-left: 6px;
+            overflow: hidden;
+        }
+
+        .inline-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.6s ease;
+        }
+
         /* ── CONTRACT RISK BARS ── */
         .contract-bars {
             display: flex;
@@ -1571,6 +1677,8 @@
             </div>
             <div class="page-title gradient-text">Customer Churn Dashboard</div>
             <div class="page-sub">Real-time unsupervised churn detection using Online Isolation Forest</div>
+            <div class="last-updated" id="last-updated"><span class="dot"></span> <span id="last-updated-text">Loading
+                    data…</span></div>
 
             <!-- KPI TICKER -->
             <div class="kpi-ticker" id="kpi-ticker">
@@ -2237,6 +2345,9 @@
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById('page-' + page).classList.add('active');
             if (el) el.classList.add('active');
+            // Smooth scroll to top
+            document.querySelector('.main').scrollTo({ top: 0, behavior: 'smooth' });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
             if (page === 'dashboard') loadDashboard();
             if (page === 'predict') initRiskMeter();
             if (page === 'monitoring') loadMonitoring();
@@ -2272,14 +2383,26 @@
                 renderScoreHistogram(data.score_buckets);
                 renderContractRiskBars(data.contract_risk);
                 renderDashboardSparklines(data);
+                // Update last-updated timestamp
+                const luEl = document.getElementById('last-updated-text');
+                if (luEl) luEl.textContent = 'Updated ' + new Date().toLocaleTimeString();
             } catch (e) { console.error('Dashboard error:', e); }
         }
 
         function animateCount(id, target) {
             const el = document.getElementById(id); if (!el) return;
-            let cur = 0;
-            const step = Math.max(1, Math.ceil(target / 60));
-            const t = setInterval(() => { cur += step; if (cur >= target) { cur = target; clearInterval(t); } el.textContent = cur.toLocaleString(); }, 16);
+            const duration = 800;
+            const start = performance.now();
+            const from = 0;
+            function ease(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; } // cubic ease in-out
+            function frame(now) {
+                const elapsed = now - start;
+                const progress = Math.min(elapsed / duration, 1);
+                const current = Math.round(from + (target - from) * ease(progress));
+                el.textContent = current.toLocaleString();
+                if (progress < 1) requestAnimationFrame(frame);
+            }
+            requestAnimationFrame(frame);
         }
 
         function renderRiskDonut(dist) {

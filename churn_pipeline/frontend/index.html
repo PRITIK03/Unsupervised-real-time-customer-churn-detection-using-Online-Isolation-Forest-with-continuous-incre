@@ -2165,6 +2165,11 @@
             <div class="page-title gradient-text">Model Monitoring</div>
             <div class="page-sub">Track model performance, drift detection and health over time</div>
 
+            <!-- MONITORING KPI TICKER -->
+            <div class="kpi-ticker" id="mon-kpi-ticker" style="margin-bottom:18px">
+                <div class="ticker-track" id="mon-ticker-track"><!-- filled by JS --></div>
+            </div>
+
             <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
                 <div class="stat-card" style="--ac:#3b82f6;--ic:rgba(59,130,246,0.15)">
                     <div class="stat-icon">🔁</div>
@@ -2874,6 +2879,7 @@
                 renderRecordsProcessedChart(data.metrics);
                 updateMonitoringSummary(data.metrics);
                 renderMonitoringSparklines(data.metrics);
+                renderMonitoringTicker(data.metrics);
             } catch (e) { console.error('Monitoring error:', e); }
         }
 
@@ -2891,6 +2897,38 @@
                 const tEl = document.getElementById('mon-trend-direction');
                 if (tEl) { tEl.textContent = diff > 0 ? `↑ +${diff}% vs last` : `↓ ${diff}% vs last`; tEl.style.color = diff > 0 ? '#ef4444' : '#10b981'; }
             }
+        }
+
+        function renderMonitoringTicker(metrics) {
+            const track = document.getElementById('mon-ticker-track');
+            if (!track || !metrics || metrics.length === 0) return;
+            const reversed = [...metrics].reverse();
+            let items = reversed.map((m, i) => {
+                const score = (parseFloat(m.mean_anomaly_score) * 100).toFixed(1);
+                const anomaly = parseFloat(m.anomaly_rate_pct).toFixed(1);
+                const ks = parseFloat(m.ks_distance).toFixed(4);
+                const status = m.status || 'GOOD';
+                const date = m.date ? m.date.substring(5, 16) : '—';
+                // Trend vs previous run
+                let scoreArrow = '', anomalyArrow = '', ksArrow = '';
+                if (i > 0) {
+                    const prev = reversed[i - 1];
+                    const pScore = (parseFloat(prev.mean_anomaly_score) * 100);
+                    const pAnomaly = parseFloat(prev.anomaly_rate_pct);
+                    const pKs = parseFloat(prev.ks_distance);
+                    scoreArrow = parseFloat(score) > pScore ? '<span class="ticker-arrow up">▲</span>' : '<span class="ticker-arrow down">▼</span>';
+                    anomalyArrow = parseFloat(anomaly) > pAnomaly ? '<span class="ticker-arrow up">▲</span>' : '<span class="ticker-arrow down">▼</span>';
+                    ksArrow = parseFloat(ks) > pKs ? '<span class="ticker-arrow up">▲</span>' : '<span class="ticker-arrow down">▼</span>';
+                }
+                const statusColor = status === 'GOOD' ? '#10b981' : status === 'WARNING' ? '#f59e0b' : '#ef4444';
+                return `<span class="ticker-item">📅 ${date}</span>
+                    <span class="ticker-item">Risk <strong style="color:#8b5cf6">${score}%</strong>${scoreArrow}</span>
+                    <span class="ticker-item">Anomaly <strong style="color:#f97316">${anomaly}%</strong>${anomalyArrow}</span>
+                    <span class="ticker-item">KS <strong style="color:${parseFloat(ks) > 0.15 ? '#ef4444' : '#10b981'}">${ks}</strong>${ksArrow}</span>
+                    <span class="ticker-item">● <strong style="color:${statusColor}">${status}</strong></span>
+                    <span class="ticker-sep">|</span>`;
+            }).join('');
+            track.innerHTML = items + items; // duplicate for seamless scroll
         }
 
         function renderMetricsTable(metrics) {

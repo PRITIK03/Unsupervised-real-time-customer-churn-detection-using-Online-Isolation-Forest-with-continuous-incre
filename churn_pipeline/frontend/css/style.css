@@ -36,7 +36,7 @@
 ───────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; will-change: scroll-position; }
 
 body {
   font-family     : 'Inter', sans-serif;
@@ -44,6 +44,7 @@ body {
   color           : var(--text-primary);
   min-height      : 100vh;
   overflow-x      : hidden;
+  scroll-snap-type: y mandatory;
 }
 
 /* ─────────────────────────────────────────

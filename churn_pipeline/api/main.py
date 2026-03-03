@@ -461,6 +461,11 @@ async def health():
         "timestamp"       : datetime.now().isoformat()
     }
 
+@app.get("/health-check")
+def health_check():
+    """Returns the health status of the server."""
+    return {"status": "Server is healthy"}
+
 
 @app.get("/model-info")
 async def model_info():

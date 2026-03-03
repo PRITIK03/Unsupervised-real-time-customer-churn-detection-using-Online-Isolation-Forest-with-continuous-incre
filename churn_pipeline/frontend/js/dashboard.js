@@ -405,6 +405,17 @@ function applySmoothTransitions() {
     });
 }
 
+// Smooth scrolling for internal links
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        document.querySelector(this.getAttribute('href')).scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+        });
+    });
+});
+
 // Call the function to apply transitions after the dashboard loads
 document.addEventListener('DOMContentLoaded', () => {
     applySmoothTransitions();

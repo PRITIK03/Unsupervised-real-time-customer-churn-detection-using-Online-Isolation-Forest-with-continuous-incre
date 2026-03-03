@@ -1,4 +1,67 @@
 import os
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from jose import JWTError, jwt
+from fastapi import Depends, status
+from datetime import timedelta
+
+# ─────────────────────────────────────────
+#  AUTH CONFIG
+# ─────────────────────────────────────────
+SECRET_KEY = "supersecretkey"  # Change this in production
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
+
+# Dummy user for demonstration
+fake_users_db = {
+    "admin": {
+        "username": "admin",
+        "full_name": "Admin User",
+        "hashed_password": "adminpass",  # In production, use hashed passwords
+        "disabled": False,
+    }
+}
+
+def verify_password(plain_password, hashed_password):
+    return plain_password == hashed_password  # Replace with hash check in prod
+
+def authenticate_user(username: str, password: str):
+    user = fake_users_db.get(username)
+    if not user or not verify_password(password, user["hashed_password"]):
+        return None
+    return user
+
+def create_access_token(data: dict, expires_delta: timedelta = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+async def get_current_user(token: str = Depends(oauth2_scheme)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+    user = fake_users_db.get(username)
+    if user is None:
+        raise credentials_exception
+    return user
+
+def require_auth(user: dict = Depends(get_current_user)):
+    return user
 import sys
 import numpy as np
 import pandas as pd
@@ -89,6 +152,20 @@ app = FastAPI(
     version     = "1.0.0",
     lifespan    = lifespan
 )
+
+# ─────────────────────────────────────────
+#  AUTH ENDPOINT
+# ─────────────────────────────────────────
+@app.post("/token")
+async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    user = authenticate_user(form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(status_code=400, detail="Incorrect username or password")
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user["username"]}, expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
 
 FRONTEND_DIR = os.path.join(ROOT_DIR, "frontend")
 app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
@@ -483,7 +560,7 @@ async def model_info():
 
 # ── Single Prediction ─────────────────────────────────────────
 @app.post("/predict")
-async def predict(customer: CustomerInput):
+async def predict(customer: CustomerInput, user: dict = Depends(require_auth)):
     if MODEL_CACHE["oif"] is None:
         if not load_active_model():
             raise HTTPException(status_code=503, detail="Model not loaded")
@@ -515,7 +592,7 @@ async def predict(customer: CustomerInput):
 
 # ── Batch Prediction ──────────────────────────────────────────
 @app.post("/predict-batch")
-async def predict_batch(batch: BatchInput):
+async def predict_batch(batch: BatchInput, user: dict = Depends(require_auth)):
     """
     Accepts a list of CustomerInput objects (parsed from CSV by the frontend).
     Returns individual predictions for all customers in one response.
@@ -558,7 +635,7 @@ async def predict_batch(batch: BatchInput):
 
 # ── Timeline Simulation ───────────────────────────────────────
 @app.post("/simulate-timeline")
-async def simulate_timeline(data: TimelineInput):
+async def simulate_timeline(data: TimelineInput, user: dict = Depends(require_auth)):
     """
     Feature 5 — 12-Month Churn Risk Timeline Simulation.
 
@@ -725,7 +802,7 @@ async def dashboard_stats():
 
 # ── Top Risk Customers ────────────────────────────────────────
 @app.get("/top-risk-customers")
-async def top_risk_customers(limit: int = 20):
+async def top_risk_customers(limit: int = 20, user: dict = Depends(require_auth)):
     """
     Returns the highest-risk processed customers for the retention team.
     Scores up to 500 customers and returns the top N sorted by risk.
@@ -783,7 +860,7 @@ async def top_risk_customers(limit: int = 20):
 
 # ── Reload Model ──────────────────────────────────────────────
 @app.post("/reload-model")
-async def reload_model():
+async def reload_model(user: dict = Depends(require_auth)):
     success = load_active_model()
     if success:
         return {"message": f"Model reloaded: {MODEL_CACHE['version']}"}
@@ -792,7 +869,7 @@ async def reload_model():
 
 # ── Activate Model Version ────────────────────────────────────
 @app.post("/activate-model")
-async def activate_model(data: ActivateModelInput):
+async def activate_model(data: ActivateModelInput, user: dict = Depends(require_auth)):
     try:
         db.register_model(
             model_version      = data.model_version,

@@ -2,29 +2,28 @@ import os
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from fastapi import Depends, status
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 # ─────────────────────────────────────────
 #  AUTH CONFIG
 # ─────────────────────────────────────────
-SECRET_KEY = "supersecretkey"  # Change this in production
-ALGORITHM = "HS256"
+SECRET_KEY               = "supersecretkey"
+ALGORITHM                = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
 
-# Dummy user for demonstration
 fake_users_db = {
     "admin": {
-        "username": "admin",
-        "full_name": "Admin User",
-        "hashed_password": "adminpass",  # In production, use hashed passwords
-        "disabled": False,
+        "username"       : "admin",
+        "full_name"      : "Admin User",
+        "hashed_password": "adminpass",
+        "disabled"       : False,
     }
 }
 
 def verify_password(plain_password, hashed_password):
-    return plain_password == hashed_password  # Replace with hash check in prod
+    return plain_password == hashed_password
 
 def authenticate_user(username: str, password: str):
     user = fake_users_db.get(username)
@@ -34,23 +33,19 @@ def authenticate_user(username: str, password: str):
 
 def create_access_token(data: dict, expires_delta: timedelta = None):
     to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
+    expire    = datetime.utcnow() + (expires_delta or timedelta(minutes=15))
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
+        status_code = status.HTTP_401_UNAUTHORIZED,
+        detail      = "Could not validate credentials",
+        headers     = {"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
+        payload  = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username = payload.get("sub")
         if username is None:
             raise credentials_exception
     except JWTError:
@@ -62,12 +57,13 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
 
 def require_auth(user: dict = Depends(get_current_user)):
     return user
+
+
 import sys
 import numpy as np
 import pandas as pd
 import logging
 from contextlib import asynccontextmanager
-from datetime import datetime
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -87,9 +83,10 @@ def load_module(name, path):
     spec.loader.exec_module(mod)
     return mod
 
-cfg   = load_module("config",        os.path.join(ROOT_DIR, "config.py"))
-db    = load_module("db_connection",  os.path.join(ROOT_DIR, "src", "db_connection.py"))
-train = load_module("train",          os.path.join(ROOT_DIR, "src", "train.py"))
+cfg     = load_module("config",          os.path.join(ROOT_DIR, "config.py"))
+db      = load_module("db_connection",   os.path.join(ROOT_DIR, "src", "db_connection.py"))
+train   = load_module("train",           os.path.join(ROOT_DIR, "src", "train.py"))
+shap_ex = load_module("shap_explainer",  os.path.join(ROOT_DIR, "src", "shap_explainer.py"))
 
 # ─────────────────────────────────────────
 #  LOGGING
@@ -100,16 +97,23 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 # ─────────────────────────────────────────
 #  MODEL CACHE
+#  Added shap_explainer and X_background
+#  so SHAP explanations are available at
+#  inference time without re-loading data.
 # ─────────────────────────────────────────
 MODEL_CACHE = {
     "oif"            : None,
     "scaler"         : None,
     "feature_columns": None,
     "label_encoders" : None,
-    "version"        : None
+    "version"        : None,
+    "shap_explainer" : None,   # ← NEW
+    "X_background"   : None,   # ← NEW: small sample for SHAP background
 }
+
 
 def load_active_model():
     try:
@@ -125,10 +129,51 @@ def load_active_model():
         MODEL_CACHE["label_encoders"]  = package.get("label_encoders", {})
         MODEL_CACHE["version"]         = active["model_version"]
 
+        # ── Build SHAP explainer from background data ──
+        # We fetch a small sample from DB to use as SHAP background.
+        # This runs once at startup — not on every prediction.
+        try:
+            engine = db.get_engine()
+            bg_df  = pd.read_sql(
+                "SELECT * FROM raw_customers WHERE is_processed=1 LIMIT 300",
+                engine
+            )
+            if not bg_df.empty:
+                scores, _ = _encode_and_score(bg_df)
+                # Re-encode to get X_background as numpy array
+                drop_cols = ["id", "is_processed", "created_at"]
+                bg_df     = bg_df.drop(
+                    columns=[c for c in drop_cols if c in bg_df.columns], errors="ignore"
+                )
+                bg_df = bg_df[cfg.FEATURE_COLUMNS].copy()
+                bg_df["TotalCharges"] = pd.to_numeric(bg_df["TotalCharges"], errors="coerce")
+                bg_df["TotalCharges"] = bg_df["TotalCharges"].fillna(bg_df["TotalCharges"].median())
+                label_encoders = MODEL_CACHE.get("label_encoders") or {}
+                for col in cfg.CATEGORICAL_COLUMNS:
+                    if col not in bg_df.columns:
+                        continue
+                    if col in label_encoders:
+                        le = label_encoders[col]
+                        bg_df[col] = bg_df[col].astype(str).apply(
+                            lambda v: le.transform([v])[0] if v in le.classes_ else -1
+                        )
+                    else:
+                        from sklearn.preprocessing import LabelEncoder as _LE
+                        _le = _LE()
+                        bg_df[col] = _le.fit_transform(bg_df[col].astype(str))
+                X_bg = MODEL_CACHE["scaler"].transform(bg_df)
+                MODEL_CACHE["X_background"]   = X_bg
+                MODEL_CACHE["shap_explainer"] = shap_ex.build_explainer(oif, X_bg)
+        except Exception as e:
+            logger.warning(f"⚠️ Could not build SHAP explainer at startup: {e}")
+            MODEL_CACHE["shap_explainer"] = None
+
         encoder_count = len(MODEL_CACHE["label_encoders"])
         logger.info(f"✅ Model loaded: {active['model_version']} "
-                    f"({encoder_count} label encoders available)")
+                    f"({encoder_count} label encoders, "
+                    f"SHAP={'ready' if MODEL_CACHE['shap_explainer'] else 'unavailable'})")
         return True
+
     except Exception as e:
         logger.error(f"❌ Failed to load model: {e}")
         return False
@@ -148,22 +193,19 @@ async def lifespan(app: FastAPI):
 # ─────────────────────────────────────────
 app = FastAPI(
     title       = "Customer Churn Detection API",
-    description = "Unsupervised churn detection using Online Isolation Forest",
-    version     = "1.0.0",
+    description = "Unsupervised churn detection using Online Isolation Forest + SHAP",
+    version     = "2.0.0",
     lifespan    = lifespan
 )
 
-# ─────────────────────────────────────────
-#  AUTH ENDPOINT
-# ─────────────────────────────────────────
 @app.post("/token")
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     user = authenticate_user(form_data.username, form_data.password)
     if not user:
         raise HTTPException(status_code=400, detail="Incorrect username or password")
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": user["username"]}, expires_delta=access_token_expires
+        data         = {"sub": user["username"]},
+        expires_delta= timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
@@ -174,68 +216,68 @@ app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
 # ─────────────────────────────────────────
 #  VALID CATEGORY VALUES
 # ─────────────────────────────────────────
-VALID_GENDER           = ["Male", "Female"]
-VALID_YES_NO           = ["Yes", "No"]
-VALID_MULTIPLE_LINES   = ["Yes", "No", "No phone service"]
-VALID_INTERNET         = ["DSL", "Fiber optic", "No"]
-VALID_INTERNET_ADDON   = ["Yes", "No", "No internet service"]
-VALID_CONTRACT         = ["Month-to-month", "One year", "Two year"]
-VALID_PAYMENT_METHOD   = [
+VALID_GENDER         = ["Male", "Female"]
+VALID_YES_NO         = ["Yes", "No"]
+VALID_MULTIPLE_LINES = ["Yes", "No", "No phone service"]
+VALID_INTERNET       = ["DSL", "Fiber optic", "No"]
+VALID_INTERNET_ADDON = ["Yes", "No", "No internet service"]
+VALID_CONTRACT       = ["Month-to-month", "One year", "Two year"]
+VALID_PAYMENT_METHOD = [
     "Electronic check", "Mailed check",
     "Bank transfer (automatic)", "Credit card (automatic)"
 ]
 
 
 # ─────────────────────────────────────────
-#  INPUT SCHEMAS — with validation
+#  INPUT SCHEMAS
 # ─────────────────────────────────────────
 class CustomerInput(BaseModel):
     gender           : str   = Field(..., description="Male or Female")
-    SeniorCitizen    : int   = Field(..., ge=0, le=1, description="0 or 1")
-    Partner          : str   = Field(..., description="Yes or No")
-    Dependents       : str   = Field(..., description="Yes or No")
-    tenure           : int   = Field(..., ge=0, le=120, description="Months with company (0–120)")
-    PhoneService     : str   = Field(..., description="Yes or No")
-    MultipleLines    : str   = Field(..., description="Yes, No, or No phone service")
-    InternetService  : str   = Field(..., description="DSL, Fiber optic, or No")
-    OnlineSecurity   : str   = Field(..., description="Yes, No, or No internet service")
-    OnlineBackup     : str   = Field(..., description="Yes, No, or No internet service")
-    DeviceProtection : str   = Field(..., description="Yes, No, or No internet service")
-    TechSupport      : str   = Field(..., description="Yes, No, or No internet service")
-    StreamingTV      : str   = Field(..., description="Yes, No, or No internet service")
-    StreamingMovies  : str   = Field(..., description="Yes, No, or No internet service")
-    Contract         : str   = Field(..., description="Month-to-month, One year, or Two year")
-    PaperlessBilling : str   = Field(..., description="Yes or No")
-    PaymentMethod    : str   = Field(..., description="Payment method")
-    MonthlyCharges   : float = Field(..., ge=0, le=500, description="Monthly bill ($0–$500)")
-    TotalCharges     : float = Field(..., ge=0, le=100000, description="Total charges ($0–$100,000)")
+    SeniorCitizen    : int   = Field(..., ge=0, le=1)
+    Partner          : str
+    Dependents       : str
+    tenure           : int   = Field(..., ge=0, le=120)
+    PhoneService     : str
+    MultipleLines    : str
+    InternetService  : str
+    OnlineSecurity   : str
+    OnlineBackup     : str
+    DeviceProtection : str
+    TechSupport      : str
+    StreamingTV      : str
+    StreamingMovies  : str
+    Contract         : str
+    PaperlessBilling : str
+    PaymentMethod    : str
+    MonthlyCharges   : float = Field(..., ge=0, le=500)
+    TotalCharges     : float = Field(..., ge=0, le=100000)
 
     @field_validator("gender")
     @classmethod
     def validate_gender(cls, v):
         if v not in VALID_GENDER:
-            raise ValueError(f"gender must be one of {VALID_GENDER}, got '{v}'")
+            raise ValueError(f"gender must be one of {VALID_GENDER}")
         return v
 
     @field_validator("Partner", "Dependents", "PhoneService", "PaperlessBilling")
     @classmethod
     def validate_yes_no(cls, v):
         if v not in VALID_YES_NO:
-            raise ValueError(f"Value must be one of {VALID_YES_NO}, got '{v}'")
+            raise ValueError(f"Value must be one of {VALID_YES_NO}")
         return v
 
     @field_validator("MultipleLines")
     @classmethod
     def validate_multiple_lines(cls, v):
         if v not in VALID_MULTIPLE_LINES:
-            raise ValueError(f"MultipleLines must be one of {VALID_MULTIPLE_LINES}, got '{v}'")
+            raise ValueError(f"MultipleLines must be one of {VALID_MULTIPLE_LINES}")
         return v
 
     @field_validator("InternetService")
     @classmethod
     def validate_internet(cls, v):
         if v not in VALID_INTERNET:
-            raise ValueError(f"InternetService must be one of {VALID_INTERNET}, got '{v}'")
+            raise ValueError(f"InternetService must be one of {VALID_INTERNET}")
         return v
 
     @field_validator("OnlineSecurity", "OnlineBackup", "DeviceProtection",
@@ -243,21 +285,21 @@ class CustomerInput(BaseModel):
     @classmethod
     def validate_internet_addon(cls, v):
         if v not in VALID_INTERNET_ADDON:
-            raise ValueError(f"Value must be one of {VALID_INTERNET_ADDON}, got '{v}'")
+            raise ValueError(f"Value must be one of {VALID_INTERNET_ADDON}")
         return v
 
     @field_validator("Contract")
     @classmethod
     def validate_contract(cls, v):
         if v not in VALID_CONTRACT:
-            raise ValueError(f"Contract must be one of {VALID_CONTRACT}, got '{v}'")
+            raise ValueError(f"Contract must be one of {VALID_CONTRACT}")
         return v
 
     @field_validator("PaymentMethod")
     @classmethod
     def validate_payment_method(cls, v):
         if v not in VALID_PAYMENT_METHOD:
-            raise ValueError(f"PaymentMethod must be one of {VALID_PAYMENT_METHOD}, got '{v}'")
+            raise ValueError(f"PaymentMethod must be one of {VALID_PAYMENT_METHOD}")
         return v
 
 
@@ -270,50 +312,34 @@ class ActivateModelInput(BaseModel):
     trained_on_records : int
 
 class TimelineInput(BaseModel):
-    """
-    Input for the 12-month churn risk simulation.
-    Uses the already-computed prediction score + customer context
-    to project risk trajectories for 3 contract scenarios.
-    """
-    churn_risk_score : float = Field(..., ge=0, le=100, description="Risk score 0–100")
-    contract         : str   = Field(..., description="Current contract type")
-    tenure           : int   = Field(..., ge=0, le=120, description="Months with company")
-    monthly_charges  : float = Field(..., ge=0, le=500, description="Current monthly bill")
+    churn_risk_score : float = Field(..., ge=0, le=100)
+    contract         : str
+    tenure           : int   = Field(..., ge=0, le=120)
+    monthly_charges  : float = Field(..., ge=0, le=500)
 
     @field_validator("contract")
     @classmethod
     def validate_contract(cls, v):
         if v not in VALID_CONTRACT:
-            raise ValueError(f"contract must be one of {VALID_CONTRACT}, got '{v}'")
+            raise ValueError(f"contract must be one of {VALID_CONTRACT}")
         return v
 
 
 # ─────────────────────────────────────────
-#  SHARED HELPER — encode + score a raw_df sample
+#  SHARED HELPER — encode + score raw_df
 # ─────────────────────────────────────────
 def _encode_and_score(raw_df: pd.DataFrame):
-    """
-    Takes a raw DataFrame slice from raw_customers,
-    drops system columns, encodes categoricals, scales,
-    and returns (scores_array, contract_series).
-    Returns (None, None) if model not loaded.
-    """
     if MODEL_CACHE["oif"] is None:
         return None, None
 
-    drop_cols = ["id", "is_processed", "created_at"]
-    df = raw_df.drop(columns=[c for c in drop_cols if c in raw_df.columns], errors="ignore")
-
-    # Preserve Contract column before feature selection
+    drop_cols    = ["id", "is_processed", "created_at"]
+    df           = raw_df.drop(columns=[c for c in drop_cols if c in raw_df.columns], errors="ignore")
     contract_col = df["Contract"].copy() if "Contract" in df.columns else None
+    df           = df[cfg.FEATURE_COLUMNS].copy()
 
-    df = df[cfg.FEATURE_COLUMNS].copy()
-
-    # Fix TotalCharges blank strings
     df["TotalCharges"] = pd.to_numeric(df["TotalCharges"], errors="coerce")
     df["TotalCharges"] = df["TotalCharges"].fillna(df["TotalCharges"].median())
 
-    # Encode using saved encoders
     label_encoders = MODEL_CACHE.get("label_encoders") or {}
     for col in cfg.CATEGORICAL_COLUMNS:
         if col not in df.columns:
@@ -325,7 +351,7 @@ def _encode_and_score(raw_df: pd.DataFrame):
             )
         else:
             from sklearn.preprocessing import LabelEncoder as _LE
-            _le     = _LE()
+            _le = _LE()
             df[col] = _le.fit_transform(df[col].astype(str))
 
     X = MODEL_CACHE["scaler"].transform(df)
@@ -337,7 +363,7 @@ def _encode_and_score(raw_df: pd.DataFrame):
 #  PREPROCESSING FOR INFERENCE
 # ─────────────────────────────────────────
 def preprocess_input(data: dict) -> np.ndarray:
-    df = pd.DataFrame([data])
+    df             = pd.DataFrame([data])
     label_encoders = MODEL_CACHE.get("label_encoders") or {}
 
     for col in cfg.CATEGORICAL_COLUMNS:
@@ -346,15 +372,10 @@ def preprocess_input(data: dict) -> np.ndarray:
         if col in label_encoders:
             le  = label_encoders[col]
             val = str(df[col].iloc[0])
-            if val in le.classes_:
-                df[col] = le.transform([val])
-            else:
-                logger.warning(f"Unseen category '{val}' in column '{col}'. Encoding as -1.")
-                df[col] = -1
+            df[col] = le.transform([val]) if val in le.classes_ else -1
         else:
-            logger.warning(f"No saved encoder for '{col}'. Re-run training to fix inference encoding.")
             from sklearn.preprocessing import LabelEncoder as _LE
-            _le     = _LE()
+            _le = _LE()
             df[col] = _le.fit_transform(df[col].astype(str))
 
     df = df[cfg.FEATURE_COLUMNS]
@@ -363,153 +384,36 @@ def preprocess_input(data: dict) -> np.ndarray:
 
 
 # ─────────────────────────────────────────
-#  BUSINESS RULE POST-PROCESSING
-# ─────────────────────────────────────────
-def apply_business_rules(score: float, customer_data: dict) -> float:
-    """
-    Adjust anomaly score with domain knowledge to reduce false positives.
-
-    Isolation Forest flags 'different' as 'risky', but some unusual
-    profiles are actually loyal customers. This post-processor:
-
-    1. CAPS risk for loyal profiles:
-       - Long tenure (24+ months) + auto-pay + long contract
-       - These are stable, committed customers — even if the IF model
-         sees them as 'unusual', their churn risk should be limited.
-
-    2. FLOORS risk for classic churn profiles:
-       - Short tenure (<6 months) + month-to-month + electronic check
-       - These match well-known churn patterns — ensure minimum risk.
-
-    3. Service stickiness bonus:
-       - Customers using 3+ add-on services are invested in the platform.
-       - Reduces score to reflect lower real-world churn likelihood.
-
-    All adjustments are capped to [0.0, 1.0] range.
-    The function works on the 0-1 scale (before multiplying by 100).
-    """
-    tenure           = customer_data.get("tenure", 0)
-    contract         = customer_data.get("Contract", "")
-    payment_method   = customer_data.get("PaymentMethod", "")
-    monthly_charges  = customer_data.get("MonthlyCharges", 0)
-
-    # Count active add-on services
-    service_cols = [
-        "OnlineSecurity", "OnlineBackup", "DeviceProtection",
-        "TechSupport", "StreamingTV", "StreamingMovies"
-    ]
-    service_count = sum(
-        1 for col in service_cols
-        if customer_data.get(col) == "Yes"
-    )
-
-    is_auto_pay = payment_method in [
-        "Bank transfer (automatic)", "Credit card (automatic)"
-    ]
-    is_long_contract = contract in ["One year", "Two year"]
-
-    adjusted = score
-
-    # ── Rule 1: Loyal customer cap ────────
-    # Tenure 24+, auto-pay, one/two-year contract → cap at 0.35 (Medium at most)
-    if tenure >= 24 and is_auto_pay and is_long_contract:
-        loyalty_cap = 0.35
-        if adjusted > loyalty_cap:
-            logger.info(
-                f"  Business rule: loyal customer (tenure={tenure}, "
-                f"contract={contract}, payment={payment_method}) → "
-                f"score capped {adjusted:.4f} → {loyalty_cap:.4f}"
-            )
-            adjusted = loyalty_cap
-
-    # ── Rule 2: Classic churn floor ───────
-    # Short tenure + month-to-month + electronic check → minimum 0.40
-    if (tenure < 6
-            and contract == "Month-to-month"
-            and payment_method == "Electronic check"):
-        churn_floor = 0.40
-        if adjusted < churn_floor:
-            logger.info(
-                f"  Business rule: classic churn profile (tenure={tenure}, "
-                f"M2M, E-check) → score floored {adjusted:.4f} → {churn_floor:.4f}"
-            )
-            adjusted = churn_floor
-
-    # ── Rule 3: Service stickiness bonus ──
-    # 3+ add-on services → reduce score by up to 15%
-    if service_count >= 3:
-        reduction = min(service_count * 0.03, 0.15)  # 3%–15%
-        old = adjusted
-        adjusted = max(adjusted - reduction, 0.0)
-        if old != adjusted:
-            logger.info(
-                f"  Business rule: {service_count} services → "
-                f"score reduced {old:.4f} → {adjusted:.4f}"
-            )
-
-    return float(np.clip(adjusted, 0.0, 1.0))
-
-
-# ─────────────────────────────────────────
-#  TIMELINE SIMULATION LOGIC
+#  TRAJECTORY SIMULATION
+#  All magic numbers moved to config.py
+#  TRAJECTORY_CONFIG — no more hardcoding.
 # ─────────────────────────────────────────
 def _simulate_trajectory(
-    base_score    : float,
-    contract      : str,
-    tenure        : int,
+    base_score     : float,
+    contract       : str,
+    tenure         : int,
     monthly_charges: float,
-    n_months      : int = 12
 ) -> list:
-    """
-    Generates a realistic 12-month risk trajectory for one contract scenario.
+    tc = cfg.TRAJECTORY_CONFIG
 
-    How the simulation works:
-    ─────────────────────────
-    The base_score (0-100) is the model's current prediction.
-    Each contract type has a different monthly drift rate:
-
-      Month-to-month → customers are volatile, risk drifts UP slightly
-                        each month (high baseline instability)
-      One year       → contract commitment reduces churn intent,
-                        risk drifts DOWN moderately
-      Two year       → strongest commitment, risk drops more aggressively
-
-    Additionally:
-    - High monthly charges amplify risk (charge_pressure)
-    - Long tenure slightly reduces risk (loyalty_factor)
-    - Small random noise ±0.8 is added each month so lines look
-      realistic rather than perfectly linear
-    - Score is always clamped to [1, 99] to avoid impossible values
-
-    This is a business-logic simulation, not a second ML model.
-    It is transparent, explainable, and produces results that
-    align with real-world churn research findings.
-    """
-
-    # Base monthly drift per contract type (percentage points per month)
-    drift_map = {
-        "Month-to-month": +0.9,   # risk slowly creeps up
-        "One year"       : -1.2,  # moderate reduction
-        "Two year"       : -1.8,  # strongest reduction
-    }
-    monthly_drift = drift_map.get(contract, +0.5)
-
-    # Charge pressure: customers paying >$70/mo have extra churn pressure
-    charge_pressure = max(0.0, (monthly_charges - 70) / 100)  # 0 to ~0.3
-
-    # Loyalty factor: long-tenure customers are more stable
-    loyalty_reduction = min(tenure * 0.04, 1.5)  # caps at 1.5 pp
+    monthly_drift   = tc["drift_rates"].get(contract, tc["drift_rates"]["default"])
+    charge_pressure = max(
+        0.0,
+        (monthly_charges - tc["charge_pressure_threshold"]) / tc["charge_pressure_scale"]
+    )
+    loyalty_reduction = min(
+        tenure * tc["loyalty_reduction_per_month"],
+        tc["loyalty_reduction_cap"]
+    )
 
     trajectory = []
-    score = float(base_score)
+    score      = float(base_score)
+    rng        = np.random.default_rng(seed=int(base_score * 100))
 
-    rng = np.random.default_rng(seed=int(base_score * 100))  # deterministic seed
-
-    for month in range(1, n_months + 1):
-        noise        = rng.uniform(-0.8, 0.8)
-        month_delta  = monthly_drift + charge_pressure - loyalty_reduction + noise
-        score        = score + month_delta
-        score        = float(np.clip(score, 1.0, 99.0))
+    for _ in range(tc["n_months"]):
+        noise       = rng.uniform(-tc["noise_range"], tc["noise_range"])
+        month_delta = monthly_drift + charge_pressure - loyalty_reduction + noise
+        score       = float(np.clip(score + month_delta, tc["score_min"], tc["score_max"]))
         trajectory.append(round(score, 2))
 
     return trajectory
@@ -523,8 +427,8 @@ def _simulate_trajectory(
 async def serve_frontend():
     response = FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-    response.headers["Pragma"] = "no-cache"
-    response.headers["Expires"] = "0"
+    response.headers["Pragma"]        = "no-cache"
+    response.headers["Expires"]       = "0"
     return response
 
 
@@ -535,12 +439,12 @@ async def health():
         "model_loaded"    : MODEL_CACHE["oif"] is not None,
         "model_version"   : MODEL_CACHE["version"],
         "encoders_loaded" : len(MODEL_CACHE["label_encoders"] or {}),
+        "shap_ready"      : MODEL_CACHE["shap_explainer"] is not None,
         "timestamp"       : datetime.now().isoformat()
     }
 
 @app.get("/health-check")
 def health_check():
-    """Returns the health status of the server."""
     return {"status": "Server is healthy"}
 
 
@@ -549,16 +453,22 @@ async def model_info():
     active = db.get_active_model()
     if active is None:
         raise HTTPException(status_code=404, detail="No active model found")
+    oif = MODEL_CACHE["oif"]
     return {
-        "model_version"     : active["model_version"],
-        "training_date"     : str(active["training_date"]),
-        "trained_on_records": int(active["trained_on_records"]),
-        "is_active"         : bool(active["is_active"]),
-        "notes"             : active["notes"]
+        "model_version"      : active["model_version"],
+        "training_date"      : str(active["training_date"]),
+        "trained_on_records" : int(active["trained_on_records"]),
+        "is_active"          : bool(active["is_active"]),
+        "notes"              : active["notes"],
+        "tier_thresholds"    : oif.tier_thresholds if oif else None,
     }
 
 
-# ── Single Prediction ─────────────────────────────────────────
+# ── Single Prediction ─────────────────────
+# CHANGED: removed apply_business_rules().
+# Returns raw honest model score + SHAP explanation.
+# Also returns tier_thresholds so frontend can show
+# what cutoffs were used.
 @app.post("/predict")
 async def predict(customer: CustomerInput, user: dict = Depends(require_auth)):
     if MODEL_CACHE["oif"] is None:
@@ -568,36 +478,78 @@ async def predict(customer: CustomerInput, user: dict = Depends(require_auth)):
         customer_dict  = customer.dict()
         X              = preprocess_input(customer_dict)
         labels, scores = MODEL_CACHE["oif"].predict(X)
-        raw_score      = float(scores[0])
+        score          = float(scores[0])
         label          = int(labels[0])
+        risk_tier      = MODEL_CACHE["oif"].get_risk_tier(score)
 
-        # Apply business rule adjustments
-        adjusted_score = apply_business_rules(raw_score, customer_dict)
-        risk_tier      = MODEL_CACHE["oif"].get_risk_tier(adjusted_score)
+        # ── SHAP explanation ──
+        explanation = shap_ex.explain_single(
+            MODEL_CACHE["shap_explainer"],
+            X,
+            MODEL_CACHE["feature_columns"] or cfg.FEATURE_COLUMNS,
+            top_n=5
+        )
+        summary = shap_ex.summarise_explanation(explanation)
 
         return {
-            "churn_risk_score"    : round(adjusted_score * 100, 2),
-            "raw_model_score"     : round(raw_score * 100, 2),
-            "business_rules_applied": raw_score != adjusted_score,
-            "risk_tier"           : risk_tier,
-            "anomaly_label"       : label,
-            "is_anomaly"          : label == -1,
-            "model_version"       : MODEL_CACHE["version"],
-            "timestamp"           : datetime.now().isoformat()
+            "churn_risk_score"  : round(score * 100, 2),
+            "risk_tier"         : risk_tier,
+            "anomaly_label"     : label,
+            "is_anomaly"        : label == -1,
+            "model_version"     : MODEL_CACHE["version"],
+            "tier_thresholds"   : MODEL_CACHE["oif"].tier_thresholds,
+            "explanation"       : explanation,
+            "explanation_summary": summary,
+            "timestamp"         : datetime.now().isoformat()
         }
     except Exception as e:
         logger.error(f"Prediction error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ── Batch Prediction ──────────────────────────────────────────
+# ── Explain Endpoint ──────────────────────
+# NEW: dedicated endpoint that returns full
+# SHAP breakdown for a customer — used by
+# the frontend explain panel.
+@app.post("/explain")
+async def explain(customer: CustomerInput, user: dict = Depends(require_auth)):
+    if MODEL_CACHE["oif"] is None:
+        if not load_active_model():
+            raise HTTPException(status_code=503, detail="Model not loaded")
+    try:
+        customer_dict  = customer.dict()
+        X              = preprocess_input(customer_dict)
+        labels, scores = MODEL_CACHE["oif"].predict(X)
+        score          = float(scores[0])
+        risk_tier      = MODEL_CACHE["oif"].get_risk_tier(score)
+
+        explanation = shap_ex.explain_single(
+            MODEL_CACHE["shap_explainer"],
+            X,
+            MODEL_CACHE["feature_columns"] or cfg.FEATURE_COLUMNS,
+            top_n=10   # full top-10 for dedicated explain endpoint
+        )
+        summary = shap_ex.summarise_explanation(explanation)
+
+        return {
+            "churn_risk_score"   : round(score * 100, 2),
+            "risk_tier"          : risk_tier,
+            "explanation"        : explanation,
+            "explanation_summary": summary,
+            "tier_thresholds"    : MODEL_CACHE["oif"].tier_thresholds,
+            "model_version"      : MODEL_CACHE["version"],
+            "timestamp"          : datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Explain error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ── Batch Prediction ──────────────────────
+# CHANGED: removed apply_business_rules(),
+# added SHAP top-3 per customer.
 @app.post("/predict-batch")
 async def predict_batch(batch: BatchInput, user: dict = Depends(require_auth)):
-    """
-    Accepts a list of CustomerInput objects (parsed from CSV by the frontend).
-    Returns individual predictions for all customers in one response.
-    Used by Feature 3 — Batch CSV Upload.
-    """
     if MODEL_CACHE["oif"] is None:
         if not load_active_model():
             raise HTTPException(status_code=503, detail="Model not loaded")
@@ -607,21 +559,26 @@ async def predict_batch(batch: BatchInput, user: dict = Depends(require_auth)):
             customer_dict  = customer.dict()
             X              = preprocess_input(customer_dict)
             labels, scores = MODEL_CACHE["oif"].predict(X)
-            raw_score      = float(scores[0])
+            score          = float(scores[0])
             label          = int(labels[0])
+            risk_tier      = MODEL_CACHE["oif"].get_risk_tier(score)
 
-            # Apply business rule adjustments
-            adjusted_score = apply_business_rules(raw_score, customer_dict)
-            risk_tier      = MODEL_CACHE["oif"].get_risk_tier(adjusted_score)
+            explanation = shap_ex.explain_single(
+                MODEL_CACHE["shap_explainer"],
+                X,
+                MODEL_CACHE["feature_columns"] or cfg.FEATURE_COLUMNS,
+                top_n=3
+            )
 
             results.append({
-                "churn_risk_score"       : round(adjusted_score * 100, 2),
-                "raw_model_score"        : round(raw_score * 100, 2),
-                "business_rules_applied" : raw_score != adjusted_score,
-                "risk_tier"              : risk_tier,
-                "anomaly_label"          : label,
-                "is_anomaly"             : label == -1
+                "churn_risk_score" : round(score * 100, 2),
+                "risk_tier"        : risk_tier,
+                "anomaly_label"    : label,
+                "is_anomaly"       : label == -1,
+                "explanation"      : explanation,
+                "explanation_summary": shap_ex.summarise_explanation(explanation)
             })
+
         return {
             "total"        : len(results),
             "predictions"  : results,
@@ -633,51 +590,29 @@ async def predict_batch(batch: BatchInput, user: dict = Depends(require_auth)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ── Timeline Simulation ───────────────────────────────────────
+# ── Timeline Simulation ───────────────────
 @app.post("/simulate-timeline")
 async def simulate_timeline(data: TimelineInput, user: dict = Depends(require_auth)):
-    """
-    Feature 5 — 12-Month Churn Risk Timeline Simulation.
-
-    Takes the already-computed prediction score and customer context,
-    then projects risk over 12 months for 3 contract scenarios:
-      - current contract (whatever the customer is on now)
-      - one year contract
-      - two year contract
-
-    Each scenario uses _simulate_trajectory() which applies realistic
-    monthly drift rates, charge pressure, and loyalty factors.
-
-    Returns three lists of 12 floats each (one per month).
-    The frontend draws these as a multi-line Chart.js chart.
-    """
     try:
-        base  = data.churn_risk_score   # already 0-100 scale
-        ten   = data.tenure
-        mch   = data.monthly_charges
-        cur   = data.contract
-
-        # Always generate all 3 scenarios regardless of current contract.
-        # If the customer is already on a long-term plan, the "upgrade"
-        # lines will still show marginal benefit vs staying the course.
-        current_traj  = _simulate_trajectory(base, cur,              ten, mch)
-        one_year_traj = _simulate_trajectory(base, "One year",       ten, mch)
-        two_year_traj = _simulate_trajectory(base, "Two year",       ten, mch)
+        base = data.churn_risk_score
+        ten  = data.tenure
+        mch  = data.monthly_charges
+        cur  = data.contract
 
         return {
-            "current"       : current_traj,
-            "one_year"      : one_year_traj,
-            "two_year"      : two_year_traj,
-            "base_score"    : base,
+            "current"         : _simulate_trajectory(base, cur,           ten, mch),
+            "one_year"        : _simulate_trajectory(base, "One year",    ten, mch),
+            "two_year"        : _simulate_trajectory(base, "Two year",    ten, mch),
+            "base_score"      : base,
             "current_contract": cur,
-            "months"        : 12
+            "months"          : cfg.TRAJECTORY_CONFIG["n_months"]
         }
     except Exception as e:
         logger.error(f"Timeline simulation error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ── Monitoring Metrics ────────────────────────────────────────
+# ── Monitoring Metrics ────────────────────
 @app.get("/monitoring")
 async def monitoring(days: int = 30):
     try:
@@ -691,7 +626,7 @@ async def monitoring(days: int = 30):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ── Model Registry ────────────────────────────────────────────
+# ── Model Registry ────────────────────────
 @app.get("/registry")
 async def registry():
     try:
@@ -705,16 +640,15 @@ async def registry():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ── Dashboard Stats ───────────────────────────────────────────
+# ── Dashboard Stats ───────────────────────
 @app.get("/dashboard-stats")
 async def dashboard_stats():
     try:
         engine       = db.get_engine()
         total_df     = pd.read_sql("SELECT COUNT(*) as total FROM raw_customers", engine)
         processed_df = pd.read_sql("SELECT COUNT(*) as total FROM raw_customers WHERE is_processed=1", engine)
-
-        metrics_df = db.fetch_last_n_metrics(n=7)
-        active     = db.get_active_model()
+        metrics_df   = db.fetch_last_n_metrics(n=7)
+        active       = db.get_active_model()
 
         risk_dist     = {"Critical": 0, "High": 0, "Medium": 0, "Low": 0}
         score_buckets = []
@@ -722,41 +656,31 @@ async def dashboard_stats():
 
         if active and MODEL_CACHE["oif"]:
             raw_df = pd.read_sql(
-                "SELECT * FROM raw_customers WHERE is_processed=1 LIMIT 500",
-                engine
+                "SELECT * FROM raw_customers WHERE is_processed=1 LIMIT 500", engine
             )
-
             if not raw_df.empty:
                 scores, contract_col = _encode_and_score(raw_df)
-
                 if scores is not None:
-                    # Risk distribution
                     for s in scores:
                         tier = MODEL_CACHE["oif"].get_risk_tier(s)
                         risk_dist[tier] += 1
 
-                    # Score histogram buckets (0-100 scale)
                     scores_pct = [s * 100 for s in scores]
                     for low in range(0, 100, 10):
                         high  = low + 10
-                        label = f"{low}-{high}"
                         count = sum(
                             1 for s in scores_pct
                             if (low <= s <= high if high == 100 else low <= s < high)
                         )
-                        score_buckets.append({"range": label, "count": count})
+                        score_buckets.append({"range": f"{low}-{high}", "count": count})
 
-                    # Contract risk breakdown
                     if contract_col is not None and len(contract_col) == len(scores):
                         contract_scores = {}
                         for i, ct in enumerate(contract_col):
                             ct = str(ct)
-                            if ct not in contract_scores:
-                                contract_scores[ct] = []
-                            contract_scores[ct].append(scores[i] * 100)
+                            contract_scores.setdefault(ct, []).append(scores[i] * 100)
 
-                        order = ["Month-to-month", "One year", "Two year"]
-                        for ct in order:
+                        for ct in ["Month-to-month", "One year", "Two year"]:
                             if ct in contract_scores:
                                 s_list = contract_scores[ct]
                                 contract_risk.append({
@@ -764,16 +688,7 @@ async def dashboard_stats():
                                     "avg_risk"      : round(float(np.mean(s_list)), 2),
                                     "customer_count": len(s_list)
                                 })
-                        # Catch any unexpected contract values
-                        for ct, s_list in contract_scores.items():
-                            if ct not in order:
-                                contract_risk.append({
-                                    "contract"      : ct,
-                                    "avg_risk"      : round(float(np.mean(s_list)), 2),
-                                    "customer_count": len(s_list)
-                                })
 
-        # Trend data for charts
         trend_data = []
         if not metrics_df.empty:
             for _, row in metrics_df.iterrows():
@@ -793,20 +708,17 @@ async def dashboard_stats():
             "trend_data"         : trend_data,
             "latest_status"      : trend_data[0]["status"] if trend_data else "GOOD",
             "score_buckets"      : score_buckets,
-            "contract_risk"      : contract_risk
+            "contract_risk"      : contract_risk,
+            "tier_thresholds"    : MODEL_CACHE["oif"].tier_thresholds if MODEL_CACHE["oif"] else None
         }
     except Exception as e:
         logger.error(f"Dashboard stats error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ── Top Risk Customers ────────────────────────────────────────
+# ── Top Risk Customers ────────────────────
 @app.get("/top-risk-customers")
 async def top_risk_customers(limit: int = 20, user: dict = Depends(require_auth)):
-    """
-    Returns the highest-risk processed customers for the retention team.
-    Scores up to 500 customers and returns the top N sorted by risk.
-    """
     if MODEL_CACHE["oif"] is None:
         if not load_active_model():
             raise HTTPException(status_code=503, detail="Model not loaded")
@@ -819,38 +731,32 @@ async def top_risk_customers(limit: int = 20, user: dict = Depends(require_auth)
         if raw_df.empty:
             return {"customers": [], "total": 0}
 
-        # Preserve original columns before encoding
-        orig_df = raw_df.copy()
-        scores, _ = _encode_and_score(raw_df)
-
+        orig_df       = raw_df.copy()
+        scores, _     = _encode_and_score(raw_df)
         if scores is None:
             return {"customers": [], "total": 0}
 
-        # Build result list
         results = []
         for i in range(len(scores)):
-            s = float(scores[i])
+            s    = float(scores[i])
             tier = MODEL_CACHE["oif"].get_risk_tier(s)
-            row = orig_df.iloc[i]
+            row  = orig_df.iloc[i]
             results.append({
-                "id"              : int(row["id"]) if "id" in orig_df.columns else i + 1,
-                "contract"        : str(row.get("Contract", "—")),
-                "tenure"          : int(row.get("tenure", 0)),
-                "monthly_charges" : float(row.get("MonthlyCharges", 0)),
-                "internet"        : str(row.get("InternetService", "—")),
-                "payment_method"  : str(row.get("PaymentMethod", "—")),
-                "risk_score"      : round(s * 100, 2),
-                "risk_tier"       : tier
+                "id"             : int(row["id"]) if "id" in orig_df.columns else i + 1,
+                "contract"       : str(row.get("Contract", "—")),
+                "tenure"         : int(row.get("tenure", 0)),
+                "monthly_charges": float(row.get("MonthlyCharges", 0)),
+                "internet"       : str(row.get("InternetService", "—")),
+                "payment_method" : str(row.get("PaymentMethod", "—")),
+                "risk_score"     : round(s * 100, 2),
+                "risk_tier"      : tier
             })
 
-        # Sort by risk descending and take top N
         results.sort(key=lambda x: x["risk_score"], reverse=True)
-        top = results[:limit]
-
         return {
-            "customers"     : top,
+            "customers"     : results[:limit],
             "total_scored"  : len(results),
-            "total_returned": len(top),
+            "total_returned": min(limit, len(results)),
             "model_version" : MODEL_CACHE["version"]
         }
     except Exception as e:
@@ -858,7 +764,7 @@ async def top_risk_customers(limit: int = 20, user: dict = Depends(require_auth)
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ── Reload Model ──────────────────────────────────────────────
+# ── Reload Model ──────────────────────────
 @app.post("/reload-model")
 async def reload_model(user: dict = Depends(require_auth)):
     success = load_active_model()
@@ -867,7 +773,7 @@ async def reload_model(user: dict = Depends(require_auth)):
     raise HTTPException(status_code=500, detail="Failed to reload model")
 
 
-# ── Activate Model Version ────────────────────────────────────
+# ── Activate Model Version ────────────────
 @app.post("/activate-model")
 async def activate_model(data: ActivateModelInput, user: dict = Depends(require_auth)):
     try:

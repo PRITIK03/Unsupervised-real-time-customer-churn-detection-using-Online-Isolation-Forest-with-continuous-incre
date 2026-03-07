@@ -229,6 +229,18 @@ def load_active_model():
             MODEL_CACHE["X_background"]   = X_bg
             MODEL_CACHE["shap_explainer"] = _build_shap_explainer(X_bg)
 
+            # ── Compute dynamic tier thresholds if missing ──
+            # Old model packages don't have tier_thresholds.
+            # Compute from training data so risk tiers are correct.
+            if oif.tier_thresholds is None:
+                try:
+                    raw_scores = oif.model.score_samples(X_bg)
+                    norm_scores = oif._normalize(raw_scores)
+                    oif.tier_thresholds = train.compute_dynamic_tiers(norm_scores)
+                    logger.info(f"✅ Dynamic tier thresholds computed from {len(X_bg)} samples")
+                except Exception as e:
+                    logger.warning(f"⚠️ Could not compute tiers: {e}")
+
         shap_status = "ready" if MODEL_CACHE["shap_explainer"] is not None else "unavailable"
         encoder_count = len(MODEL_CACHE["label_encoders"])
         logger.info(f"✅ Model loaded: {active['model_version']} "
@@ -552,14 +564,14 @@ async def predict(customer: CustomerInput):
         customer_dict  = customer.dict()
         X              = preprocess_input(customer_dict)
         labels, scores = MODEL_CACHE["oif"].predict(X)
-        score          = float(scores[0])
+        raw_score      = float(scores[0])
         label          = int(labels[0])
-        risk_tier      = MODEL_CACHE["oif"].get_risk_tier(score)
 
         # ── SHAP explanation ──
         explanation = []
         summary     = ""
         exp_obj     = MODEL_CACHE.get("shap_explainer")
+        shap_values_all = None                        # keep full SV for scoring
 
         if exp_obj is not None:
             try:
@@ -567,6 +579,7 @@ async def predict(customer: CustomerInput):
                 sv         = np.array(
                     sv_raw.values if hasattr(sv_raw, "values") else sv_raw
                 ).flatten()
+                shap_values_all = sv                  # save for adjustment
                 feat_names = MODEL_CACHE["feature_columns"] or cfg.FEATURE_COLUMNS
 
                 pairs = []
@@ -595,6 +608,28 @@ async def predict(customer: CustomerInput):
                 logger.warning(traceback.format_exc())
         else:
             logger.warning("⚠️ SHAP explainer is None at predict time — explanation will be empty")
+
+        # ── SHAP-adjusted scoring ──
+        # IsolationForest anomaly score = "how statistically unusual".
+        # A stable, loyal customer can be unusual without being a churn risk.
+        # Use SHAP net direction to adjust: if features mostly REDUCE risk,
+        # dampen the anomaly score downward.
+        score = raw_score
+        if shap_values_all is not None and len(shap_values_all) > 0:
+            risk_sum = float(np.sum(shap_values_all[shap_values_all > 0]))
+            safe_sum = float(np.abs(np.sum(shap_values_all[shap_values_all < 0])))
+
+            if (risk_sum + safe_sum) > 0:
+                # ratio: 0 = all features reduce risk, 1 = all increase risk
+                risk_ratio = risk_sum / (risk_sum + safe_sum)
+                # Dampen score: keep full score when risk_ratio~1,
+                # reduce significantly when risk_ratio~0
+                dampened = score * (0.15 + 0.85 * risk_ratio)
+                logger.info(f"📊 Score adjustment: raw={score:.4f}, risk_ratio={risk_ratio:.3f}, "
+                            f"adjusted={dampened:.4f}")
+                score = dampened
+
+        risk_tier = MODEL_CACHE["oif"].get_risk_tier(score)
 
         return {
             "churn_risk_score"   : round(score * 100, 2),

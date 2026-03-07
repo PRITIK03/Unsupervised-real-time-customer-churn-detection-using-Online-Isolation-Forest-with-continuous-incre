@@ -231,15 +231,40 @@ def load_active_model():
 
             # ── Compute dynamic tier thresholds if missing ──
             # Old model packages don't have tier_thresholds.
-            # Compute from training data so risk tiers are correct.
+            # We compute from SHAP-adjusted scores so the tiers
+            # match the post-adjustment distribution.
             if oif.tier_thresholds is None:
                 try:
+                    shap_exp = MODEL_CACHE.get("shap_explainer")
                     raw_scores = oif.model.score_samples(X_bg)
                     norm_scores = oif._normalize(raw_scores)
-                    oif.tier_thresholds = train.compute_dynamic_tiers(norm_scores)
-                    logger.info(f"✅ Dynamic tier thresholds computed from {len(X_bg)} samples")
+
+                    if shap_exp is not None:
+                        # Compute SHAP-adjusted scores for a sub-sample
+                        n_sample = min(50, len(X_bg))
+                        idx = np.random.default_rng(42).choice(len(X_bg), size=n_sample, replace=False)
+                        adj_scores = []
+                        for i in idx:
+                            sv = shap_exp.shap_values(X_bg[i:i+1])
+                            sv = np.array(sv.values if hasattr(sv, "values") else sv).flatten()
+                            rsk = float(np.sum(sv[sv > 0]))
+                            sfe = float(np.abs(np.sum(sv[sv < 0])))
+                            if (rsk + sfe) > 0:
+                                rr = rsk / (rsk + sfe)
+                                f = (0.20 + 1.20 * rr) if rr < 0.5 else (1.0 + 0.30 * (rr - 0.5))
+                            else:
+                                f = 1.0
+                            adj_scores.append(float(np.clip(norm_scores[i] * f, 0, 1)))
+                        adj_scores = np.array(adj_scores)
+                        oif.tier_thresholds = train.compute_dynamic_tiers(adj_scores)
+                        logger.info(f"✅ Dynamic tiers from SHAP-adjusted scores (n={n_sample})")
+                    else:
+                        oif.tier_thresholds = train.compute_dynamic_tiers(norm_scores)
+                        logger.info(f"✅ Dynamic tiers from raw scores (n={len(X_bg)})")
                 except Exception as e:
+                    import traceback
                     logger.warning(f"⚠️ Could not compute tiers: {e}")
+                    logger.warning(traceback.format_exc())
 
         shap_status = "ready" if MODEL_CACHE["shap_explainer"] is not None else "unavailable"
         encoder_count = len(MODEL_CACHE["label_encoders"])
@@ -613,7 +638,8 @@ async def predict(customer: CustomerInput):
         # IsolationForest anomaly score = "how statistically unusual".
         # A stable, loyal customer can be unusual without being a churn risk.
         # Use SHAP net direction to adjust: if features mostly REDUCE risk,
-        # dampen the anomaly score downward.
+        # dampen the anomaly score downward.  If features mostly INCREASE
+        # risk, boost the score upward.
         score = raw_score
         if shap_values_all is not None and len(shap_values_all) > 0:
             risk_sum = float(np.sum(shap_values_all[shap_values_all > 0]))
@@ -622,11 +648,17 @@ async def predict(customer: CustomerInput):
             if (risk_sum + safe_sum) > 0:
                 # ratio: 0 = all features reduce risk, 1 = all increase risk
                 risk_ratio = risk_sum / (risk_sum + safe_sum)
-                # Dampen score: keep full score when risk_ratio~1,
-                # reduce significantly when risk_ratio~0
-                dampened = score * (0.15 + 0.85 * risk_ratio)
+
+                if risk_ratio < 0.5:
+                    # Net safe → dampen score  (ratio=0 → ×0.20, ratio=0.5 → ×0.80)
+                    factor = 0.20 + 1.20 * risk_ratio
+                else:
+                    # Net risky → mild boost   (ratio=0.5 → ×1.0, ratio=1.0 → ×1.15)
+                    factor = 1.0 + 0.30 * (risk_ratio - 0.5)
+
+                dampened = np.clip(score * factor, 0, 1)
                 logger.info(f"📊 Score adjustment: raw={score:.4f}, risk_ratio={risk_ratio:.3f}, "
-                            f"adjusted={dampened:.4f}")
+                            f"factor={factor:.3f}, adjusted={dampened:.4f}")
                 score = dampened
 
         risk_tier = MODEL_CACHE["oif"].get_risk_tier(score)

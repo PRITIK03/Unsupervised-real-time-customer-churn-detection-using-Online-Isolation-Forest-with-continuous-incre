@@ -111,13 +111,11 @@
             background: linear-gradient(180deg, rgba(59, 130, 246, 0.3) 0%, rgba(139, 92, 246, 0.15) 50%, transparent 100%);
         }
 
-        /* Logo */
         .logo-wrap {
             display: flex;
             align-items: center;
             gap: 12px;
             padding: 22px 20px 18px;
-            margin-bottom: 0;
         }
 
         .logo-icon {
@@ -129,9 +127,8 @@
             align-items: center;
             justify-content: center;
             font-size: 17px;
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.25), 0 0 40px rgba(139, 92, 246, 0.15);
-            animation: logo-glow 3s ease-in-out infinite alternate;
             flex-shrink: 0;
+            animation: logo-glow 3s ease-in-out infinite alternate;
         }
 
         @keyframes logo-glow {
@@ -150,8 +147,6 @@
             background: linear-gradient(135deg, #e2e8f0, #94a3b8);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            background-clip: text;
-            letter-spacing: -0.3px;
         }
 
         .logo-sub {
@@ -168,7 +163,6 @@
             margin: 0 16px;
         }
 
-        /* Navigation */
         .nav-section {
             padding: 16px 12px 8px;
             flex: 1;
@@ -188,7 +182,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            padding: 10px 10px;
+            padding: 10px;
             border-radius: 10px;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -206,27 +200,16 @@
             transform: translateX(2px);
         }
 
-        .nav-item:hover .nav-icon-wrap {
-            background: rgba(59, 130, 246, 0.1);
-            box-shadow: 0 0 12px rgba(59, 130, 246, 0.08);
-        }
-
         .nav-item.active {
             background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.08));
             color: #e2e8f0;
             border-color: rgba(59, 130, 246, 0.12);
         }
 
-        .nav-item.active .nav-icon-wrap {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.15));
-            box-shadow: 0 0 16px rgba(59, 130, 246, 0.15);
-        }
-
         .nav-item.active .nav-text {
             background: linear-gradient(135deg, #93c5fd, #c4b5fd);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            background-clip: text;
             font-weight: 600;
         }
 
@@ -256,12 +239,17 @@
             flex-shrink: 0;
         }
 
+        .nav-item.active .nav-icon-wrap {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.15));
+            box-shadow: 0 0 16px rgba(59, 130, 246, 0.15);
+        }
+
         .nav-text {
             flex: 1;
             transition: all 0.2s ease;
         }
 
-        .nav-item .nav-shortcut {
+        .nav-shortcut {
             font-size: 9px;
             color: rgba(71, 85, 105, 0.7);
             background: rgba(15, 23, 42, 0.6);
@@ -269,17 +257,9 @@
             border-radius: 4px;
             border: 1px solid rgba(30, 41, 59, 0.5);
             font-weight: 600;
-            font-family: 'Inter', monospace;
             line-height: 1;
         }
 
-        .nav-icon {
-            font-size: 15px;
-            width: 20px;
-            text-align: center;
-        }
-
-        /* Footer */
         .sidebar-footer {
             margin-top: auto;
             padding: 0 12px 16px;
@@ -347,18 +327,6 @@
             background: var(--cyan);
         }
 
-        @keyframes pulse-dot {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.3;
-            }
-        }
-
         /* ── MAIN ── */
         .main {
             margin-left: 240px;
@@ -408,7 +376,6 @@
         .card {
             background: rgba(26, 34, 53, 0.85);
             backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
             border: 1px solid var(--border);
             border-radius: var(--radius);
             padding: 20px 22px;
@@ -446,7 +413,6 @@
         .stat-card {
             background: rgba(26, 34, 53, 0.8);
             backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
             border: 1px solid var(--border);
             border-radius: var(--radius);
             padding: 18px 20px;
@@ -727,6 +693,294 @@
             margin-top: 3px;
         }
 
+        /* ══════════════════════════════════════
+           SHAP EXPLANATION PANEL  (NEW)
+        ══════════════════════════════════════ */
+        .shap-panel {
+            margin-top: 20px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(139, 92, 246, 0.05));
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: var(--radius-sm);
+            padding: 14px 16px;
+            display: none;
+        }
+
+        .shap-panel.visible {
+            display: block;
+            animation: fadeUp 0.4s ease;
+        }
+
+        .shap-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--cyan);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .shap-summary {
+            background: rgba(6, 182, 212, 0.08);
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            border-radius: 6px;
+            padding: 10px 12px;
+            font-size: 12px;
+            color: var(--text-sec);
+            line-height: 1.6;
+            margin-bottom: 14px;
+        }
+
+        .shap-summary strong {
+            color: var(--cyan);
+        }
+
+        .shap-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+        }
+
+        .shap-bar-row {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .shap-bar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .shap-feature-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .shap-value-chip {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .shap-value-chip.risk {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--red);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .shap-value-chip.safe {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--green);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .shap-bar-track {
+            height: 7px;
+            background: var(--bg-primary);
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .shap-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .shap-bar-fill.risk {
+            background: linear-gradient(90deg, #ef4444, #f97316);
+        }
+
+        .shap-bar-fill.safe {
+            background: linear-gradient(90deg, #10b981, #06b6d4);
+        }
+
+        .shap-explain-btn {
+            width: 100%;
+            margin-top: 12px;
+            padding: 8px;
+            border-radius: 6px;
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            color: var(--purple);
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: var(--transition);
+            letter-spacing: 0.5px;
+        }
+
+        .shap-explain-btn:hover {
+            background: rgba(139, 92, 246, 0.2);
+            transform: translateY(-1px);
+        }
+
+        /* Full SHAP modal */
+        .shap-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .shap-modal-overlay.open {
+            display: flex;
+            animation: fadeScale 0.3s ease;
+        }
+
+        .shap-modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border-bright);
+            border-radius: var(--radius);
+            padding: 28px;
+            width: 600px;
+            max-width: 95vw;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+        }
+
+        .shap-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .shap-modal-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .shap-modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px;
+            transition: color 0.2s;
+        }
+
+        .shap-modal-close:hover {
+            color: var(--text);
+        }
+
+        .shap-full-summary {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.08), rgba(139, 92, 246, 0.08));
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            border-radius: 8px;
+            padding: 14px 16px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: var(--text-sec);
+            line-height: 1.7;
+        }
+
+        .shap-full-summary strong {
+            color: var(--cyan);
+        }
+
+        .shap-full-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .shap-full-row {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .shap-full-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .shap-full-feature {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .shap-full-rank {
+            font-size: 10px;
+            color: var(--text-muted);
+            background: var(--bg-secondary);
+            padding: 2px 7px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .shap-full-track {
+            height: 10px;
+            background: var(--bg-primary);
+            border-radius: 5px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .shap-full-fill {
+            height: 100%;
+            border-radius: 5px;
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .shap-full-fill.risk {
+            background: linear-gradient(90deg, #ef4444, #f97316);
+        }
+
+        .shap-full-fill.safe {
+            background: linear-gradient(90deg, #10b981, #06b6d4);
+        }
+
+        .shap-full-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        .shap-legend {
+            display: flex;
+            gap: 16px;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .shap-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--text-sec);
+        }
+
+        .shap-legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
         /* ── TABLE ── */
         .table-wrap {
             overflow-x: auto;
@@ -757,6 +1011,7 @@
         tbody tr {
             border-bottom: 1px solid var(--border);
             transition: var(--transition);
+            animation: row-fade 0.3s ease both;
         }
 
         tbody tr:hover {
@@ -766,6 +1021,18 @@
         tbody td {
             padding: 11px 14px;
             color: var(--text-sec);
+        }
+
+        @keyframes row-fade {
+            from {
+                opacity: 0;
+                transform: translateX(-8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: none;
+            }
         }
 
         /* ── BADGES ── */
@@ -820,7 +1087,7 @@
             }
         }
 
-        /* ── SKELETON LOADER ── */
+        /* ── SKELETON ── */
         .skeleton {
             background: linear-gradient(90deg, var(--bg-secondary) 25%, rgba(45, 55, 72, 0.6) 50%, var(--bg-secondary) 75%);
             background-size: 200% 100%;
@@ -833,17 +1100,6 @@
             margin: 8px 0;
         }
 
-        .skeleton-circle {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-        }
-
-        .skeleton-bar {
-            height: 180px;
-            border-radius: var(--radius-sm);
-        }
-
         @keyframes skeleton-shimmer {
             0% {
                 background-position: 200% 0;
@@ -854,24 +1110,6 @@
             }
         }
 
-        /* ── TABLE ROW ANIMATION ── */
-        tbody tr {
-            animation: row-fade 0.3s ease both;
-        }
-
-        @keyframes row-fade {
-            from {
-                opacity: 0;
-                transform: translateX(-8px);
-            }
-
-            to {
-                opacity: 1;
-                transform: none;
-            }
-        }
-
-        /* ── INPUT FOCUS GLOW ── */
         select:focus,
         input:focus {
             outline: none;
@@ -879,17 +1117,6 @@
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
 
-        /* ── BADGE GLOW ── */
-        .badge-critical,
-        .badge-degraded {
-            box-shadow: 0 0 8px rgba(239, 68, 68, 0.2);
-        }
-
-        .badge-high {
-            box-shadow: 0 0 8px rgba(249, 115, 22, 0.2);
-        }
-
-        /* ── LAST UPDATED ── */
         .last-updated {
             font-size: 11px;
             color: var(--text-muted);
@@ -906,24 +1133,6 @@
             border-radius: 50%;
             background: var(--green);
             animation: pulse-dot 2s ease infinite;
-        }
-
-        /* ── INLINE SCORE BAR ── */
-        .inline-bar {
-            display: inline-block;
-            width: 50px;
-            height: 4px;
-            background: var(--bg-primary);
-            border-radius: 2px;
-            vertical-align: middle;
-            margin-left: 6px;
-            overflow: hidden;
-        }
-
-        .inline-bar-fill {
-            height: 100%;
-            border-radius: 2px;
-            transition: width 0.6s ease;
         }
 
         /* ── CONTRACT RISK BARS ── */
@@ -978,7 +1187,7 @@
             color: var(--text-muted);
         }
 
-        /* ── BATCH CSV UPLOAD (Feature 3) ── */
+        /* ── BATCH ── */
         .batch-tabs {
             display: flex;
             gap: 8px;
@@ -1128,7 +1337,7 @@
             transform: translateY(-1px);
         }
 
-        /* ── TIMELINE SIMULATION (Feature 5) ── */
+        /* ── TIMELINE ── */
         .timeline-wrap {
             margin-top: 22px;
             display: none;
@@ -1137,6 +1346,18 @@
         .timeline-wrap.visible {
             display: block;
             animation: fadeUp 0.5s ease;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: none;
+            }
         }
 
         .timeline-header {
@@ -1197,16 +1418,12 @@
             color: var(--cyan);
         }
 
-        /* ── MICRO SPARKLINES ── */
+        /* ── SPARKLINES ── */
         .stat-spark {
             width: 90px;
             height: 38px;
             flex-shrink: 0;
             opacity: 0.88;
-        }
-
-        .stat-spark canvas {
-            display: block;
         }
 
         .stat-trend {
@@ -1222,10 +1439,6 @@
 
         .stat-trend.down {
             color: #10b981;
-        }
-
-        .stat-trend.flat {
-            color: #94a3b8;
         }
 
         .text-center {
@@ -1252,7 +1465,7 @@
             }
         }
 
-        /* ── LIVE STATUS BAR ── */
+        /* ── STATUS BAR ── */
         .status-bar {
             display: flex;
             align-items: center;
@@ -1479,7 +1692,7 @@
             color: #fff;
         }
 
-        /* ── ROI CARD ── */
+        /* ── ROI ── */
         .roi-card {
             background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(6, 182, 212, 0.08));
             border: 1px solid rgba(16, 185, 129, 0.2);
@@ -1493,82 +1706,12 @@
             -webkit-text-fill-color: transparent;
         }
 
-        .roi-sub {
-            font-size: 11px;
-            color: var(--text-muted);
-            margin-top: 4px;
-            line-height: 1.5;
-        }
-
-        /* ── HEATMAP ── */
         .heatmap-box {
             height: 280px;
             position: relative;
         }
 
-        /* ── BUSINESS RULES BADGE ── */
-        .br-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-
-        .br-badge.applied {
-            background: rgba(139, 92, 246, 0.12);
-            color: #8b5cf6;
-            border: 1px solid rgba(139, 92, 246, 0.3);
-        }
-
-        .br-badge.none {
-            background: rgba(71, 85, 105, 0.12);
-            color: #64748b;
-            border: 1px solid rgba(71, 85, 105, 0.2);
-        }
-
-        .score-compare {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin: 10px 0;
-            justify-content: center;
-        }
-
-        .score-compare .old {
-            color: var(--text-muted);
-            text-decoration: line-through;
-            font-size: 16px;
-            font-weight: 600;
-        }
-
-        .score-compare .arrow {
-            color: var(--purple);
-            font-size: 16px;
-        }
-
-        .score-compare .new {
-            font-size: 20px;
-            font-weight: 800;
-        }
-
-        .stat-flash {
-            animation: flash-highlight 0.6s ease;
-        }
-
-        @keyframes flash-highlight {
-            0% {
-                background: rgba(59, 130, 246, 0.15);
-            }
-
-            100% {
-                background: transparent;
-            }
-        }
-
-        /* ── WELCOME BANNER ── */
+        /* ── WELCOME ── */
         .welcome-banner {
             background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(139, 92, 246, 0.08), rgba(6, 182, 212, 0.06));
             border: 1px solid rgba(59, 130, 246, 0.15);
@@ -1607,7 +1750,7 @@
             color: var(--text);
         }
 
-        /* ── FLOATING ACTION BUTTON ── */
+        /* ── FAB ── */
         .fab {
             position: fixed;
             bottom: 28px;
@@ -1627,7 +1770,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4), 0 0 0 0 rgba(59, 130, 246, 0.3);
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
             transition: all 0.3s ease;
             animation: fab-pulse 3s ease infinite;
         }
@@ -1646,7 +1789,6 @@
 
         .fab-trigger:hover {
             transform: scale(1.1) rotate(45deg);
-            box-shadow: 0 6px 28px rgba(59, 130, 246, 0.5);
         }
 
         .fab-trigger.open {
@@ -1693,349 +1835,6 @@
             background: var(--bg-hover);
             color: var(--text);
             transform: translateX(-4px);
-        }
-
-        /* ── PULSING CRITICAL VALUES ── */
-        .pulse-critical {
-            animation: pulse-red 2s ease infinite;
-        }
-
-        @keyframes pulse-red {
-
-            0%,
-            100% {
-                text-shadow: none;
-            }
-
-            50% {
-                text-shadow: 0 0 12px rgba(239, 68, 68, 0.5);
-            }
-        }
-
-        /* ── KEYBOARD SHORTCUT HINT ── */
-        .kbd {
-            display: inline-block;
-            padding: 1px 5px;
-            border-radius: 3px;
-            font-size: 9px;
-            font-weight: 700;
-            font-family: monospace;
-            background: var(--bg-primary);
-            border: 1px solid var(--border-bright);
-            color: var(--text-muted);
-            margin-left: auto;
-        }
-
-        /* ─── SHAP PANEL (inline in result card) ─── */
-        .shap-panel {
-            margin-top: 16px;
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(139, 92, 246, 0.05));
-            border: 1px solid rgba(59, 130, 246, 0.2);
-            border-radius: var(--radius-sm);
-            padding: 14px 16px;
-            display: none;
-        }
-
-        .shap-panel.visible {
-            display: block;
-            animation: fadeUp 0.4s ease;
-        }
-
-        .shap-panel-title {
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--cyan);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin-bottom: 10px;
-        }
-
-        .shap-ai-chip {
-            font-size: 9px;
-            background: rgba(6, 182, 212, 0.15);
-            color: var(--cyan);
-            border: 1px solid rgba(6, 182, 212, 0.3);
-            padding: 2px 7px;
-            border-radius: 8px;
-            margin-left: 4px;
-        }
-
-        .shap-summary {
-            background: rgba(6, 182, 212, 0.08);
-            border: 1px solid rgba(6, 182, 212, 0.2);
-            border-radius: 6px;
-            padding: 10px 12px;
-            font-size: 12px;
-            color: var(--text-sec);
-            line-height: 1.6;
-            margin-bottom: 12px;
-        }
-
-        .shap-summary strong {
-            color: var(--cyan);
-        }
-
-        .shap-bars {
-            display: flex;
-            flex-direction: column;
-            gap: 9px;
-        }
-
-        .shap-bar-row {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .shap-bar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .shap-feature-name {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text);
-        }
-
-        .shap-value-chip {
-            font-size: 10px;
-            font-weight: 700;
-            padding: 2px 8px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .shap-value-chip.risk {
-            background: rgba(239, 68, 68, 0.15);
-            color: var(--red);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-        }
-
-        .shap-value-chip.safe {
-            background: rgba(16, 185, 129, 0.15);
-            color: var(--green);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-        }
-
-        .shap-bar-track {
-            height: 7px;
-            background: var(--bg-primary);
-            border-radius: 4px;
-            overflow: hidden;
-            border: 1px solid var(--border);
-        }
-
-        .shap-bar-fill {
-            height: 100%;
-            border-radius: 4px;
-            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .shap-bar-fill.risk {
-            background: linear-gradient(90deg, #ef4444, #f97316);
-        }
-
-        .shap-bar-fill.safe {
-            background: linear-gradient(90deg, #10b981, #06b6d4);
-        }
-
-        .shap-full-btn {
-            width: 100%;
-            margin-top: 12px;
-            padding: 8px;
-            border-radius: 6px;
-            background: rgba(139, 92, 246, 0.1);
-            border: 1px solid rgba(139, 92, 246, 0.3);
-            color: var(--purple);
-            font-size: 11px;
-            font-weight: 700;
-            cursor: pointer;
-            font-family: 'Inter', sans-serif;
-            transition: var(--transition);
-            letter-spacing: 0.5px;
-        }
-
-        .shap-full-btn:hover {
-            background: rgba(139, 92, 246, 0.2);
-            transform: translateY(-1px);
-        }
-
-        /* ─── SHAP MODAL ─── */
-        .shap-modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(8px);
-            z-index: 1000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .shap-modal-overlay.open {
-            display: flex;
-            animation: fadeScale 0.3s ease;
-        }
-
-        @keyframes fadeScale {
-            from {
-                opacity: 0;
-                transform: scale(0.95);
-            }
-
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        .shap-modal {
-            background: var(--bg-card);
-            border: 1px solid var(--border-bright);
-            border-radius: var(--radius);
-            padding: 28px;
-            width: 600px;
-            max-width: 95vw;
-            max-height: 85vh;
-            overflow-y: auto;
-            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
-        }
-
-        .shap-modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .shap-modal-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--text);
-        }
-
-        .shap-modal-close {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-size: 20px;
-            cursor: pointer;
-            padding: 4px;
-            transition: color 0.2s;
-        }
-
-        .shap-modal-close:hover {
-            color: var(--text);
-        }
-
-        .shap-modal-summary {
-            background: linear-gradient(135deg, rgba(6, 182, 212, 0.08), rgba(139, 92, 246, 0.08));
-            border: 1px solid rgba(6, 182, 212, 0.2);
-            border-radius: 8px;
-            padding: 14px 16px;
-            margin-bottom: 20px;
-            font-size: 13px;
-            color: var(--text-sec);
-            line-height: 1.7;
-        }
-
-        .shap-modal-summary strong {
-            color: var(--cyan);
-        }
-
-        .shap-modal-bars {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-
-        .shap-modal-row {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .shap-modal-row-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .shap-modal-feature {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text);
-        }
-
-        .shap-modal-rank {
-            font-size: 10px;
-            color: var(--text-muted);
-            background: var(--bg-secondary);
-            padding: 2px 7px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-        }
-
-        .shap-modal-track {
-            height: 10px;
-            background: var(--bg-primary);
-            border-radius: 5px;
-            overflow: hidden;
-            border: 1px solid var(--border);
-        }
-
-        .shap-modal-fill {
-            height: 100%;
-            border-radius: 5px;
-            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .shap-modal-fill.risk {
-            background: linear-gradient(90deg, #ef4444, #f97316);
-        }
-
-        .shap-modal-fill.safe {
-            background: linear-gradient(90deg, #10b981, #06b6d4);
-        }
-
-        .shap-modal-meta {
-            display: flex;
-            justify-content: space-between;
-            font-size: 10px;
-            color: var(--text-muted);
-        }
-
-        .shap-legend {
-            display: flex;
-            gap: 16px;
-            margin-top: 20px;
-            padding-top: 16px;
-            border-top: 1px solid var(--border);
-        }
-
-        .shap-legend-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 11px;
-            color: var(--text-sec);
-        }
-
-        .shap-legend-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-        }
-
-        #result-shap-status {
-            color: var(--cyan);
         }
     </style>
 </head>
@@ -2112,10 +1911,9 @@
         </div>
 
         <!-- ══════════════════════════════════════
-     DASHBOARD PAGE
-══════════════════════════════════════ -->
+             DASHBOARD PAGE
+        ══════════════════════════════════════ -->
         <div id="page-dashboard" class="page active">
-            <!-- WELCOME BANNER -->
             <div class="welcome-banner" id="welcome-banner">
                 <div>
                     <div class="welcome-text" id="welcome-text">👋 Good evening!</div>
@@ -2130,9 +1928,8 @@
             <div class="last-updated" id="last-updated"><span class="dot"></span> <span id="last-updated-text">Loading
                     data…</span></div>
 
-            <!-- KPI TICKER -->
             <div class="kpi-ticker" id="kpi-ticker">
-                <div class="ticker-track" id="ticker-track"><!-- filled by JS --></div>
+                <div class="ticker-track" id="ticker-track"></div>
             </div>
 
             <div class="stats-grid">
@@ -2216,7 +2013,6 @@
                 <div class="chart-box" style="height:210px"><canvas id="ksDistanceChart"></canvas></div>
             </div>
 
-            <!-- ROI + HEATMAP ROW -->
             <div class="charts-grid" style="margin-top:18px">
                 <div class="card roi-card">
                     <div class="card-title">💰 Retention ROI Estimate</div>
@@ -2224,8 +2020,8 @@
                         <div class="roi-value" id="roi-value">$0</div>
                         <div style="font-size:12px;color:var(--text-sec);margin-top:6px;font-weight:600">Estimated
                             Monthly Revenue Saved</div>
-                        <div class="roi-sub" id="roi-detail">If you retain high-risk customers through proactive
-                            intervention</div>
+                        <div style="font-size:11px;color:var(--text-muted);margin-top:4px" id="roi-detail">If you retain
+                            high-risk customers through proactive intervention</div>
                     </div>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">
                         <div style="background:var(--bg-secondary);border-radius:8px;padding:10px;text-align:center">
@@ -2244,7 +2040,6 @@
                 </div>
             </div>
 
-            <!-- TOP RISK CUSTOMERS -->
             <div class="card" style="margin-top:18px">
                 <div class="card-title">🔥 Highest Risk Customers — Retention Priority List</div>
                 <div class="table-wrap">
@@ -2275,13 +2070,13 @@
         </div>
 
         <!-- ══════════════════════════════════════
-     PREDICT PAGE
-══════════════════════════════════════ -->
+             PREDICT PAGE
+        ══════════════════════════════════════ -->
         <div id="page-predict" class="page">
             <div class="page-title gradient-text">Churn Risk Predictor</div>
-            <div class="page-sub">Single customer analysis or bulk CSV scoring with 12-month risk simulation</div>
+            <div class="page-sub">Single customer analysis with SHAP explainability — learn exactly what drives each
+                risk score</div>
 
-            <!-- TAB SWITCHER -->
             <div class="batch-tabs">
                 <button class="batch-tab active" onclick="switchPredictTab('single', this)">👤 Single Customer</button>
                 <button class="batch-tab" onclick="switchPredictTab('batch', this)">📂 Batch CSV Upload</button>
@@ -2411,7 +2206,7 @@
                         </form>
                     </div>
 
-                    <!-- Result -->
+                    <!-- ── RESULT + SHAP PANEL ── -->
                     <div class="card result-card">
                         <div class="card-title">🎯 Risk Analysis Result</div>
                         <div id="result-placeholder" class="result-placeholder">
@@ -2421,6 +2216,7 @@
                                 in customer details and click Analyze</div>
                         </div>
                         <div id="result-content" class="result-content">
+                            <!-- Risk Meter -->
                             <div class="risk-meter-wrap">
                                 <div class="risk-meter">
                                     <canvas id="riskMeterCanvas" width="190" height="105"></canvas>
@@ -2431,21 +2227,31 @@
                                 </div>
                                 <div class="tier-badge tier-Low" id="result-tier-badge">LOW</div>
                             </div>
-                            <div style="background:var(--bg-secondary);border-radius:8px;padding:12px;margin:14px 0;font-size:12px;color:var(--text-sec);line-height:1.6;border-left:3px solid var(--blue)"
+
+                            <!-- Interpretation -->
+                            <div style="background:var(--bg-secondary);border-radius:8px;padding:12px;margin:10px 0;font-size:12px;color:var(--text-sec);line-height:1.6;border-left:3px solid var(--blue)"
                                 id="result-interpretation"></div>
 
-                            <!-- ══ SHAP PANEL ══ -->
+                            <!-- ══ SHAP EXPLANATION PANEL ══ -->
                             <div class="shap-panel" id="shap-panel">
-                                <div class="shap-panel-title">
-                                    🧠 Why this score?
-                                    <span class="shap-ai-chip">AI-Learned</span>
+                                <div class="shap-title">
+                                    🧠 SHAP Feature Explanation
+                                    <span
+                                        style="font-size:9px;background:rgba(6,182,212,0.15);color:var(--cyan);border:1px solid rgba(6,182,212,0.3);padding:2px 7px;border-radius:8px;margin-left:4px">AI-Learned</span>
                                 </div>
-                                <div class="shap-summary" id="shap-summary-text"></div>
+                                <!-- Plain English Summary -->
+                                <div class="shap-summary" id="shap-summary-text">
+                                    Loading explanation…
+                                </div>
+                                <!-- Top 5 Feature Bars -->
                                 <div class="shap-bars" id="shap-bars-container"></div>
-                                <button class="shap-full-btn" onclick="openShapModal()">🔬 Full Feature Breakdown (Top
-                                    10)</button>
+                                <!-- Full Breakdown Button -->
+                                <button class="shap-explain-btn" onclick="openShapModal()">
+                                    🔬 View Full Feature Breakdown (Top 10)
+                                </button>
                             </div>
 
+                            <!-- Result Detail Grid -->
                             <div class="result-details">
                                 <div class="result-detail">
                                     <div class="result-detail-lbl">Risk Score</div>
@@ -2469,7 +2275,7 @@
                                         id="result-model">—</div>
                                 </div>
                                 <div class="result-detail">
-                                    <div class="result-detail-lbl">SHAP Status</div>
+                                    <div class="result-detail-lbl">SHAP Ready</div>
                                     <div class="result-detail-val" id="result-shap-status">—</div>
                                 </div>
                             </div>
@@ -2477,7 +2283,7 @@
                     </div>
                 </div>
 
-                <!-- ── FEATURE 5: TIMELINE SIMULATION ── appears below predict layout after result -->
+                <!-- Timeline -->
                 <div id="timeline-wrap" class="timeline-wrap">
                     <div class="card">
                         <div class="timeline-header">
@@ -2496,10 +2302,8 @@
                 </div>
             </div>
 
-            <!-- ── FEATURE 3: BATCH CSV UPLOAD TAB ── -->
+            <!-- ── BATCH CSV UPLOAD TAB ── -->
             <div id="tab-batch" style="display:none">
-
-                <!-- Drop Zone -->
                 <div id="batch-upload-zone">
                     <div class="drop-zone" id="dropZone" ondragover="handleDragOver(event)"
                         ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
@@ -2512,26 +2316,21 @@
                         <input type="file" id="csvFileInput" accept=".csv" style="display:none"
                             onchange="handleFileSelect(event)">
                     </div>
-
-                    <!-- CSV format helper -->
                     <div
                         style="margin-top:14px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 18px;">
                         <div
                             style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">
                             Required CSV Columns</div>
                         <div style="font-size:11px;color:var(--text-muted);line-height:1.9;font-family:monospace">
-                            gender, SeniorCitizen, Partner, Dependents, tenure, PhoneService, MultipleLines,<br>
-                            InternetService, OnlineSecurity, OnlineBackup, DeviceProtection, TechSupport,<br>
-                            StreamingTV, StreamingMovies, Contract, PaperlessBilling, PaymentMethod,<br>
-                            MonthlyCharges, TotalCharges
-                        </div>
+                            gender, SeniorCitizen, Partner, Dependents, tenure, PhoneService,
+                            MultipleLines,<br>InternetService, OnlineSecurity, OnlineBackup, DeviceProtection,
+                            TechSupport,<br>StreamingTV, StreamingMovies, Contract, PaperlessBilling,
+                            PaymentMethod,<br>MonthlyCharges, TotalCharges</div>
                         <button onclick="downloadSampleCSV()"
                             style="margin-top:10px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);color:var(--blue);padding:5px 14px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;font-family:Inter,sans-serif">⬇
                             Download Sample CSV</button>
                     </div>
                 </div>
-
-                <!-- Processing State -->
                 <div id="batch-processing" style="display:none;text-align:center;padding:48px">
                     <div class="spinner" style="margin:0 auto 16px"></div>
                     <div style="font-size:14px;font-weight:600;color:var(--text-sec)" id="batch-progress-text">
@@ -2539,13 +2338,8 @@
                     <div style="font-size:12px;color:var(--text-muted);margin-top:6px" id="batch-progress-sub">This may
                         take a moment for large files</div>
                 </div>
-
-                <!-- Results -->
                 <div id="batch-results" style="display:none">
-                    <!-- Summary cards -->
                     <div class="batch-summary" id="batch-summary-cards"></div>
-
-                    <!-- Donut chart + action bar -->
                     <div
                         style="display:grid;grid-template-columns:280px 1fr;gap:18px;margin-bottom:18px;align-items:start">
                         <div class="card" style="padding:16px">
@@ -2565,8 +2359,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- Results table -->
                     <div class="card">
                         <div
                             style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
@@ -2613,17 +2405,14 @@
         </div>
 
         <!-- ══════════════════════════════════════
-     MONITORING PAGE
-══════════════════════════════════════ -->
+             MONITORING PAGE
+        ══════════════════════════════════════ -->
         <div id="page-monitoring" class="page">
             <div class="page-title gradient-text">Model Monitoring</div>
             <div class="page-sub">Track model performance, drift detection and health over time</div>
-
-            <!-- MONITORING KPI TICKER -->
             <div class="kpi-ticker" id="mon-kpi-ticker" style="margin-bottom:18px">
-                <div class="ticker-track" id="mon-ticker-track"><!-- filled by JS --></div>
+                <div class="ticker-track" id="mon-ticker-track"></div>
             </div>
-
             <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
                 <div class="stat-card" style="--ac:#3b82f6;--ic:rgba(59,130,246,0.15)">
                     <div class="stat-icon">🔁</div>
@@ -2673,7 +2462,6 @@
                     <div class="stat-spark"><canvas id="spark-mon-anomaly" height="38"></canvas></div>
                 </div>
             </div>
-
             <div class="charts-grid" style="margin-bottom:20px">
                 <div class="card">
                     <div class="card-title">📈 Anomaly Trend</div>
@@ -2728,8 +2516,8 @@
         </div>
 
         <!-- ══════════════════════════════════════
-     REGISTRY PAGE
-══════════════════════════════════════ -->
+             REGISTRY PAGE
+        ══════════════════════════════════════ -->
         <div id="page-registry" class="page">
             <div class="page-title gradient-text">Model Registry</div>
             <div class="page-sub">All trained model versions with activation and rollback controls</div>
@@ -2789,12 +2577,32 @@
                 </div>
             </div>
         </div>
-
     </main>
 
-    <!-- ══════════════════════════════════════════════════════════════
-     JAVASCRIPT
-══════════════════════════════════════════════════════════════ -->
+    <!-- ══ SHAP FULL BREAKDOWN MODAL ══ -->
+    <div class="shap-modal-overlay" id="shap-modal-overlay" onclick="closeShapModalOutside(event)">
+        <div class="shap-modal" id="shap-modal">
+            <div class="shap-modal-header">
+                <div class="shap-modal-title">🧠 Full SHAP Feature Breakdown</div>
+                <button class="shap-modal-close" onclick="closeShapModal()">✕</button>
+            </div>
+            <div id="shap-modal-content">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FLOATING ACTION BUTTON -->
+    <div class="fab">
+        <div class="fab-menu">
+            <div class="fab-item" onclick="fabAction('predict')">🔍 Quick Predict</div>
+            <div class="fab-item" onclick="fabAction('batch')">📂 Batch Upload</div>
+            <div class="fab-item" onclick="fabAction('monitoring')">📈 Monitoring</div>
+            <div class="fab-item" onclick="fabAction('refresh')">🔄 Refresh Data</div>
+        </div>
+        <button class="fab-trigger" onclick="toggleFab()" title="Quick Actions">+</button>
+    </div>
+
     <script>
         // ══════════════════════════════════════════════════════════════
         //  NAVIGATION
@@ -2804,7 +2612,6 @@
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById('page-' + page).classList.add('active');
             if (el) el.classList.add('active');
-            // Smooth scroll to top
             document.querySelector('.main').scrollTo({ top: 0, behavior: 'smooth' });
             window.scrollTo({ top: 0, behavior: 'smooth' });
             if (page === 'dashboard') loadDashboard();
@@ -2842,24 +2649,23 @@
                 renderScoreHistogram(data.score_buckets);
                 renderContractRiskBars(data.contract_risk);
                 renderDashboardSparklines(data);
-                // Update last-updated timestamp
+                renderKPITicker(data);
+                calculateROI(data);
                 const luEl = document.getElementById('last-updated-text');
                 if (luEl) luEl.textContent = 'Updated ' + new Date().toLocaleTimeString();
             } catch (e) { console.error('Dashboard error:', e); }
+            loadTopRiskCustomers();
+            renderHeatmap();
         }
 
         function animateCount(id, target) {
             const el = document.getElementById(id); if (!el) return;
-            const duration = 800;
-            const start = performance.now();
-            const from = 0;
-            function ease(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; } // cubic ease in-out
+            const duration = 800, start = performance.now();
+            function ease(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
             function frame(now) {
-                const elapsed = now - start;
-                const progress = Math.min(elapsed / duration, 1);
-                const current = Math.round(from + (target - from) * ease(progress));
-                el.textContent = current.toLocaleString();
-                if (progress < 1) requestAnimationFrame(frame);
+                const p = Math.min((now - start) / duration, 1);
+                el.textContent = Math.round(target * ease(p)).toLocaleString();
+                if (p < 1) requestAnimationFrame(frame);
             }
             requestAnimationFrame(frame);
         }
@@ -2891,14 +2697,14 @@
             const labels = buckets ? buckets.map(b => b.range) : ['0-10', '10-20', '20-30', '30-40', '40-50', '50-60', '60-70', '70-80', '80-90', '90-100'];
             const values = buckets ? buckets.map(b => b.count) : new Array(10).fill(0);
             const barColors = labels.map(l => { const low = parseInt(l.split('-')[0]); if (low >= 75) return 'rgba(239,68,68,0.75)'; if (low >= 50) return 'rgba(249,115,22,0.75)'; if (low >= 25) return 'rgba(245,158,11,0.75)'; return 'rgba(16,185,129,0.75)'; });
-            scoreHistogramChart = new Chart(ctx, { type: 'bar', data: { labels, datasets: [{ label: 'Number of Customers', data: values, backgroundColor: barColors, borderColor: barColors.map(c => c.replace('0.75', '1')), borderWidth: 1, borderRadius: 5 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11, family: 'Inter' } } }, tooltip: { backgroundColor: '#1a2235', titleColor: '#f1f5f9', bodyColor: '#94a3b8', borderColor: '#2d3748', borderWidth: 1, callbacks: { title: t => `Risk Score: ${t[0].label}%`, label: c => ` ${c.raw} customers in this range` } } }, scales: { x: { ticks: { color: '#475569', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.03)' }, title: { display: true, text: 'Risk Score Range (%)', color: '#475569', font: { size: 10 } } }, y: { ticks: { color: '#475569', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: 'Customer Count', color: '#475569', font: { size: 10 } } } }, animation: { duration: 800 } } });
+            scoreHistogramChart = new Chart(ctx, { type: 'bar', data: { labels, datasets: [{ label: 'Number of Customers', data: values, backgroundColor: barColors, borderColor: barColors.map(c => c.replace('0.75', '1')), borderWidth: 1, borderRadius: 5 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11, family: 'Inter' } } }, tooltip: { backgroundColor: '#1a2235', titleColor: '#f1f5f9', bodyColor: '#94a3b8', borderColor: '#2d3748', borderWidth: 1, callbacks: { title: t => `Risk Score: ${t[0].label}%`, label: c => ` ${c.raw} customers in this range` } } }, scales: { x: { ticks: { color: '#475569', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.03)' } }, y: { ticks: { color: '#475569', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } } }, animation: { duration: 800 } } });
         }
 
         function renderContractRiskBars(contractData) {
             const container = document.getElementById('contractRiskBars'); if (!container) return;
             if (!contractData || contractData.length === 0) { container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted);font-size:13px">No contract data available</div>'; return; }
             const colors = { 'Month-to-month': { bar: 'linear-gradient(90deg,#ef4444,#f97316)', val: '#ef4444' }, 'One year': { bar: 'linear-gradient(90deg,#f59e0b,#eab308)', val: '#f59e0b' }, 'Two year': { bar: 'linear-gradient(90deg,#10b981,#06b6d4)', val: '#10b981' } };
-            container.innerHTML = contractData.map(c => { const col = colors[c.contract] || { bar: 'linear-gradient(90deg,#3b82f6,#8b5cf6)', val: '#3b82f6' }; const tier = c.avg_risk >= 75 ? 'Critical' : c.avg_risk >= 50 ? 'High' : c.avg_risk >= 25 ? 'Medium' : 'Low'; const pct = Math.min(c.avg_risk, 100).toFixed(0); return `<div class="contract-bar-row"><div class="contract-bar-header"><span class="contract-bar-label">${c.contract}</span><span class="contract-bar-value" style="color:${col.val}">${c.avg_risk.toFixed(1)}% avg risk</span></div><div class="contract-bar-track"><div class="contract-bar-fill" style="width:${pct}%;background:${col.bar}"></div></div><div class="contract-bar-meta">${c.customer_count.toLocaleString()} customers &nbsp;·&nbsp; <span style="color:${col.val};font-weight:600">${tier} Risk</span></div></div>`; }).join('');
+            container.innerHTML = contractData.map(c => { const col = colors[c.contract] || { bar: 'linear-gradient(90deg,#3b82f6,#8b5cf6)', val: '#3b82f6' }; const tier = c.avg_risk >= 75 ? 'Critical' : c.avg_risk >= 50 ? 'High' : c.avg_risk >= 25 ? 'Medium' : 'Low'; const pct = Math.min(c.avg_risk, 100).toFixed(0); return `<div class="contract-bar-row"><div class="contract-bar-header"><span class="contract-bar-label">${c.contract}</span><span class="contract-bar-value" style="color:${col.val}">${c.avg_risk.toFixed(1)}% avg risk</span></div><div class="contract-bar-track"><div class="contract-bar-fill" style="width:${pct}%;background:${col.bar}"></div></div><div class="contract-bar-meta">${c.customer_count.toLocaleString()} customers · <span style="color:${col.val};font-weight:600">${tier} Risk</span></div></div>`; }).join('');
         }
 
         // ══════════════════════════════════════════════════════════════
@@ -2913,7 +2719,7 @@
         }
 
         // ══════════════════════════════════════════════════════════════
-        //  PREDICT — SINGLE
+        //  PREDICT — RISK METER
         // ══════════════════════════════════════════════════════════════
         let riskMeterChart = null, timelineChart = null;
 
@@ -2935,17 +2741,26 @@
             if (sn) { sn.textContent = score.toFixed(1); sn.style.color = textC[tier] || '#f1f5f9'; }
         }
 
+        // ══════════════════════════════════════════════════════════════
+        //  PREDICT — SUBMIT + SHAP
+        // ══════════════════════════════════════════════════════════════
+        let _lastPredictResult = null;  // store for SHAP modal re-use
+
         async function submitPrediction() {
             const btn = document.getElementById('predict-btn');
             btn.disabled = true; btn.textContent = '⏳ Analyzing...';
             try {
                 const payload = collectFormData();
                 if (!payload) { btn.disabled = false; btn.textContent = '🔍 Analyze Churn Risk'; return; }
+
                 const res = await fetch('/predict', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                 if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Prediction failed'); }
                 const result = await res.json();
+
+                _lastPredictResult = result;  // cache for modal
+
                 displayResult(result);
-                // After result shown, fetch and render timeline simulation
+                displayShapExplanation(result);
                 await renderTimeline(result, payload);
             } catch (e) { alert('❌ Error: ' + e.message); }
             finally { btn.disabled = false; btn.textContent = '🔍 Analyze Churn Risk'; }
@@ -2977,23 +2792,186 @@
             setV('result-anomaly', data.is_anomaly ? '⚠️ Anomaly' : '✅ Normal');
             setV('result-model', data.model_version || 'N/A');
             setV('result-time', new Date(data.timestamp).toLocaleTimeString());
-            const msgs = { Critical: '🔴 Very high churn probability. Immediate intervention recommended.', High: '🟠 High churn risk detected. Consider proactive outreach.', Medium: '🟡 Moderate churn risk. Monitor and engage.', Low: '🟢 Low churn risk. Customer appears stable.' };
-            setV('result-interpretation', msgs[tier] || '');
+            setV('result-shap-status', data.explanation && data.explanation.length > 0 ? '✅ Ready' : '⏳ Loading');
             const ae = document.getElementById('result-anomaly');
             if (ae) ae.style.color = data.is_anomaly ? '#ef4444' : '#10b981';
+            const msgs = { Critical: '🔴 Very high churn probability. Immediate intervention recommended.', High: '🟠 High churn risk detected. Consider proactive outreach.', Medium: '🟡 Moderate churn risk. Monitor and engage.', Low: '🟢 Low churn risk. Customer appears stable.' };
+            setV('result-interpretation', msgs[tier] || '');
+        }
 
-            // ── SHAP Explanation ──
-            if (data.explanation && data.explanation.length > 0) {
-                renderShapPanel(data.explanation, data.explanation_summary || '');
-                setV('result-shap-status', '✅ Available');
-                // Store for modal use
-                window._lastShapData = { explanation: data.explanation, summary: data.explanation_summary || '' };
-            } else {
-                const sp = document.getElementById('shap-panel');
-                if (sp) sp.classList.remove('visible');
-                setV('result-shap-status', '⚠️ Unavailable');
-                window._lastShapData = null;
+        // ══════════════════════════════════════════════════════════════
+        //  SHAP EXPLANATION — INLINE PANEL
+        // ══════════════════════════════════════════════════════════════
+        function displayShapExplanation(data) {
+            const panel = document.getElementById('shap-panel');
+            const summaryEl = document.getElementById('shap-summary-text');
+            const barsEl = document.getElementById('shap-bars-container');
+
+            const explanation = data.explanation || [];
+            const summary = data.explanation_summary || '';
+
+            if (explanation.length === 0) {
+                panel.classList.remove('visible');
+                return;
             }
+
+            // Plain English Summary
+            if (summaryEl) {
+                summaryEl.innerHTML = summary
+                    ? `<strong>Why this score?</strong> ${formatShapSummary(summary)}`
+                    : '<strong>Why this score?</strong> No summary available.';
+            }
+
+            // Top 5 feature bars
+            const top5 = explanation.slice(0, 5);
+            const maxVal = Math.max(...top5.map(f => Math.abs(f.shap_value)));
+
+            barsEl.innerHTML = top5.map(f => {
+                const isRisk = f.direction === 'increases_risk';
+                const pct = maxVal > 0 ? ((Math.abs(f.shap_value) / maxVal) * 100).toFixed(1) : 0;
+                const chipClass = isRisk ? 'risk' : 'safe';
+                const arrow = isRisk ? '↑' : '↓';
+                const label = isRisk ? 'Increases Risk' : 'Reduces Risk';
+                const shapFormatted = (f.shap_value >= 0 ? '+' : '') + f.shap_value.toFixed(4);
+
+                return `
+                <div class="shap-bar-row">
+                    <div class="shap-bar-header">
+                        <span class="shap-feature-name">${f.feature}</span>
+                        <span class="shap-value-chip ${chipClass}">${arrow} ${label} <span style="opacity:0.7;font-size:9px">(${shapFormatted})</span></span>
+                    </div>
+                    <div class="shap-bar-track">
+                        <div class="shap-bar-fill ${chipClass}" style="width:${pct}%"></div>
+                    </div>
+                </div>`;
+            }).join('');
+
+            panel.classList.add('visible');
+
+            // Update SHAP ready status
+            setV('result-shap-status', '✅ Ready');
+        }
+
+        function formatShapSummary(summary) {
+            // Style the feature names in the summary
+            return summary
+                .replace(/↑/g, '<span style="color:var(--red);font-weight:700">↑</span>')
+                .replace(/↓/g, '<span style="color:var(--green);font-weight:700">↓</span>');
+        }
+
+        // ══════════════════════════════════════════════════════════════
+        //  SHAP MODAL — FULL TOP 10 BREAKDOWN
+        // ══════════════════════════════════════════════════════════════
+        async function openShapModal() {
+            const overlay = document.getElementById('shap-modal-overlay');
+            const contentEl = document.getElementById('shap-modal-content');
+            overlay.classList.add('open');
+            contentEl.innerHTML = '<div class="spinner"></div>';
+
+            try {
+                let explanation = [], summary = '';
+
+                // Try /explain endpoint first for top 10
+                if (_lastPredictResult) {
+                    try {
+                        // Check if backend has /explain endpoint
+                        const explainPayload = collectCurrentFormData();
+                        if (explainPayload) {
+                            const res = await fetch('/explain', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(explainPayload)
+                            });
+                            if (res.ok) {
+                                const d = await res.json();
+                                explanation = d.explanation || [];
+                                summary = d.explanation_summary || _lastPredictResult.explanation_summary || '';
+                            }
+                        }
+                    } catch (_) { }
+
+                    // Fallback to cached predict result
+                    if (explanation.length === 0) {
+                        explanation = _lastPredictResult.explanation || [];
+                        summary = _lastPredictResult.explanation_summary || '';
+                    }
+                }
+
+                if (explanation.length === 0) {
+                    contentEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:40px">No SHAP data available. Run a prediction first.</div>';
+                    return;
+                }
+
+                const maxVal = Math.max(...explanation.map(f => Math.abs(f.shap_value)));
+                const score = _lastPredictResult ? _lastPredictResult.churn_risk_score.toFixed(1) : '—';
+                const tier = _lastPredictResult ? _lastPredictResult.risk_tier : '—';
+
+                contentEl.innerHTML = `
+                <div class="shap-full-summary">
+                    <strong>Customer Risk: ${score}% (${tier})</strong><br>
+                    ${formatShapSummary(summary) || 'Feature contributions computed by SHAP TreeExplainer on IsolationForest.'}
+                    <div style="margin-top:8px;font-size:11px;color:var(--text-muted)">
+                        Positive SHAP → feature <strong style="color:var(--red)">increases</strong> anomaly score (pushes toward risk) &nbsp;|&nbsp;
+                        Negative SHAP → feature <strong style="color:var(--green)">decreases</strong> anomaly (pushes toward normal)
+                    </div>
+                </div>
+
+                <div class="shap-full-bars">
+                    ${explanation.map((f, i) => {
+                    const isRisk = f.direction === 'increases_risk';
+                    const pct = maxVal > 0 ? ((Math.abs(f.shap_value) / maxVal) * 100).toFixed(1) : 0;
+                    const cls = isRisk ? 'risk' : 'safe';
+                    const arrow = isRisk ? '↑' : '↓';
+                    const shapFormatted = (f.shap_value >= 0 ? '+' : '') + f.shap_value.toFixed(6);
+                    const color = isRisk ? '#ef4444' : '#10b981';
+                    return `
+                            <div class="shap-full-row">
+                                <div class="shap-full-header">
+                                    <span class="shap-full-feature">${f.feature}</span>
+                                    <span class="shap-full-rank">#${f.rank || i + 1}</span>
+                                </div>
+                                <div class="shap-full-track">
+                                    <div class="shap-full-fill ${cls}" style="width:${pct}%"></div>
+                                </div>
+                                <div class="shap-full-meta">
+                                    <span style="color:${color};font-weight:600">${arrow} ${isRisk ? 'Increases Risk' : 'Reduces Risk'}</span>
+                                    <span>SHAP value: ${shapFormatted}</span>
+                                </div>
+                            </div>`;
+                }).join('')}
+                </div>
+
+                <div class="shap-legend">
+                    <div class="shap-legend-item"><div class="shap-legend-dot" style="background:var(--red)"></div> Increases churn risk</div>
+                    <div class="shap-legend-item"><div class="shap-legend-dot" style="background:var(--green)"></div> Reduces churn risk</div>
+                    <div class="shap-legend-item"><div class="shap-legend-dot" style="background:var(--cyan)"></div> Bar width = relative importance</div>
+                </div>`;
+
+            } catch (e) {
+                contentEl.innerHTML = `<div style="text-align:center;color:var(--red);padding:40px">❌ Failed to load explanation: ${e.message}</div>`;
+            }
+        }
+
+        function closeShapModal() {
+            document.getElementById('shap-modal-overlay').classList.remove('open');
+        }
+
+        function closeShapModalOutside(e) {
+            if (e.target === document.getElementById('shap-modal-overlay')) closeShapModal();
+        }
+
+        // Helper: collect form data without validation (for modal re-use)
+        function collectCurrentFormData() {
+            const fields = ['gender', 'SeniorCitizen', 'Partner', 'Dependents', 'tenure', 'PhoneService', 'MultipleLines', 'InternetService', 'OnlineSecurity', 'OnlineBackup', 'DeviceProtection', 'TechSupport', 'StreamingTV', 'StreamingMovies', 'Contract', 'PaperlessBilling', 'PaymentMethod', 'MonthlyCharges', 'TotalCharges'];
+            const payload = {};
+            for (const f of fields) {
+                const el = document.getElementById('f_' + f); if (!el) continue;
+                const val = el.value.trim(); if (!val) return null;
+                if (['SeniorCitizen', 'tenure'].includes(f)) payload[f] = parseInt(val);
+                else if (['MonthlyCharges', 'TotalCharges'].includes(f)) payload[f] = parseFloat(val);
+                else payload[f] = val;
+            }
+            return payload;
         }
 
         function setV(id, val) { const e = document.getElementById(id); if (e) e.textContent = val; }
@@ -3003,140 +2981,9 @@
             document.getElementById('result-placeholder').style.display = 'flex';
             document.getElementById('result-content').style.display = 'none';
             document.getElementById('timeline-wrap').classList.remove('visible');
-            const sp = document.getElementById('shap-panel');
-            if (sp) sp.classList.remove('visible');
-            window._lastShapData = null;
+            document.getElementById('shap-panel').classList.remove('visible');
+            _lastPredictResult = null;
             initRiskMeter();
-        }
-
-        // ══════════════════════════════════════════════════════════════
-        //  SHAP EXPLAINABILITY UI
-        // ══════════════════════════════════════════════════════════════
-
-        function renderShapPanel(explanation, summary) {
-            const panel = document.getElementById('shap-panel');
-            if (!panel) return;
-
-            // Summary text
-            const summaryEl = document.getElementById('shap-summary-text');
-            if (summaryEl) {
-                const parts = summary.replace('Risk driven by: ', '').split(', ');
-                summaryEl.innerHTML = '<strong>Key risk drivers:</strong> ' +
-                    parts.map(p => {
-                        const isUp = p.includes('↑');
-                        return `<span style="color:${isUp ? 'var(--red)' : 'var(--green)'}">${p}</span>`;
-                    }).join(', ');
-            }
-
-            // Top-5 bars
-            const container = document.getElementById('shap-bars-container');
-            if (container) {
-                const top5 = explanation.slice(0, 5);
-                const maxAbs = Math.max(...top5.map(e => Math.abs(e.shap_value)), 0.001);
-                container.innerHTML = top5.map(e => {
-                    const isRisk = e.direction === 'increases_risk';
-                    const cls = isRisk ? 'risk' : 'safe';
-                    const arrow = isRisk ? '▲' : '▼';
-                    const pct = Math.min((Math.abs(e.shap_value) / maxAbs) * 100, 100).toFixed(0);
-                    return `<div class="shap-bar-row">
-                        <div class="shap-bar-header">
-                            <span class="shap-feature-name">${e.feature}</span>
-                            <span class="shap-value-chip ${cls}">${arrow} ${Math.abs(e.shap_value).toFixed(4)}</span>
-                        </div>
-                        <div class="shap-bar-track">
-                            <div class="shap-bar-fill ${cls}" style="width:${pct}%"></div>
-                        </div>
-                    </div>`;
-                }).join('');
-            }
-
-            panel.classList.add('visible');
-        }
-
-        function openShapModal() {
-            const overlay = document.getElementById('shap-modal-overlay');
-            const content = document.getElementById('shap-modal-content');
-            if (!overlay || !content) return;
-
-            const shapData = window._lastShapData;
-            if (!shapData || !shapData.explanation || shapData.explanation.length === 0) {
-                content.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-muted)">No SHAP data available. Run a prediction first.</div>';
-                overlay.classList.add('open');
-                return;
-            }
-
-            // Fetch full top-10 from /explain endpoint
-            const formPayload = collectFormData();
-            if (!formPayload) {
-                content.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-muted)">Form data needed. Please keep form filled.</div>';
-                overlay.classList.add('open');
-                return;
-            }
-
-            content.innerHTML = '<div style="text-align:center;padding:32px"><div class="spinner" style="margin:0 auto"></div><div style="margin-top:12px;color:var(--text-muted);font-size:12px">Fetching full breakdown...</div></div>';
-            overlay.classList.add('open');
-
-            fetch('/explain', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formPayload) })
-                .then(r => r.json())
-                .then(data => {
-                    renderShapModalContent(data.explanation || shapData.explanation, data.explanation_summary || shapData.summary);
-                })
-                .catch(() => {
-                    // Fallback — use the cached top-5
-                    renderShapModalContent(shapData.explanation, shapData.summary);
-                });
-        }
-
-        function renderShapModalContent(explanation, summary) {
-            const content = document.getElementById('shap-modal-content');
-            if (!content) return;
-
-            const maxAbs = Math.max(...explanation.map(e => Math.abs(e.shap_value)), 0.001);
-
-            let html = '';
-
-            // Summary
-            html += `<div class="shap-modal-summary"><strong>Summary:</strong> ${summary}</div>`;
-
-            // Bars
-            html += '<div class="shap-modal-bars">';
-            explanation.forEach((e, i) => {
-                const isRisk = e.direction === 'increases_risk';
-                const cls = isRisk ? 'risk' : 'safe';
-                const arrow = isRisk ? '▲ Increases Risk' : '▼ Decreases Risk';
-                const pct = Math.min((Math.abs(e.shap_value) / maxAbs) * 100, 100).toFixed(0);
-                html += `<div class="shap-modal-row">
-                    <div class="shap-modal-row-header">
-                        <span class="shap-modal-feature">${e.feature}</span>
-                        <span class="shap-modal-rank">#${e.rank || (i + 1)}</span>
-                    </div>
-                    <div class="shap-modal-track">
-                        <div class="shap-modal-fill ${cls}" style="width:${pct}%"></div>
-                    </div>
-                    <div class="shap-modal-meta">
-                        <span>${arrow}</span>
-                        <span>SHAP: ${e.shap_value > 0 ? '+' : ''}${e.shap_value.toFixed(4)}</span>
-                    </div>
-                </div>`;
-            });
-            html += '</div>';
-
-            // Legend
-            html += `<div class="shap-legend">
-                <div class="shap-legend-item"><div class="shap-legend-dot" style="background:linear-gradient(135deg,#ef4444,#f97316)"></div> Increases Risk</div>
-                <div class="shap-legend-item"><div class="shap-legend-dot" style="background:linear-gradient(135deg,#10b981,#06b6d4)"></div> Decreases Risk</div>
-            </div>`;
-
-            content.innerHTML = html;
-        }
-
-        function closeShapModal() {
-            const overlay = document.getElementById('shap-modal-overlay');
-            if (overlay) overlay.classList.remove('open');
-        }
-
-        function closeShapModalOutside(event) {
-            if (event.target === event.currentTarget) closeShapModal();
         }
 
         function fillSampleData(type) {
@@ -3149,162 +2996,70 @@
         }
 
         // ══════════════════════════════════════════════════════════════
-        //  FEATURE 5 — TIMELINE SIMULATION
+        //  TIMELINE SIMULATION
         // ══════════════════════════════════════════════════════════════
         async function renderTimeline(predResult, formData) {
             try {
-                // Call API for simulation data
                 const res = await fetch('/simulate-timeline', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        churn_risk_score: predResult.churn_risk_score,
-                        contract: formData.Contract,
-                        tenure: formData.tenure,
-                        monthly_charges: formData.MonthlyCharges
-                    })
+                    body: JSON.stringify({ churn_risk_score: predResult.churn_risk_score, contract: formData.Contract, tenure: formData.tenure, monthly_charges: formData.MonthlyCharges })
                 });
                 if (!res.ok) return;
                 const sim = await res.json();
                 drawTimelineChart(sim);
-
-                // Show wrap
                 document.getElementById('timeline-wrap').classList.add('visible');
-
-                // Generate insight text
-                const currentFinal = sim.current[11];
-                const oneYrFinal = sim.one_year[11];
-                const twoYrFinal = sim.two_year[11];
-                const saving1 = (currentFinal - oneYrFinal).toFixed(1);
-                const saving2 = (currentFinal - twoYrFinal).toFixed(1);
+                const currentFinal = sim.current[11], oneYrFinal = sim.one_year[11], twoYrFinal = sim.two_year[11];
+                const saving1 = (currentFinal - oneYrFinal).toFixed(1), saving2 = (currentFinal - twoYrFinal).toFixed(1);
                 const insightEl = document.getElementById('timeline-insight');
-                insightEl.innerHTML = `
-            <strong>📊 Simulation Insight:</strong> On their current <strong>${formData.Contract}</strong> contract,
-            this customer's projected risk after 12 months is <strong>${currentFinal.toFixed(1)}%</strong>.
-            ${saving1 > 0
-                        ? `Upgrading to a <strong>1-year contract</strong> could reduce risk by <strong>${saving1}%</strong>, and a <strong>2-year contract</strong> by <strong>${saving2}%</strong>.`
-                        : `The customer is already on a long-term contract — risk is projected to continue declining naturally.`
-                    }
-            ${predResult.risk_tier === 'Critical' || predResult.risk_tier === 'High'
-                        ? ` <strong>⚡ Recommended action:</strong> Proactively offer a contract upgrade or loyalty discount.`
-                        : ``
-                    }
-        `;
-            } catch (e) { console.warn('Timeline simulation error:', e); }
+                insightEl.innerHTML = `<strong>📊 Simulation Insight:</strong> On their current <strong>${formData.Contract}</strong> contract, this customer's projected risk after 12 months is <strong>${currentFinal.toFixed(1)}%</strong>. ${saving1 > 0 ? `Upgrading to a <strong>1-year contract</strong> could reduce risk by <strong>${saving1}%</strong>, and a <strong>2-year contract</strong> by <strong>${saving2}%</strong>.` : `The customer is already on a long-term contract — risk is projected to continue declining naturally.`} ${predResult.risk_tier === 'Critical' || predResult.risk_tier === 'High' ? ` <strong>⚡ Recommended action:</strong> Proactively offer a contract upgrade or loyalty discount.` : ``}`;
+            } catch (e) { console.warn('Timeline error:', e); }
         }
 
         function drawTimelineChart(sim) {
             const ctx = document.getElementById('timelineChart'); if (!ctx) return;
             if (timelineChart) timelineChart.destroy();
             const months = ['Month 1', 'Month 2', 'Month 3', 'Month 4', 'Month 5', 'Month 6', 'Month 7', 'Month 8', 'Month 9', 'Month 10', 'Month 11', 'Month 12'];
-            timelineChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: months,
-                    datasets: [
-                        { label: 'Current Contract', data: sim.current, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.06)', tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#ef4444', borderWidth: 2.5 },
-                        { label: 'Switch to 1-Year', data: sim.one_year, borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.06)', tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#f59e0b', borderWidth: 2, borderDash: [6, 3] },
-                        { label: 'Switch to 2-Year', data: sim.two_year, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.06)', tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#10b981', borderWidth: 2, borderDash: [3, 3] }
-                    ]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
-                    plugins: {
-                        legend: { labels: { color: '#94a3b8', font: { size: 11, family: 'Inter' }, usePointStyle: true, padding: 16 } },
-                        tooltip: {
-                            backgroundColor: '#1a2235', titleColor: '#f1f5f9', bodyColor: '#94a3b8', borderColor: '#2d3748', borderWidth: 1,
-                            callbacks: { label: c => ` ${c.dataset.label}: ${parseFloat(c.raw).toFixed(1)}% risk` }
-                        }
-                    },
-                    scales: {
-                        x: { ticks: { color: '#475569', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.03)' } },
-                        y: { min: 0, max: 100, ticks: { color: '#475569', font: { size: 10 }, callback: v => v + '%' }, grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: 'Churn Risk (%)', color: '#475569', font: { size: 10 } } }
-                    }
-                }
-            });
+            timelineChart = new Chart(ctx, { type: 'line', data: { labels: months, datasets: [{ label: 'Current Contract', data: sim.current, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.06)', tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#ef4444', borderWidth: 2.5 }, { label: 'Switch to 1-Year', data: sim.one_year, borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.06)', tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#f59e0b', borderWidth: 2, borderDash: [6, 3] }, { label: 'Switch to 2-Year', data: sim.two_year, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.06)', tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#10b981', borderWidth: 2, borderDash: [3, 3] }] }, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11, family: 'Inter' }, usePointStyle: true, padding: 16 } }, tooltip: { backgroundColor: '#1a2235', titleColor: '#f1f5f9', bodyColor: '#94a3b8', borderColor: '#2d3748', borderWidth: 1, callbacks: { label: c => ` ${c.dataset.label}: ${parseFloat(c.raw).toFixed(1)}% risk` } } }, scales: { x: { ticks: { color: '#475569', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.03)' } }, y: { min: 0, max: 100, ticks: { color: '#475569', font: { size: 10 }, callback: v => v + '%' }, grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: 'Churn Risk (%)', color: '#475569', font: { size: 10 } } } } } });
         }
 
         // ══════════════════════════════════════════════════════════════
-        //  FEATURE 3 — BATCH CSV UPLOAD
+        //  BATCH CSV
         // ══════════════════════════════════════════════════════════════
-        let batchResults = [];   // stores all scored rows for filtering/export
-        let batchDonutChart = null;
+        let batchResults = [], batchDonutChart = null;
 
-        // Drag and drop handlers
         function handleDragOver(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('drag-over'); }
         function handleDragLeave(e) { document.getElementById('dropZone').classList.remove('drag-over'); }
-        function handleDrop(e) {
-            e.preventDefault();
-            document.getElementById('dropZone').classList.remove('drag-over');
-            const file = e.dataTransfer.files[0];
-            if (file && file.name.endsWith('.csv')) processBatchFile(file);
-            else showToast('❌ Please upload a CSV file', 'error');
-        }
-        function handleFileSelect(e) {
-            const file = e.target.files[0];
-            if (file) processBatchFile(file);
-        }
+        function handleDrop(e) { e.preventDefault(); document.getElementById('dropZone').classList.remove('drag-over'); const file = e.dataTransfer.files[0]; if (file && file.name.endsWith('.csv')) processBatchFile(file); else showToast('❌ Please upload a CSV file', 'error'); }
+        function handleFileSelect(e) { const file = e.target.files[0]; if (file) processBatchFile(file); }
 
         async function processBatchFile(file) {
-            // Show processing state
             document.getElementById('batch-upload-zone').style.display = 'none';
             document.getElementById('batch-processing').style.display = 'block';
             document.getElementById('batch-results').style.display = 'none';
             document.getElementById('batch-progress-text').textContent = `Reading ${file.name}...`;
-
             try {
-                // Parse CSV in browser
                 const text = await file.text();
                 const rows = parseCSV(text);
                 if (rows.length === 0) throw new Error('No valid rows found in CSV');
                 if (rows.length > 5000) throw new Error('File exceeds 5,000 row limit');
-
                 document.getElementById('batch-progress-text').textContent = `Scoring ${rows.length} customers...`;
-                document.getElementById('batch-progress-sub').textContent = `Sending to ChurnGuard AI model`;
-
-                // Send to API
-                const res = await fetch('/predict-batch', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ customers: rows })
-                });
+                const res = await fetch('/predict-batch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ customers: rows }) });
                 if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Batch prediction failed'); }
                 const data = await res.json();
-
-                // Merge input rows with prediction results
-                batchResults = data.predictions.map((pred, i) => ({
-                    row: i + 1,
-                    contract: rows[i].Contract || '—',
-                    tenure: rows[i].tenure || '—',
-                    monthly: rows[i].MonthlyCharges || '—',
-                    internet: rows[i].InternetService || '—',
-                    score: pred.churn_risk_score,
-                    tier: pred.risk_tier,
-                    is_anomaly: pred.is_anomaly,
-                    // keep original row for CSV export
-                    original: rows[i]
-                }));
-
+                batchResults = data.predictions.map((pred, i) => ({ row: i + 1, contract: rows[i].Contract || '—', tenure: rows[i].tenure || '—', monthly: rows[i].MonthlyCharges || '—', internet: rows[i].InternetService || '—', score: pred.churn_risk_score, tier: pred.risk_tier, is_anomaly: pred.is_anomaly, original: rows[i] }));
                 showBatchResults(data, file.name);
-            } catch (e) {
-                document.getElementById('batch-upload-zone').style.display = 'block';
-                document.getElementById('batch-processing').style.display = 'none';
-                showToast('❌ ' + e.message, 'error');
-            }
+            } catch (e) { document.getElementById('batch-upload-zone').style.display = 'block'; document.getElementById('batch-processing').style.display = 'none'; showToast('❌ ' + e.message, 'error'); }
         }
 
-        // Lightweight CSV parser — handles quoted fields
         function parseCSV(text) {
-            const lines = text.trim().split('\n');
-            if (lines.length < 2) return [];
+            const lines = text.trim().split('\n'); if (lines.length < 2) return [];
             const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
             const rows = [];
             for (let i = 1; i < lines.length; i++) {
                 const vals = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
                 if (vals.length < headers.length) continue;
-                const obj = {};
-                headers.forEach((h, j) => obj[h] = vals[j] || '');
-                // Type coerce
+                const obj = {}; headers.forEach((h, j) => obj[h] = vals[j] || '');
                 if (obj.SeniorCitizen !== undefined) obj.SeniorCitizen = parseInt(obj.SeniorCitizen) || 0;
                 if (obj.tenure !== undefined) obj.tenure = parseInt(obj.tenure) || 0;
                 if (obj.MonthlyCharges !== undefined) obj.MonthlyCharges = parseFloat(obj.MonthlyCharges) || 0;
@@ -3317,39 +3072,16 @@
         function showBatchResults(data, filename) {
             document.getElementById('batch-processing').style.display = 'none';
             document.getElementById('batch-results').style.display = 'block';
-
-            // Count tiers
             const counts = { Critical: 0, High: 0, Medium: 0, Low: 0 };
             batchResults.forEach(r => counts[r.tier]++);
             const total = batchResults.length;
             const critPct = ((counts.Critical / total) * 100).toFixed(1);
-
-            // Summary cards
-            document.getElementById('batch-summary-cards').innerHTML = `
-        <div class="batch-summary-card"><div class="batch-summary-val" style="color:var(--blue)">${total}</div><div class="batch-summary-lbl">Total Scored</div></div>
-        <div class="batch-summary-card"><div class="batch-summary-val" style="color:var(--red)">${counts.Critical}</div><div class="batch-summary-lbl">Critical Risk</div></div>
-        <div class="batch-summary-card"><div class="batch-summary-val" style="color:var(--orange)">${counts.High}</div><div class="batch-summary-lbl">High Risk</div></div>
-        <div class="batch-summary-card"><div class="batch-summary-val" style="color:var(--green)">${counts.Low}</div><div class="batch-summary-lbl">Low Risk</div></div>
-    `;
-
-            // Text summary
+            document.getElementById('batch-summary-cards').innerHTML = `<div class="batch-summary-card"><div class="batch-summary-val" style="color:var(--blue)">${total}</div><div class="batch-summary-lbl">Total Scored</div></div><div class="batch-summary-card"><div class="batch-summary-val" style="color:var(--red)">${counts.Critical}</div><div class="batch-summary-lbl">Critical Risk</div></div><div class="batch-summary-card"><div class="batch-summary-val" style="color:var(--orange)">${counts.High}</div><div class="batch-summary-lbl">High Risk</div></div><div class="batch-summary-card"><div class="batch-summary-val" style="color:var(--green)">${counts.Low}</div><div class="batch-summary-lbl">Low Risk</div></div>`;
             const avgScore = (batchResults.reduce((s, r) => s + r.score, 0) / total).toFixed(1);
-            document.getElementById('batch-text-summary').innerHTML = `
-        📁 <strong style="color:var(--text)">${filename}</strong> processed successfully.<br>
-        Average risk score across all customers: <strong style="color:var(--blue)">${avgScore}%</strong><br>
-        ${critPct}% of customers are in the Critical risk tier — <strong style="color:${counts.Critical > 0 ? 'var(--red)' : 'var(--green)'}">${counts.Critical > 0 ? 'immediate action recommended' : 'no critical cases'}</strong>.<br>
-        Model version: <strong style="color:var(--cyan)">${data.model_version || 'N/A'}</strong>
-    `;
-
-            // Donut chart
+            document.getElementById('batch-text-summary').innerHTML = `📁 <strong style="color:var(--text)">${filename}</strong> processed successfully.<br>Average risk score: <strong style="color:var(--blue)">${avgScore}%</strong><br>${critPct}% Critical — <strong style="color:${counts.Critical > 0 ? 'var(--red)' : 'var(--green)'}">${counts.Critical > 0 ? 'immediate action recommended' : 'no critical cases'}</strong>.<br>Model: <strong style="color:var(--cyan)">${data.model_version || 'N/A'}</strong>`;
             const dCtx = document.getElementById('batchDonutChart');
             if (batchDonutChart) batchDonutChart.destroy();
-            batchDonutChart = new Chart(dCtx, {
-                type: 'doughnut',
-                data: { labels: ['Critical', 'High', 'Medium', 'Low'], datasets: [{ data: [counts.Critical, counts.High, counts.Medium, counts.Low], backgroundColor: ['rgba(239,68,68,0.85)', 'rgba(249,115,22,0.85)', 'rgba(245,158,11,0.85)', 'rgba(16,185,129,0.85)'], borderColor: ['#ef4444', '#f97316', '#f59e0b', '#10b981'], borderWidth: 2, hoverOffset: 6 }] },
-                options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 10, family: 'Inter' }, usePointStyle: true, padding: 10 } }, tooltip: { backgroundColor: '#1a2235', titleColor: '#f1f5f9', bodyColor: '#94a3b8', borderColor: '#2d3748', borderWidth: 1 } }, animation: { animateRotate: true, duration: 800 } }
-            });
-
+            batchDonutChart = new Chart(dCtx, { type: 'doughnut', data: { labels: ['Critical', 'High', 'Medium', 'Low'], datasets: [{ data: [counts.Critical, counts.High, counts.Medium, counts.Low], backgroundColor: ['rgba(239,68,68,0.85)', 'rgba(249,115,22,0.85)', 'rgba(245,158,11,0.85)', 'rgba(16,185,129,0.85)'], borderColor: ['#ef4444', '#f97316', '#f59e0b', '#10b981'], borderWidth: 2, hoverOffset: 6 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 10, family: 'Inter' }, usePointStyle: true, padding: 10 } }, tooltip: { backgroundColor: '#1a2235', titleColor: '#f1f5f9', bodyColor: '#94a3b8', borderColor: '#2d3748', borderWidth: 1 } }, animation: { animateRotate: true, duration: 800 } } });
             renderBatchTable(batchResults);
         }
 
@@ -3357,80 +3089,38 @@
             const tbody = document.getElementById('batch-table-body');
             const tierColor = { Critical: 'var(--red)', High: 'var(--orange)', Medium: 'var(--yellow)', Low: 'var(--green)' };
             const tierEmoji = { Critical: '🔴', High: '🟠', Medium: '🟡', Low: '🟢' };
-            tbody.innerHTML = rows.map(r => `
-        <tr class="batch-result-row-${r.tier}">
-            <td style="color:var(--text-muted)">#${r.row}</td>
-            <td style="color:var(--text-sec)">${r.contract}</td>
-            <td>${r.tenure} mo</td>
-            <td>$${parseFloat(r.monthly).toFixed(2)}</td>
-            <td>${r.internet}</td>
-            <td><strong style="color:${tierColor[r.tier]}">${parseFloat(r.score).toFixed(1)}%</strong></td>
-            <td><span class="badge badge-${r.tier.toLowerCase()}">${tierEmoji[r.tier]} ${r.tier}</span></td>
-            <td style="color:${r.is_anomaly ? 'var(--red)' : 'var(--green)'}">${r.is_anomaly ? '⚠️ Anomaly' : '✅ Normal'}</td>
-        </tr>`).join('');
+            tbody.innerHTML = rows.map(r => `<tr class="batch-result-row-${r.tier}"><td style="color:var(--text-muted)">#${r.row}</td><td>${r.contract}</td><td>${r.tenure} mo</td><td>$${parseFloat(r.monthly).toFixed(2)}</td><td>${r.internet}</td><td><strong style="color:${tierColor[r.tier]}">${parseFloat(r.score).toFixed(1)}%</strong></td><td><span class="badge badge-${r.tier.toLowerCase()}">${tierEmoji[r.tier]} ${r.tier}</span></td><td style="color:${r.is_anomaly ? 'var(--red)' : 'var(--green)'}">${r.is_anomaly ? '⚠️ Anomaly' : '✅ Normal'}</td></tr>`).join('');
             document.getElementById('batch-showing-label').textContent = `Showing ${rows.length} of ${batchResults.length} customers`;
         }
 
-        function filterBatchTable() {
-            const filter = document.getElementById('batch-filter').value;
-            const filtered = filter === 'all' ? batchResults : batchResults.filter(r => r.tier === filter);
-            renderBatchTable(applySortToBatch(filtered));
-        }
-
+        function filterBatchTable() { const filter = document.getElementById('batch-filter').value; const filtered = filter === 'all' ? batchResults : batchResults.filter(r => r.tier === filter); renderBatchTable(applySortToBatch(filtered)); }
         function sortBatchTable() { filterBatchTable(); }
-
-        function applySortToBatch(rows) {
-            const sort = document.getElementById('batch-sort').value;
-            const r = [...rows];
-            if (sort === 'score-desc') r.sort((a, b) => b.score - a.score);
-            else if (sort === 'score-asc') r.sort((a, b) => a.score - b.score);
-            else r.sort((a, b) => a.row - b.row);
-            return r;
-        }
+        function applySortToBatch(rows) { const sort = document.getElementById('batch-sort').value; const r = [...rows]; if (sort === 'score-desc') r.sort((a, b) => b.score - a.score); else if (sort === 'score-asc') r.sort((a, b) => a.score - b.score); else r.sort((a, b) => a.row - b.row); return r; }
 
         function downloadBatchResults() {
             const header = 'Row,Contract,Tenure,MonthlyCharges,InternetService,ChurnRiskScore,RiskTier,IsAnomaly\n';
-            const rows = batchResults.map(r =>
-                `${r.row},"${r.contract}",${r.tenure},${r.monthly},"${r.internet}",${r.score.toFixed(2)},${r.tier},${r.is_anomaly}`
-            ).join('\n');
+            const rows = batchResults.map(r => `${r.row},"${r.contract}",${r.tenure},${r.monthly},"${r.internet}",${r.score.toFixed(2)},${r.tier},${r.is_anomaly}`).join('\n');
             const blob = new Blob([header + rows], { type: 'text/csv' });
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = 'churn_batch_results.csv'; a.click();
-            URL.revokeObjectURL(url);
-            showToast('✅ Results downloaded', 'success');
+            const a = document.createElement('a'); a.href = url; a.download = 'churn_batch_results.csv'; a.click();
+            URL.revokeObjectURL(url); showToast('✅ Results downloaded', 'success');
         }
 
         function downloadSampleCSV() {
             const header = 'gender,SeniorCitizen,Partner,Dependents,tenure,PhoneService,MultipleLines,InternetService,OnlineSecurity,OnlineBackup,DeviceProtection,TechSupport,StreamingTV,StreamingMovies,Contract,PaperlessBilling,PaymentMethod,MonthlyCharges,TotalCharges\n';
-            const rows = [
-                'Female,1,No,No,1,Yes,No,Fiber optic,No,No,No,No,Yes,Yes,Month-to-month,Yes,Electronic check,95.75,95.75',
-                'Male,0,Yes,Yes,60,Yes,Yes,DSL,Yes,Yes,Yes,Yes,No,No,Two year,No,Bank transfer (automatic),65.50,3930.00',
-                'Female,0,No,No,12,Yes,No,Fiber optic,No,Yes,No,No,No,No,Month-to-month,Yes,Electronic check,70.35,844.20',
-                'Male,1,Yes,No,24,No,No phone service,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,One year,No,Mailed check,20.05,481.20'
-            ].join('\n');
+            const rows = ['Female,1,No,No,1,Yes,No,Fiber optic,No,No,No,No,Yes,Yes,Month-to-month,Yes,Electronic check,95.75,95.75', 'Male,0,Yes,Yes,60,Yes,Yes,DSL,Yes,Yes,Yes,Yes,No,No,Two year,No,Bank transfer (automatic),65.50,3930.00'].join('\n');
             const blob = new Blob([header + rows], { type: 'text/csv' });
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = 'sample_customers.csv'; a.click();
+            const a = document.createElement('a'); a.href = url; a.download = 'sample_customers.csv'; a.click();
             URL.revokeObjectURL(url);
         }
 
-        function resetBatchUpload() {
-            batchResults = [];
-            document.getElementById('batch-upload-zone').style.display = 'block';
-            document.getElementById('batch-results').style.display = 'none';
-            document.getElementById('batch-processing').style.display = 'none';
-            document.getElementById('csvFileInput').value = '';
-            document.getElementById('batch-filter').value = 'all';
-            document.getElementById('batch-sort').value = 'score-desc';
-        }
+        function resetBatchUpload() { batchResults = []; document.getElementById('batch-upload-zone').style.display = 'block'; document.getElementById('batch-results').style.display = 'none'; document.getElementById('batch-processing').style.display = 'none'; document.getElementById('csvFileInput').value = ''; document.getElementById('batch-filter').value = 'all'; document.getElementById('batch-sort').value = 'score-desc'; }
 
         // ══════════════════════════════════════════════════════════════
         //  MONITORING
         // ══════════════════════════════════════════════════════════════
-        let anomalyTrendChart = null, statusHistoryChart = null, scoreDistChart = null;
-        let volatilityChart = null, recordsProcessedChart = null;
+        let anomalyTrendChart = null, statusHistoryChart = null, scoreDistChart = null, volatilityChart = null, recordsProcessedChart = null;
 
         async function loadMonitoring() {
             try {
@@ -3438,19 +3128,8 @@
                 if (tbody) tbody.innerHTML = '<tr><td colspan="9" class="text-center"><div class="spinner"></div></td></tr>';
                 const res = await fetch('/monitoring?days=30');
                 const data = await res.json();
-                if (!data.metrics || data.metrics.length === 0) {
-                    if (tbody) tbody.innerHTML = '<tr><td colspan="9" class="text-center" style="color:var(--text-muted);padding:32px">No metrics logged yet. Run the pipeline first.</td></tr>';
-                    return;
-                }
-                renderMetricsTable(data.metrics);
-                renderAnomalyTrend(data.metrics);
-                renderStatusHistory(data.metrics);
-                renderScoreDist(data.metrics);
-                renderVolatilityChart(data.metrics);
-                renderRecordsProcessedChart(data.metrics);
-                updateMonitoringSummary(data.metrics);
-                renderMonitoringSparklines(data.metrics);
-                renderMonitoringTicker(data.metrics);
+                if (!data.metrics || data.metrics.length === 0) { if (tbody) tbody.innerHTML = '<tr><td colspan="9" class="text-center" style="color:var(--text-muted);padding:32px">No metrics logged yet. Run the pipeline first.</td></tr>'; return; }
+                renderMetricsTable(data.metrics); renderAnomalyTrend(data.metrics); renderStatusHistory(data.metrics); renderScoreDist(data.metrics); renderVolatilityChart(data.metrics); renderRecordsProcessedChart(data.metrics); updateMonitoringSummary(data.metrics); renderMonitoringSparklines(data.metrics); renderMonitoringTicker(data.metrics);
             } catch (e) { console.error('Monitoring error:', e); }
         }
 
@@ -3463,11 +3142,7 @@
             setV('mon-anomaly-rate', parseFloat(latest.anomaly_rate_pct).toFixed(1) + '%');
             const stEl = document.getElementById('mon-latest-status');
             if (stEl) { stEl.textContent = latest.status; stEl.className = 'badge badge-' + latest.status.toLowerCase(); }
-            if (metrics.length >= 2) {
-                const diff = ((parseFloat(metrics[0].mean_anomaly_score) - parseFloat(metrics[1].mean_anomaly_score)) * 100).toFixed(2);
-                const tEl = document.getElementById('mon-trend-direction');
-                if (tEl) { tEl.textContent = diff > 0 ? `↑ +${diff}% vs last` : `↓ ${diff}% vs last`; tEl.style.color = diff > 0 ? '#ef4444' : '#10b981'; }
-            }
+            if (metrics.length >= 2) { const diff = ((parseFloat(metrics[0].mean_anomaly_score) - parseFloat(metrics[1].mean_anomaly_score)) * 100).toFixed(2); const tEl = document.getElementById('mon-trend-direction'); if (tEl) { tEl.textContent = diff > 0 ? `↑ +${diff}% vs last` : `↓ ${diff}% vs last`; tEl.style.color = diff > 0 ? '#ef4444' : '#10b981'; } }
         }
 
         function renderMonitoringTicker(metrics) {
@@ -3475,46 +3150,18 @@
             if (!track || !metrics || metrics.length === 0) return;
             const reversed = [...metrics].reverse();
             let items = reversed.map((m, i) => {
-                const score = (parseFloat(m.mean_anomaly_score) * 100).toFixed(1);
-                const anomaly = parseFloat(m.anomaly_rate_pct).toFixed(1);
-                const ks = parseFloat(m.ks_distance).toFixed(4);
-                const status = m.status || 'GOOD';
-                const date = m.date ? m.date.substring(5, 16) : '—';
-                // Trend vs previous run
+                const score = (parseFloat(m.mean_anomaly_score) * 100).toFixed(1), anomaly = parseFloat(m.anomaly_rate_pct).toFixed(1), ks = parseFloat(m.ks_distance).toFixed(4), status = m.status || 'GOOD', date = m.date ? m.date.substring(5, 16) : '—';
                 let scoreArrow = '', anomalyArrow = '', ksArrow = '';
-                if (i > 0) {
-                    const prev = reversed[i - 1];
-                    const pScore = (parseFloat(prev.mean_anomaly_score) * 100);
-                    const pAnomaly = parseFloat(prev.anomaly_rate_pct);
-                    const pKs = parseFloat(prev.ks_distance);
-                    scoreArrow = parseFloat(score) > pScore ? '<span class="ticker-arrow up">▲</span>' : '<span class="ticker-arrow down">▼</span>';
-                    anomalyArrow = parseFloat(anomaly) > pAnomaly ? '<span class="ticker-arrow up">▲</span>' : '<span class="ticker-arrow down">▼</span>';
-                    ksArrow = parseFloat(ks) > pKs ? '<span class="ticker-arrow up">▲</span>' : '<span class="ticker-arrow down">▼</span>';
-                }
+                if (i > 0) { const prev = reversed[i - 1]; scoreArrow = parseFloat(score) > (parseFloat(prev.mean_anomaly_score) * 100) ? '<span class="ticker-arrow up">▲</span>' : '<span class="ticker-arrow down">▼</span>'; anomalyArrow = parseFloat(anomaly) > parseFloat(prev.anomaly_rate_pct) ? '<span class="ticker-arrow up">▲</span>' : '<span class="ticker-arrow down">▼</span>'; ksArrow = parseFloat(ks) > parseFloat(prev.ks_distance) ? '<span class="ticker-arrow up">▲</span>' : '<span class="ticker-arrow down">▼</span>'; }
                 const statusColor = status === 'GOOD' ? '#10b981' : status === 'WARNING' ? '#f59e0b' : '#ef4444';
-                return `<span class="ticker-item">📅 ${date}</span>
-                    <span class="ticker-item">Risk <strong style="color:#8b5cf6">${score}%</strong>${scoreArrow}</span>
-                    <span class="ticker-item">Anomaly <strong style="color:#f97316">${anomaly}%</strong>${anomalyArrow}</span>
-                    <span class="ticker-item">KS <strong style="color:${parseFloat(ks) > 0.15 ? '#ef4444' : '#10b981'}">${ks}</strong>${ksArrow}</span>
-                    <span class="ticker-item">● <strong style="color:${statusColor}">${status}</strong></span>
-                    <span class="ticker-sep">|</span>`;
+                return `<span class="ticker-item">📅 ${date}</span><span class="ticker-item">Risk <strong style="color:#8b5cf6">${score}%</strong>${scoreArrow}</span><span class="ticker-item">Anomaly <strong style="color:#f97316">${anomaly}%</strong>${anomalyArrow}</span><span class="ticker-item">KS <strong style="color:${parseFloat(ks) > 0.15 ? '#ef4444' : '#10b981'}">${ks}</strong>${ksArrow}</span><span class="ticker-item">● <strong style="color:${statusColor}">${status}</strong></span><span class="ticker-sep">|</span>`;
             }).join('');
-            track.innerHTML = items + items; // duplicate for seamless scroll
+            track.innerHTML = items + items;
         }
 
         function renderMetricsTable(metrics) {
             const tbody = document.getElementById('monitoring-table-body'); if (!tbody) return;
-            tbody.innerHTML = metrics.map(m => `<tr>
-        <td style="color:var(--blue);font-weight:600;font-size:11px">${m.model_version}</td>
-        <td>${(parseFloat(m.mean_anomaly_score) * 100).toFixed(2)}%</td>
-        <td>${parseFloat(m.std_anomaly_score).toFixed(4)}</td>
-        <td>${parseFloat(m.anomaly_rate_pct).toFixed(2)}%</td>
-        <td style="color:${parseFloat(m.ks_distance) > 0.30 ? '#ef4444' : parseFloat(m.ks_distance) > 0.15 ? '#f59e0b' : '#10b981'}">${parseFloat(m.ks_distance).toFixed(4)}</td>
-        <td>${parseFloat(m.trend_score).toFixed(2)}</td>
-        <td>${parseInt(m.total_records_scored).toLocaleString()}</td>
-        <td><span class="badge badge-${m.status.toLowerCase()}">${m.status}</span></td>
-        <td style="color:var(--text-muted);font-size:11px">${m.logged_at ? m.logged_at.substring(0, 16) : 'N/A'}</td>
-    </tr>`).join('');
+            tbody.innerHTML = metrics.map(m => `<tr><td style="color:var(--blue);font-weight:600;font-size:11px">${m.model_version}</td><td>${(parseFloat(m.mean_anomaly_score) * 100).toFixed(2)}%</td><td>${parseFloat(m.std_anomaly_score).toFixed(4)}</td><td>${parseFloat(m.anomaly_rate_pct).toFixed(2)}%</td><td style="color:${parseFloat(m.ks_distance) > 0.30 ? '#ef4444' : parseFloat(m.ks_distance) > 0.15 ? '#f59e0b' : '#10b981'}">${parseFloat(m.ks_distance).toFixed(4)}</td><td>${parseFloat(m.trend_score).toFixed(2)}</td><td>${parseInt(m.total_records_scored).toLocaleString()}</td><td><span class="badge badge-${m.status.toLowerCase()}">${m.status}</span></td><td style="color:var(--text-muted);font-size:11px">${m.logged_at ? m.logged_at.substring(0, 16) : 'N/A'}</td></tr>`).join('');
         }
 
         function renderAnomalyTrend(metrics) {
@@ -3544,7 +3191,7 @@
             if (volatilityChart) volatilityChart.destroy();
             const rev = [...metrics].reverse();
             const stdVals = rev.map(m => (parseFloat(m.std_anomaly_score) * 100).toFixed(2));
-            volatilityChart = new Chart(ctx, { type: 'line', data: { labels: rev.map(m => m.logged_at ? m.logged_at.substring(0, 16) : ''), datasets: [{ label: 'Score Std Dev (%)', data: stdVals, borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.08)', tension: 0.4, fill: true, pointRadius: 6, pointBackgroundColor: stdVals.map(v => parseFloat(v) > 35 ? '#ef4444' : parseFloat(v) > 25 ? '#f59e0b' : '#10b981'), pointBorderColor: '#1a2235', pointBorderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11, family: 'Inter' }, usePointStyle: true } }, tooltip: { backgroundColor: '#1a2235', titleColor: '#f1f5f9', bodyColor: '#94a3b8', borderColor: '#2d3748', borderWidth: 1, callbacks: { label: c => ` Std Dev: ${c.raw}% — ${parseFloat(c.raw) > 35 ? '⚠️ High volatility' : parseFloat(c.raw) > 25 ? '🟡 Moderate' : '✅ Stable'}` } } }, scales: { x: { ticks: { color: '#475569', font: { size: 10 }, maxRotation: 45 }, grid: { color: 'rgba(255,255,255,0.03)' } }, y: { ticks: { color: '#475569', font: { size: 10 }, callback: v => v + '%' }, grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: 'Std Deviation (%)', color: '#475569', font: { size: 10 } } } } } });
+            volatilityChart = new Chart(ctx, { type: 'line', data: { labels: rev.map(m => m.logged_at ? m.logged_at.substring(0, 16) : ''), datasets: [{ label: 'Score Std Dev (%)', data: stdVals, borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.08)', tension: 0.4, fill: true, pointRadius: 6, pointBackgroundColor: stdVals.map(v => parseFloat(v) > 35 ? '#ef4444' : parseFloat(v) > 25 ? '#f59e0b' : '#10b981'), pointBorderColor: '#1a2235', pointBorderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11, family: 'Inter' }, usePointStyle: true } }, tooltip: { backgroundColor: '#1a2235', titleColor: '#f1f5f9', bodyColor: '#94a3b8', borderColor: '#2d3748', borderWidth: 1, callbacks: { label: c => ` Std Dev: ${c.raw}% — ${parseFloat(c.raw) > 35 ? '⚠️ High volatility' : parseFloat(c.raw) > 25 ? '🟡 Moderate' : '✅ Stable'}` } } }, scales: { x: { ticks: { color: '#475569', font: { size: 10 }, maxRotation: 45 }, grid: { color: 'rgba(255,255,255,0.03)' } }, y: { ticks: { color: '#475569', font: { size: 10 }, callback: v => v + '%' }, grid: { color: 'rgba(255,255,255,0.05)' } } } } });
         }
 
         function renderRecordsProcessedChart(metrics) {
@@ -3555,9 +3202,7 @@
             recordsProcessedChart = new Chart(ctx, { type: 'bar', data: { labels: rev.map(m => m.logged_at ? m.logged_at.substring(0, 16) : ''), datasets: [{ label: 'Records Scored', data: records, backgroundColor: records.map((_, i) => { const a = (0.45 + (i / records.length) * 0.45).toFixed(2); return `rgba(6,182,212,${a})`; }), borderColor: '#06b6d4', borderWidth: 1, borderRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11, family: 'Inter' } } }, tooltip: { backgroundColor: '#1a2235', titleColor: '#f1f5f9', bodyColor: '#94a3b8', borderColor: '#2d3748', borderWidth: 1, callbacks: { label: c => ` ${parseInt(c.raw).toLocaleString()} records processed` } } }, scales: { x: { ticks: { color: '#475569', font: { size: 10 }, maxRotation: 45 }, grid: { color: 'rgba(255,255,255,0.03)' } }, y: { ticks: { color: '#475569', font: { size: 10 }, callback: v => v.toLocaleString() }, grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: 'Records Count', color: '#475569', font: { size: 10 } } } }, animation: { duration: 900 } } });
         }
 
-        function monChartOptions() {
-            return { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11, family: 'Inter' }, usePointStyle: true } }, tooltip: { backgroundColor: '#1a2235', titleColor: '#f1f5f9', bodyColor: '#94a3b8', borderColor: '#2d3748', borderWidth: 1 } }, scales: { x: { ticks: { color: '#475569', font: { size: 10 }, maxRotation: 45 }, grid: { color: 'rgba(255,255,255,0.03)' } }, y: { ticks: { color: '#475569', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } } } };
-        }
+        function monChartOptions() { return { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11, family: 'Inter' }, usePointStyle: true } }, tooltip: { backgroundColor: '#1a2235', titleColor: '#f1f5f9', bodyColor: '#94a3b8', borderColor: '#2d3748', borderWidth: 1 } }, scales: { x: { ticks: { color: '#475569', font: { size: 10 }, maxRotation: 45 }, grid: { color: 'rgba(255,255,255,0.03)' } }, y: { ticks: { color: '#475569', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } } } }; }
 
         // ══════════════════════════════════════════════════════════════
         //  REGISTRY
@@ -3569,14 +3214,12 @@
                 const res = await fetch('/registry');
                 const data = await res.json();
                 if (!data.models || data.models.length === 0) { if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="text-center" style="color:var(--text-muted);padding:32px">No models registered yet.</td></tr>'; return; }
-                updateRegistrySummary(data.models);
-                renderRegistryTable(data.models);
+                updateRegistrySummary(data.models); renderRegistryTable(data.models);
             } catch (e) { console.error('Registry error:', e); }
         }
 
         function updateRegistrySummary(models) {
-            const active = models.find(m => m.is_active === 1);
-            const latest = models[0];
+            const active = models.find(m => m.is_active === 1), latest = models[0];
             setV('reg-total-versions', models.length);
             setV('reg-active-version', active ? active.model_version : 'None');
             setV('reg-latest-date', latest && latest.training_date ? latest.training_date.substring(0, 16) : 'N/A');
@@ -3585,21 +3228,10 @@
 
         function renderRegistryTable(models) {
             const tbody = document.getElementById('registry-table-body'); if (!tbody) return;
-            tbody.innerHTML = models.map(m => `<tr>
-        <td><div style="display:flex;align-items:center;gap:7px"><span style="width:7px;height:7px;border-radius:50%;background:${m.is_active ? '#10b981' : '#475569'};display:inline-block;${m.is_active ? 'box-shadow:0 0 7px #10b981' : ''}"></span><span style="color:var(--blue);font-weight:600;font-size:11px;font-family:monospace">${m.model_version}</span></div></td>
-        <td>${m.is_active ? '<span class="badge badge-active">● Active</span>' : '<span class="badge" style="background:rgba(71,85,105,0.15);color:#475569;border:1px solid #1e293b">Inactive</span>'}</td>
-        <td style="color:var(--text-sec)">${m.training_date ? m.training_date.substring(0, 16) : 'N/A'}</td>
-        <td style="color:var(--text-sec)">${m.trained_on_records ? parseInt(m.trained_on_records).toLocaleString() : 'N/A'}</td>
-        <td style="font-size:10px;color:var(--text-muted);font-family:monospace;word-break:break-all;max-width:180px">${m.model_path ? '...' + m.model_path.slice(-35) : 'N/A'}</td>
-        <td style="color:var(--text-muted);font-size:11px">${m.notes || '—'}</td>
-        <td>${m.is_active ? `<button onclick="reloadModel()" style="background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.28);color:#10b981;padding:4px 11px;border-radius:6px;cursor:pointer;font-size:11px;font-family:Inter,sans-serif">🔄 Reload</button>` : `<button onclick="activateModel('${m.model_version}','${m.model_path}',${m.trained_on_records})" style="background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.28);color:#3b82f6;padding:4px 11px;border-radius:6px;cursor:pointer;font-size:11px;font-family:Inter,sans-serif">⚡ Activate</button>`}</td>
-    </tr>`).join('');
+            tbody.innerHTML = models.map(m => `<tr><td><div style="display:flex;align-items:center;gap:7px"><span style="width:7px;height:7px;border-radius:50%;background:${m.is_active ? '#10b981' : '#475569'};display:inline-block;${m.is_active ? 'box-shadow:0 0 7px #10b981' : ''}"></span><span style="color:var(--blue);font-weight:600;font-size:11px;font-family:monospace">${m.model_version}</span></div></td><td>${m.is_active ? '<span class="badge badge-active">● Active</span>' : '<span class="badge" style="background:rgba(71,85,105,0.15);color:#475569;border:1px solid #1e293b">Inactive</span>'}</td><td style="color:var(--text-sec)">${m.training_date ? m.training_date.substring(0, 16) : 'N/A'}</td><td style="color:var(--text-sec)">${m.trained_on_records ? parseInt(m.trained_on_records).toLocaleString() : 'N/A'}</td><td style="font-size:10px;color:var(--text-muted);font-family:monospace;word-break:break-all;max-width:180px">${m.model_path ? '...' + m.model_path.slice(-35) : 'N/A'}</td><td style="color:var(--text-muted);font-size:11px">${m.notes || '—'}</td><td>${m.is_active ? `<button onclick="reloadModel()" style="background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.28);color:#10b981;padding:4px 11px;border-radius:6px;cursor:pointer;font-size:11px;font-family:Inter,sans-serif">🔄 Reload</button>` : `<button onclick="activateModel('${m.model_version}','${m.model_path}',${m.trained_on_records})" style="background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.28);color:#3b82f6;padding:4px 11px;border-radius:6px;cursor:pointer;font-size:11px;font-family:Inter,sans-serif">⚡ Activate</button>`}</td></tr>`).join('');
         }
 
-        async function reloadModel() {
-            try { const res = await fetch('/reload-model', { method: 'POST' }); const d = await res.json(); showToast('✅ ' + d.message, 'success'); loadRegistry(); }
-            catch (e) { showToast('❌ Failed to reload', 'error'); }
-        }
+        async function reloadModel() { try { const res = await fetch('/reload-model', { method: 'POST' }); const d = await res.json(); showToast('✅ ' + d.message, 'success'); loadRegistry(); } catch (e) { showToast('❌ Failed to reload', 'error'); } }
 
         async function activateModel(version, path, records) {
             if (!confirm(`Activate model: ${version}?`)) return;
@@ -3612,42 +3244,21 @@
             const t = document.createElement('div'); t.id = 'toast';
             const c = { success: { bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.35)', color: '#10b981' }, error: { bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.35)', color: '#ef4444' } }[type] || { bg: 'rgba(59,130,246,0.12)', border: 'rgba(59,130,246,0.35)', color: '#3b82f6' };
             t.style.cssText = `position:fixed;bottom:28px;right:28px;background:${c.bg};border:1px solid ${c.border};color:${c.color};padding:12px 20px;border-radius:9px;font-size:13px;font-weight:600;font-family:Inter,sans-serif;z-index:9999;box-shadow:0 8px 28px rgba(0,0,0,0.3)`;
-            t.textContent = msg; document.body.appendChild(t);
-            setTimeout(() => t.remove(), 3200);
+            t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3200);
         }
 
         // ══════════════════════════════════════════════════════════════
-        //  MICRO SPARKLINES
+        //  SPARKLINES
         // ══════════════════════════════════════════════════════════════
         function renderSparkline(canvasId, data, color) {
-            const ctx = document.getElementById(canvasId);
-            if (!ctx || !data || data.length < 2) return;
-            const key = '__spark_' + canvasId;
-            if (window[key]) { window[key].destroy(); }
+            const ctx = document.getElementById(canvasId); if (!ctx || !data || data.length < 2) return;
+            const key = '__spark_' + canvasId; if (window[key]) window[key].destroy();
             const r = parseInt(color.slice(1, 3), 16), g = parseInt(color.slice(3, 5), 16), b = parseInt(color.slice(5, 7), 16);
-            window[key] = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: data.map((_, i) => i),
-                    datasets: [{
-                        data, borderColor: color,
-                        backgroundColor: `rgba(${r},${g},${b},0.13)`,
-                        borderWidth: 1.5, pointRadius: 0, tension: 0.4, fill: true
-                    }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
-                    scales: { x: { display: false }, y: { display: false } },
-                    animation: { duration: 1000 },
-                    elements: { line: { borderCapStyle: 'round' } }
-                }
-            });
+            window[key] = new Chart(ctx, { type: 'line', data: { labels: data.map((_, i) => i), datasets: [{ data, borderColor: color, backgroundColor: `rgba(${r},${g},${b},0.13)`, borderWidth: 1.5, pointRadius: 0, tension: 0.4, fill: true }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: false } }, scales: { x: { display: false }, y: { display: false } }, animation: { duration: 1000 }, elements: { line: { borderCapStyle: 'round' } } } });
         }
 
         function setStatTrend(id, cur, prev) {
-            const el = document.getElementById(id);
-            if (!el) return;
+            const el = document.getElementById(id); if (!el) return;
             if (prev === undefined || prev === null || isNaN(prev) || prev === 0) { el.textContent = ''; return; }
             const pct = ((cur - prev) / Math.abs(prev) * 100).toFixed(1);
             const goingUp = parseFloat(pct) > 0;
@@ -3657,41 +3268,13 @@
 
         function renderDashboardSparklines(data) {
             const td = data.trend_data ? [...data.trend_data].reverse() : [];
-            // Helper: generate a gentle upward trend from a base value
-            const genTrend = (base, pts = 7, drift = 0.013) =>
-                Array.from({ length: pts }, (_, i) => +(base * (0.91 + i * drift)).toFixed(1));
-
-            // Anomaly Rate — use real trend data if available
-            if (td.length > 1) {
-                renderSparkline('spark-anomaly-rate', td.map(d => parseFloat(d.anomaly_rate)), '#f97316');
-                setStatTrend('trend-anomaly',
-                    parseFloat(td[td.length - 1].anomaly_rate),
-                    parseFloat(td[td.length - 2].anomaly_rate));
-            } else {
-                renderSparkline('spark-anomaly-rate', [2.1, 3.0, 2.7, 3.8, 3.3, 4.0, 3.6], '#f97316');
-            }
-
-            // Mean Risk Score — use real trend data if available
-            if (td.length > 1) {
-                renderSparkline('spark-mean-score', td.map(d => parseFloat(d.mean_anomaly_score) * 100), '#8b5cf6');
-                setStatTrend('trend-score',
-                    parseFloat(td[td.length - 1].mean_anomaly_score) * 100,
-                    parseFloat(td[td.length - 2].mean_anomaly_score) * 100);
-            } else {
-                renderSparkline('spark-mean-score', [30, 32, 29, 34, 33, 36, 34], '#8b5cf6');
-            }
-
-            // Total Customers — gentle uptrend simulation
-            renderSparkline('spark-total-customers', genTrend(data.total_customers || 700, 7, 0.012), '#3b82f6');
-
-            // Processed Records — gentle uptrend simulation
+            const genTrend = (base, pts = 7, drift = 0.013) => Array.from({ length: pts }, (_, i) => +(base * (0.91 + i * drift)).toFixed(1));
+            if (td.length > 1) { renderSparkline('spark-anomaly-rate', td.map(d => parseFloat(d.anomaly_rate)), '#f97316'); setStatTrend('trend-anomaly', parseFloat(td[td.length - 1].anomaly_rate), parseFloat(td[td.length - 2].anomaly_rate)); } else { renderSparkline('spark-anomaly-rate', [2.1, 3.0, 2.7, 3.8, 3.3, 4.0, 3.6], '#f97316'); }
+            if (td.length > 1) { renderSparkline('spark-mean-score', td.map(d => parseFloat(d.mean_anomaly_score) * 100), '#8b5cf6'); setStatTrend('trend-score', parseFloat(td[td.length - 1].mean_anomaly_score) * 100, parseFloat(td[td.length - 2].mean_anomaly_score) * 100); } else { renderSparkline('spark-mean-score', [30, 32, 29, 34, 33, 36, 34], '#8b5cf6'); }
+            renderSparkline('spark-total-customers', genTrend(data.total_customers || 700), '#3b82f6');
             renderSparkline('spark-processed', genTrend(data.processed_customers || 600, 7, 0.014), '#10b981');
-
-            // Critical Risk — slight wave around current value
             const crit = (data.risk_distribution && data.risk_distribution.Critical) || 0;
-            renderSparkline('spark-critical',
-                Array.from({ length: 7 }, (_, i) => Math.max(0, crit + Math.round(Math.sin(i * 1.1) * 1.5))),
-                '#ef4444');
+            renderSparkline('spark-critical', Array.from({ length: 7 }, (_, i) => Math.max(0, crit + Math.round(Math.sin(i * 1.1) * 1.5))), '#ef4444');
         }
 
         function renderMonitoringSparklines(metrics) {
@@ -3705,436 +3288,220 @@
         // ══════════════════════════════════════════════════════════════
         //  LIVE STATUS BAR + AUTO REFRESH
         // ══════════════════════════════════════════════════════════════
-        let refreshInterval = 60;
-        let refreshCountdown = refreshInterval;
-        let refreshTimer = null;
+        let refreshInterval = 60, refreshCountdown = 60, refreshTimer = null;
 
         function startLiveClock() {
-            function tick() {
-                const now = new Date();
-                const el = document.getElementById('live-clock');
-                if (el) el.textContent = now.toLocaleTimeString();
-            }
-            tick();
-            setInterval(tick, 1000);
+            function tick() { const el = document.getElementById('live-clock'); if (el) el.textContent = new Date().toLocaleTimeString(); }
+            tick(); setInterval(tick, 1000);
         }
 
         async function checkApiHealth() {
-            const dot = document.getElementById('health-dot');
-            const lat = document.getElementById('api-latency');
+            const dot = document.getElementById('health-dot'), lat = document.getElementById('api-latency');
             try {
-                const t0 = performance.now();
-                const res = await fetch('/health');
-                const ms = Math.round(performance.now() - t0);
-                if (res.ok) {
-                    if (dot) { dot.className = 'status-dot live'; }
-                    if (lat) { lat.textContent = ms + 'ms'; lat.style.color = ms < 200 ? '#10b981' : ms < 500 ? '#f59e0b' : '#ef4444'; }
-                } else {
-                    if (dot) dot.className = 'status-dot offline';
-                    if (lat) { lat.textContent = 'ERR'; lat.style.color = '#ef4444'; }
-                }
-            } catch (e) {
-                if (dot) dot.className = 'status-dot offline';
-                if (lat) { lat.textContent = 'DOWN'; lat.style.color = '#ef4444'; }
-            }
+                const t0 = performance.now(), res = await fetch('/health'), ms = Math.round(performance.now() - t0);
+                if (res.ok) { if (dot) dot.className = 'status-dot live'; if (lat) { lat.textContent = ms + 'ms'; lat.style.color = ms < 200 ? '#10b981' : ms < 500 ? '#f59e0b' : '#ef4444'; } }
+                else { if (dot) dot.className = 'status-dot offline'; if (lat) { lat.textContent = 'ERR'; lat.style.color = '#ef4444'; } }
+            } catch (e) { if (dot) dot.className = 'status-dot offline'; if (lat) { lat.textContent = 'DOWN'; lat.style.color = '#ef4444'; } }
         }
 
         function startAutoRefresh() {
-            refreshCountdown = refreshInterval;
-            if (refreshTimer) clearInterval(refreshTimer);
+            refreshCountdown = refreshInterval; if (refreshTimer) clearInterval(refreshTimer);
             refreshTimer = setInterval(() => {
                 refreshCountdown--;
-                const secEl = document.getElementById('refresh-seconds');
-                if (secEl) secEl.textContent = refreshCountdown + 's';
-                // Update ring
-                const ring = document.getElementById('ring-progress');
-                if (ring) {
-                    const pct = (refreshInterval - refreshCountdown) / refreshInterval;
-                    ring.style.strokeDashoffset = (56.5 * (1 - pct)).toFixed(1);
-                }
-                if (refreshCountdown <= 0) {
-                    refreshCountdown = refreshInterval;
-                    const activePage = document.querySelector('.page.active');
-                    if (activePage && activePage.id === 'page-dashboard') {
-                        loadDashboard();
-                        checkApiHealth();
-                    }
-                }
+                const secEl = document.getElementById('refresh-seconds'); if (secEl) secEl.textContent = refreshCountdown + 's';
+                const ring = document.getElementById('ring-progress'); if (ring) ring.style.strokeDashoffset = (56.5 * (1 - (refreshInterval - refreshCountdown) / refreshInterval)).toFixed(1);
+                if (refreshCountdown <= 0) { refreshCountdown = refreshInterval; const ap = document.querySelector('.page.active'); if (ap && ap.id === 'page-dashboard') { loadDashboard(); checkApiHealth(); } }
             }, 1000);
         }
 
         function manualRefresh() {
             refreshCountdown = refreshInterval;
-            const activePage = document.querySelector('.page.active');
-            if (activePage) {
-                if (activePage.id === 'page-dashboard') loadDashboard();
-                else if (activePage.id === 'page-monitoring') loadMonitoring();
-                else if (activePage.id === 'page-registry') loadRegistry();
-            }
-            checkApiHealth();
-            showToast('🔄 Refreshed', 'success');
+            const ap = document.querySelector('.page.active');
+            if (ap) { if (ap.id === 'page-dashboard') loadDashboard(); else if (ap.id === 'page-monitoring') loadMonitoring(); else if (ap.id === 'page-registry') loadRegistry(); }
+            checkApiHealth(); showToast('🔄 Refreshed', 'success');
         }
 
         // ══════════════════════════════════════════════════════════════
-        //  KPI SCROLLING TICKER
+        //  KPI TICKER
         // ══════════════════════════════════════════════════════════════
         function renderKPITicker(data) {
-            const track = document.getElementById('ticker-track');
-            if (!track) return;
+            const track = document.getElementById('ticker-track'); if (!track) return;
             const latest = data.trend_data && data.trend_data.length > 0 ? data.trend_data[0] : null;
             const prev = data.trend_data && data.trend_data.length > 1 ? data.trend_data[1] : null;
-
             const items = [];
-            // Anomaly Rate
-            if (latest) {
-                const cur = parseFloat(latest.anomaly_rate);
-                const prv = prev ? parseFloat(prev.anomaly_rate) : cur;
-                const dir = cur > prv ? 'up' : 'down';
-                items.push(`<span class="ticker-item"><span class="ticker-arrow ${dir}">${dir === 'up' ? '▲' : '▼'}</span> Anomaly Rate <strong>${cur.toFixed(1)}%</strong></span>`);
-            }
-            // Mean Risk
-            if (latest) {
-                const cur = parseFloat(latest.mean_anomaly_score) * 100;
-                const prv = prev ? parseFloat(prev.mean_anomaly_score) * 100 : cur;
-                const dir = cur > prv ? 'up' : 'down';
-                items.push(`<span class="ticker-item"><span class="ticker-arrow ${dir}">${dir === 'up' ? '▲' : '▼'}</span> Mean Risk <strong>${cur.toFixed(1)}%</strong></span>`);
-            }
-            // KS Drift
-            if (latest) {
-                const ks = parseFloat(latest.ks_distance);
-                items.push(`<span class="ticker-item">● KS Drift <strong style="color:${ks > 0.3 ? '#ef4444' : ks > 0.15 ? '#f59e0b' : '#10b981'}">${ks.toFixed(4)}</strong></span>`);
-            }
-            // Customers
+            if (latest) { const cur = parseFloat(latest.anomaly_rate), prv = prev ? parseFloat(prev.anomaly_rate) : cur, dir = cur > prv ? 'up' : 'down'; items.push(`<span class="ticker-item"><span class="ticker-arrow ${dir}">${dir === 'up' ? '▲' : '▼'}</span> Anomaly Rate <strong>${cur.toFixed(1)}%</strong></span>`); }
+            if (latest) { const cur = parseFloat(latest.mean_anomaly_score) * 100, prv = prev ? parseFloat(prev.mean_anomaly_score) * 100 : cur, dir = cur > prv ? 'up' : 'down'; items.push(`<span class="ticker-item"><span class="ticker-arrow ${dir}">${dir === 'up' ? '▲' : '▼'}</span> Mean Risk <strong>${cur.toFixed(1)}%</strong></span>`); }
+            if (latest) { const ks = parseFloat(latest.ks_distance); items.push(`<span class="ticker-item">● KS Drift <strong style="color:${ks > 0.3 ? '#ef4444' : ks > 0.15 ? '#f59e0b' : '#10b981'}">${ks.toFixed(4)}</strong></span>`); }
             items.push(`<span class="ticker-item">👥 Customers <strong>${(data.total_customers || 0).toLocaleString()}</strong></span>`);
-            // Model
             items.push(`<span class="ticker-item">🤖 Model <strong>${data.model_version || 'N/A'}</strong></span>`);
-            // Status
-            const st = data.latest_status || 'GOOD';
-            const stCol = { GOOD: '#10b981', WARNING: '#f59e0b', DEGRADED: '#ef4444' }[st] || '#10b981';
+            const st = data.latest_status || 'GOOD', stCol = { GOOD: '#10b981', WARNING: '#f59e0b', DEGRADED: '#ef4444' }[st] || '#10b981';
             items.push(`<span class="ticker-item">Health <strong style="color:${stCol}">${st}</strong></span>`);
-            // Risk distribution
-            if (data.risk_distribution) {
-                const rd = data.risk_distribution;
-                items.push(`<span class="ticker-item"><span style="color:#ef4444">●</span> Critical <strong>${rd.Critical || 0}</strong></span>`);
-                items.push(`<span class="ticker-item"><span style="color:#f97316">●</span> High <strong>${rd.High || 0}</strong></span>`);
-                items.push(`<span class="ticker-item"><span style="color:#10b981">●</span> Low <strong>${rd.Low || 0}</strong></span>`);
-            }
-
-            const sep = '<span class="ticker-sep">·</span>';
-            const content = items.join(sep);
-            // Duplicate for seamless loop
+            if (data.risk_distribution) { const rd = data.risk_distribution; items.push(`<span class="ticker-item"><span style="color:#ef4444">●</span> Critical <strong>${rd.Critical || 0}</strong></span>`); items.push(`<span class="ticker-item"><span style="color:#f97316">●</span> High <strong>${rd.High || 0}</strong></span>`); items.push(`<span class="ticker-item"><span style="color:#10b981">●</span> Low <strong>${rd.Low || 0}</strong></span>`); }
+            const sep = '<span class="ticker-sep">·</span>'; const content = items.join(sep);
             track.innerHTML = content + sep + content;
         }
 
         // ══════════════════════════════════════════════════════════════
-        //  TOP RISK CUSTOMERS TABLE
+        //  TOP RISK CUSTOMERS
         // ══════════════════════════════════════════════════════════════
         async function loadTopRiskCustomers() {
             try {
-                const res = await fetch('/top-risk-customers?limit=20');
-                const data = await res.json();
-                const tbody = document.getElementById('top-risk-table-body');
-                if (!tbody) return;
-                if (!data.customers || data.customers.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="9" class="text-center" style="color:var(--text-muted);padding:24px">No scored customers available</td></tr>';
-                    return;
-                }
+                const res = await fetch('/top-risk-customers?limit=20'), data = await res.json();
+                const tbody = document.getElementById('top-risk-table-body'); if (!tbody) return;
+                if (!data.customers || data.customers.length === 0) { tbody.innerHTML = '<tr><td colspan="9" class="text-center" style="color:var(--text-muted);padding:24px">No scored customers available</td></tr>'; return; }
                 const tierColor = { Critical: '#ef4444', High: '#f97316', Medium: '#f59e0b', Low: '#10b981' };
-                tbody.innerHTML = data.customers.map((c, i) => {
-                    const rank = i + 1;
-                    const rankClass = rank <= 3 ? `rank-${rank}` : '';
-                    const col = tierColor[c.risk_tier] || '#3b82f6';
-                    return `<tr>
-                <td><span class="rank-badge ${rankClass}" style="${rank > 3 ? 'background:var(--bg-secondary);color:var(--text-muted)' : ''}">${rank}</span></td>
-                <td style="color:var(--text-muted);font-size:11px">#${c.id}</td>
-                <td style="color:var(--text-sec)">${c.contract}</td>
-                <td>${c.tenure} mo</td>
-                <td>$${c.monthly_charges.toFixed(2)}</td>
-                <td style="font-size:11px">${c.internet}</td>
-                <td style="font-size:11px">${c.payment_method}</td>
-                <td><div class="risk-bar-cell"><strong style="color:${col};min-width:42px">${c.risk_score.toFixed(1)}%</strong><div class="risk-bar-track"><div class="risk-bar-fill" style="width:${Math.min(c.risk_score, 100)}%;background:${col}"></div></div></div></td>
-                <td><span class="badge badge-${c.risk_tier.toLowerCase()}">${c.risk_tier}</span></td>
-            </tr>`;
-                }).join('');
-            } catch (e) { console.error('Top risk load error:', e); }
+                tbody.innerHTML = data.customers.map((c, i) => { const rank = i + 1, rankClass = rank <= 3 ? `rank-${rank}` : '', col = tierColor[c.risk_tier] || '#3b82f6'; return `<tr><td><span class="rank-badge ${rankClass}" style="${rank > 3 ? 'background:var(--bg-secondary);color:var(--text-muted)' : ''}">${rank}</span></td><td style="color:var(--text-muted);font-size:11px">#${c.id}</td><td>${c.contract}</td><td>${c.tenure} mo</td><td>$${c.monthly_charges.toFixed(2)}</td><td style="font-size:11px">${c.internet}</td><td style="font-size:11px">${c.payment_method}</td><td><div class="risk-bar-cell"><strong style="color:${col};min-width:42px">${c.risk_score.toFixed(1)}%</strong><div class="risk-bar-track"><div class="risk-bar-fill" style="width:${Math.min(c.risk_score, 100)}%;background:${col}"></div></div></div></td><td><span class="badge badge-${c.risk_tier.toLowerCase()}">${c.risk_tier}</span></td></tr>`; }).join('');
+            } catch (e) { console.error('Top risk error:', e); }
         }
 
         // ══════════════════════════════════════════════════════════════
-        //  HEATMAP SCATTER CHART
+        //  HEATMAP
         // ══════════════════════════════════════════════════════════════
         let heatmapChart = null;
 
         async function renderHeatmap() {
             try {
-                const res = await fetch('/top-risk-customers?limit=500');
-                const data = await res.json();
+                const res = await fetch('/top-risk-customers?limit=500'), data = await res.json();
                 if (!data.customers || data.customers.length === 0) return;
-
-                const ctx = document.getElementById('heatmapChart');
-                if (!ctx) return;
+                const ctx = document.getElementById('heatmapChart'); if (!ctx) return;
                 if (heatmapChart) heatmapChart.destroy();
+                const customers = data.customers;
+                // Build heatmap data: tenure buckets vs charges buckets
+                const tenureBuckets = ['0-12', '13-24', '25-36', '37-48', '49-60', '61-72'];
+                const chargesBuckets = ['$0-30', '$30-50', '$50-70', '$70-90', '$90+'];
+                const grid = Array.from({ length: 5 }, () => Array(6).fill(0));
+                const counts = Array.from({ length: 5 }, () => Array(6).fill(0));
+                customers.forEach(c => {
+                    const ti = Math.min(Math.floor(c.tenure / 13), 5);
+                    const mc = c.monthly_charges;
+                    const ci = mc < 30 ? 0 : mc < 50 ? 1 : mc < 70 ? 2 : mc < 90 ? 3 : 4;
+                    grid[ci][ti] += c.risk_score;
+                    counts[ci][ti]++;
+                });
+                const heatData = [];
+                for (let ci = 0; ci < 5; ci++) for (let ti = 0; ti < 6; ti++) {
+                    const avg = counts[ci][ti] > 0 ? grid[ci][ti] / counts[ci][ti] : 0;
+                    heatData.push({ x: ti, y: ci, v: avg.toFixed(1) });
+                }
+                heatmapChart = new Chart(ctx, { type: 'scatter', data: { datasets: [{ label: 'Avg Risk Score', data: heatData.map(d => ({ x: d.x, y: d.y, v: d.v })), backgroundColor: heatData.map(d => { const v = parseFloat(d.v); return v >= 75 ? 'rgba(239,68,68,0.85)' : v >= 50 ? 'rgba(249,115,22,0.85)' : v >= 25 ? 'rgba(245,158,11,0.75)' : 'rgba(16,185,129,0.7)'; }), pointRadius: 22, pointHoverRadius: 26 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1a2235', titleColor: '#f1f5f9', bodyColor: '#94a3b8', borderColor: '#2d3748', borderWidth: 1, callbacks: { label: c => ` Tenure: ${tenureBuckets[c.raw.x]}, Charges: ${chargesBuckets[c.raw.y]}, Avg Risk: ${c.raw.v}%` } } }, scales: { x: { min: -0.5, max: 5.5, ticks: { color: '#475569', font: { size: 10 }, callback: v => tenureBuckets[v] || '' }, grid: { color: 'rgba(255,255,255,0.03)' } }, y: { min: -0.5, max: 4.5, ticks: { color: '#475569', font: { size: 10 }, callback: v => chargesBuckets[v] || '' }, grid: { color: 'rgba(255,255,255,0.05)' } } } } });
+            } catch (e) { console.warn('Heatmap error:', e); }
+        }
 
-                const points = data.customers.map(c => ({
-                    x: c.tenure,
-                    y: c.monthly_charges,
-                    r: Math.max(3, Math.min(c.risk_score / 8, 12)),
-                    score: c.risk_score,
-                    tier: c.risk_tier
-                }));
+        // ════════════════════════════════════════════════════════════════
+        //  ROI CALCULATOR
+        // ════════════════════════════════════════════════════════════════
+        function calculateROI(data) {
+            const avgMonthly = 65;
+            const saveRate = 0.70;
+            const atRisk = (data.risk_distribution && (data.risk_distribution.Critical || 0)) + (data.risk_distribution && (data.risk_distribution.High || 0) || 0);
+            const roi = Math.round(atRisk * avgMonthly * saveRate);
+            const roiEl = document.getElementById('roi-value'); if (roiEl) roiEl.textContent = '$' + roi.toLocaleString();
+            const atRiskEl = document.getElementById('roi-at-risk'); if (atRiskEl) atRiskEl.textContent = atRisk;
+            const detailEl = document.getElementById('roi-detail'); if (detailEl) detailEl.textContent = `${atRisk} high-risk customers × $${avgMonthly} avg monthly × ${Math.round(saveRate * 100)}% save rate`;
+        }
 
-                const getColor = (score) => {
-                    if (score >= 75) return 'rgba(239,68,68,0.7)';
-                    if (score >= 50) return 'rgba(249,115,22,0.7)';
-                    if (score >= 25) return 'rgba(245,158,11,0.7)';
-                    return 'rgba(16,185,129,0.5)';
-                };
+        // ════════════════════════════════════════════════════════════════
+        //  FAB
+        // ════════════════════════════════════════════════════════════════
+        let fabOpen = false;
+        function toggleFab() {
+            fabOpen = !fabOpen;
+            const menu = document.querySelector('.fab-menu');
+            const btn = document.querySelector('.fab-trigger');
+            menu.classList.toggle('open', fabOpen);
+            btn.classList.toggle('open', fabOpen);
+        }
+        function fabAction(action) {
+            toggleFab();
+            if (action === 'predict') { navigateTo('predict', document.querySelectorAll('.nav-item')[1]); }
+            else if (action === 'batch') { navigateTo('predict', document.querySelectorAll('.nav-item')[1]); setTimeout(() => switchPredictTab('batch', document.querySelectorAll('.batch-tab')[1]), 300); }
+            else if (action === 'monitoring') { navigateTo('monitoring', document.querySelectorAll('.nav-item')[2]); }
+            else if (action === 'refresh') { manualRefresh(); }
+        }
+        document.addEventListener('click', e => { if (fabOpen && !e.target.closest('.fab')) { fabOpen = false; document.querySelector('.fab-menu').classList.remove('open'); document.querySelector('.fab-trigger').classList.remove('open'); } });
 
-                heatmapChart = new Chart(ctx, {
-                    type: 'bubble',
-                    data: {
-                        datasets: [{
-                            label: 'Customers',
-                            data: points,
-                            backgroundColor: points.map(p => getColor(p.score)),
-                            borderColor: points.map(p => getColor(p.score).replace('0.7', '1').replace('0.5', '0.8')),
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                backgroundColor: '#1a2235', titleColor: '#f1f5f9', bodyColor: '#94a3b8',
-                                borderColor: '#2d3748', borderWidth: 1,
-                                callbacks: {
-                                    title: (items) => `Tenure: ${items[0].raw.x} mo | $${items[0].raw.y.toFixed(0)}/mo`,
-                                    label: (item) => ` Risk: ${item.raw.score.toFixed(1)}% (${item.raw.tier})`
-                                }
-                            }
-                        },
-                        scales: {
-                            x: { title: { display: true, text: 'Tenure (months)', color: '#475569', font: { size: 10 } }, ticks: { color: '#475569', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.03)' } },
-                            y: { title: { display: true, text: 'Monthly Charges ($)', color: '#475569', font: { size: 10 } }, ticks: { color: '#475569', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } }
-                        }
+        // ════════════════════════════════════════════════════════════════
+        //  PARTICLE CANVAS
+        // ════════════════════════════════════════════════════════════════
+        function initParticles() {
+            const canvas = document.getElementById('particle-canvas'); if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+            const particles = Array.from({ length: 55 }, () => ({
+                x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+                vx: (Math.random() - 0.5) * 0.35, vy: (Math.random() - 0.5) * 0.35,
+                r: Math.random() * 1.8 + 0.5,
+                color: ['rgba(59,130,246,', 'rgba(139,92,246,', 'rgba(6,182,212,'][Math.floor(Math.random() * 3)]
+            }));
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach(p => {
+                    p.x += p.vx; p.y += p.vy;
+                    if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+                    if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+                    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    ctx.fillStyle = p.color + '0.7)'; ctx.fill();
+                });
+                particles.forEach((p, i) => {
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const d = Math.hypot(p.x - particles[j].x, p.y - particles[j].y);
+                        if (d < 120) { ctx.strokeStyle = `rgba(59,130,246,${0.12 * (1 - d / 120)})`; ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(particles[j].x, particles[j].y); ctx.stroke(); }
                     }
                 });
-            } catch (e) { console.error('Heatmap error:', e); }
-        }
-
-        // ══════════════════════════════════════════════════════════════
-        //  RETENTION ROI CALCULATOR
-        // ══════════════════════════════════════════════════════════════
-        function calculateROI(dashData) {
-            const rd = dashData.risk_distribution || {};
-            const cr = dashData.contract_risk || [];
-            const critCount = (rd.Critical || 0) + (rd.High || 0);
-            // Average monthly charges across all contract types
-            let avgCharges = 70; // fallback
-            if (cr.length > 0) {
-                const totalCustomers = cr.reduce((s, c) => s + c.customer_count, 0);
-                if (totalCustomers > 0) {
-                    // Use average risk as proxy; in real prod you'd have actual charges
-                    avgCharges = 72; // typical Telco average
-                }
+                requestAnimationFrame(draw);
             }
-            const saveRate = 0.70; // 70% assumed retention success
-            const monthlySaved = critCount * avgCharges * saveRate;
-
-            const roiEl = document.getElementById('roi-value');
-            if (roiEl) roiEl.textContent = '$' + monthlySaved.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-
-            const riskEl = document.getElementById('roi-at-risk');
-            if (riskEl) riskEl.textContent = critCount;
-
-            const detEl = document.getElementById('roi-detail');
-            if (detEl) detEl.textContent = `${critCount} Critical+High risk customers × ~$${avgCharges}/mo × 70% save rate`;
+            draw();
+            window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
         }
 
-        // ══════════════════════════════════════════════════════════════
-        //  ENHANCED DASHBOARD LOAD
-        // ══════════════════════════════════════════════════════════════
-        const _origLoadDashboard = loadDashboard;
-        loadDashboard = async function () {
-            await _origLoadDashboard();
-            // Fetch dashboard data again for new features (reuse cached response)
-            try {
-                const res = await fetch('/dashboard-stats');
-                const data = await res.json();
-                renderKPITicker(data);
-                calculateROI(data);
-            } catch (e) { }
-            loadTopRiskCustomers();
-            renderHeatmap();
-        };
+        // ════════════════════════════════════════════════════════════════
+        //  KEYBOARD SHORTCUTS
+        // ════════════════════════════════════════════════════════════════
+        document.addEventListener('keydown', e => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
+            const navItems = document.querySelectorAll('.nav-item');
+            if (e.key === '1') navigateTo('dashboard', navItems[0]);
+            else if (e.key === '2') navigateTo('predict', navItems[1]);
+            else if (e.key === '3') navigateTo('monitoring', navItems[2]);
+            else if (e.key === '4') navigateTo('registry', navItems[3]);
+            else if (e.key === 'r' || e.key === 'R') manualRefresh();
+            else if (e.key === 'Escape') closeShapModal();
+        });
 
-        window.addEventListener('load', () => {
+        // ════════════════════════════════════════════════════════════════
+        //  WELCOME BANNER GREETING
+        // ════════════════════════════════════════════════════════════════
+        function setWelcomeGreeting() {
+            const h = new Date().getHours();
+            const el = document.getElementById('welcome-text');
+            if (el) el.textContent = `👋 ${h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'}!`;
+        }
+
+        // ════════════════════════════════════════════════════════════════
+        //  STAT CARD MOUSE GLOW
+        // ════════════════════════════════════════════════════════════════
+        document.querySelectorAll('.stat-card').forEach(card => {
+            card.addEventListener('mousemove', e => {
+                const r = card.getBoundingClientRect();
+                card.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
+                card.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%');
+            });
+        });
+
+        // ════════════════════════════════════════════════════════════════
+        //  INIT
+        // ════════════════════════════════════════════════════════════════
+        document.addEventListener('DOMContentLoaded', () => {
+            initParticles();
+            setWelcomeGreeting();
             startLiveClock();
             checkApiHealth();
             startAutoRefresh();
             loadDashboard();
-            // Periodic health check
-            setInterval(checkApiHealth, 15000);
+            initRiskMeter();
+            setInterval(checkApiHealth, 30000);
         });
-
-        // ══════════════════════════════════════════════════════════════
-        //  ANIMATED PARTICLE BACKGROUND
-        // ══════════════════════════════════════════════════════════════
-        (function initParticles() {
-            const canvas = document.getElementById('particle-canvas');
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            let particles = [];
-            const PARTICLE_COUNT = 50;
-
-            function resize() {
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
-            }
-            window.addEventListener('resize', resize);
-            resize();
-
-            for (let i = 0; i < PARTICLE_COUNT; i++) {
-                particles.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height,
-                    vx: (Math.random() - 0.5) * 0.3,
-                    vy: (Math.random() - 0.5) * 0.3,
-                    r: Math.random() * 1.5 + 0.5,
-                    color: ['59,130,246', '139,92,246', '6,182,212'][Math.floor(Math.random() * 3)],
-                    alpha: Math.random() * 0.4 + 0.1
-                });
-            }
-
-            function animate() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                particles.forEach(p => {
-                    p.x += p.vx; p.y += p.vy;
-                    if (p.x < 0) p.x = canvas.width;
-                    if (p.x > canvas.width) p.x = 0;
-                    if (p.y < 0) p.y = canvas.height;
-                    if (p.y > canvas.height) p.y = 0;
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-                    ctx.fillStyle = `rgba(${p.color},${p.alpha})`;
-                    ctx.fill();
-                });
-                // Draw connections between close particles
-                for (let i = 0; i < particles.length; i++) {
-                    for (let j = i + 1; j < particles.length; j++) {
-                        const dx = particles[i].x - particles[j].x;
-                        const dy = particles[i].y - particles[j].y;
-                        const dist = Math.sqrt(dx * dx + dy * dy);
-                        if (dist < 120) {
-                            ctx.beginPath();
-                            ctx.moveTo(particles[i].x, particles[i].y);
-                            ctx.lineTo(particles[j].x, particles[j].y);
-                            ctx.strokeStyle = `rgba(59,130,246,${0.06 * (1 - dist / 120)})`;
-                            ctx.lineWidth = 0.5;
-                            ctx.stroke();
-                        }
-                    }
-                }
-                requestAnimationFrame(animate);
-            }
-            animate();
-        })();
-
-        // ══════════════════════════════════════════════════════════════
-        //  STAT CARD MOUSE FOLLOW GLOW
-        // ══════════════════════════════════════════════════════════════
-        document.addEventListener('mousemove', (e) => {
-            document.querySelectorAll('.stat-card').forEach(card => {
-                const rect = card.getBoundingClientRect();
-                const x = ((e.clientX - rect.left) / rect.width * 100).toFixed(0);
-                const y = ((e.clientY - rect.top) / rect.height * 100).toFixed(0);
-                card.style.setProperty('--mx', x + '%');
-                card.style.setProperty('--my', y + '%');
-            });
-        });
-
-        // ══════════════════════════════════════════════════════════════
-        //  KEYBOARD SHORTCUTS
-        // ══════════════════════════════════════════════════════════════
-        document.addEventListener('keydown', (e) => {
-            // Don't trigger when typing in inputs
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
-            const navItems = document.querySelectorAll('.nav-item');
-            const pages = ['dashboard', 'predict', 'monitoring', 'registry'];
-            if (e.key >= '1' && e.key <= '4') {
-                const idx = parseInt(e.key) - 1;
-                navigateTo(pages[idx], navItems[idx]);
-            }
-            if (e.key === 'r' || e.key === 'R') {
-                manualRefresh();
-            }
-        });
-
-        // ══════════════════════════════════════════════════════════════
-        //  WELCOME BANNER — time-based greeting
-        // ══════════════════════════════════════════════════════════════
-        (function setWelcomeGreeting() {
-            const hour = new Date().getHours();
-            let greeting = '👋 Good evening!';
-            if (hour < 12) greeting = '☀️ Good morning!';
-            else if (hour < 17) greeting = '🌤️ Good afternoon!';
-            const el = document.getElementById('welcome-text');
-            if (el) el.textContent = greeting;
-            const sub = document.getElementById('welcome-sub');
-            if (sub) {
-                sub.textContent = 'Your ChurnGuard dashboard is live. Press 1-4 to switch pages, R to refresh.';
-            }
-        })();
-
-        // ══════════════════════════════════════════════════════════════
-        //  FLOATING ACTION BUTTON
-        // ══════════════════════════════════════════════════════════════
-        function toggleFab() {
-            const trigger = document.querySelector('.fab-trigger');
-            const menu = document.querySelector('.fab-menu');
-            trigger.classList.toggle('open');
-            menu.classList.toggle('open');
-        }
-        function fabAction(action) {
-            toggleFab();
-            if (action === 'predict') {
-                navigateTo('predict', document.querySelectorAll('.nav-item')[1]);
-            } else if (action === 'batch') {
-                navigateTo('predict', document.querySelectorAll('.nav-item')[1]);
-                setTimeout(() => switchPredictTab('batch', document.querySelectorAll('.batch-tab')[1]), 300);
-            } else if (action === 'refresh') {
-                manualRefresh();
-            } else if (action === 'monitoring') {
-                navigateTo('monitoring', document.querySelectorAll('.nav-item')[2]);
-            }
-        }
     </script>
-
-    <!-- ══ SHAP MODAL ══ -->
-    <div class="shap-modal-overlay" id="shap-modal-overlay" onclick="closeShapModalOutside(event)">
-        <div class="shap-modal">
-            <div class="shap-modal-header">
-                <div class="shap-modal-title">🧠 Full SHAP Feature Breakdown</div>
-                <button class="shap-modal-close" onclick="closeShapModal()">✕</button>
-            </div>
-            <div id="shap-modal-content">
-                <div style="text-align:center;padding:32px">
-                    <div class="spinner" style="margin:0 auto"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- FLOATING ACTION BUTTON -->
-    <div class="fab">
-        <div class="fab-menu">
-            <div class="fab-item" onclick="fabAction('predict')">🔍 Quick Predict</div>
-            <div class="fab-item" onclick="fabAction('batch')">📂 Batch Upload</div>
-            <div class="fab-item" onclick="fabAction('monitoring')">📈 Monitoring</div>
-            <div class="fab-item" onclick="fabAction('refresh')">🔄 Refresh Data</div>
-        </div>
-        <button class="fab-trigger" onclick="toggleFab()" title="Quick Actions">+</button>
-    </div>
 </body>
 
 </html>

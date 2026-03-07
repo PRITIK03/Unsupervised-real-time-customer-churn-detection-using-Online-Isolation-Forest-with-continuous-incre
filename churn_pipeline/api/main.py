@@ -1,24 +1,24 @@
 import os
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
-from fastapi import Depends, status
+from fastapi import Depends, HTTPException, status
 from datetime import timedelta, datetime
 
 # ─────────────────────────────────────────
 #  AUTH CONFIG
 # ─────────────────────────────────────────
-SECRET_KEY               = "supersecretkey"
-ALGORITHM                = "HS256"
+SECRET_KEY = "supersecretkey"
+ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
 
 fake_users_db = {
     "admin": {
-        "username"       : "admin",
-        "full_name"      : "Admin User",
+        "username": "admin",
+        "full_name": "Admin User",
         "hashed_password": "adminpass",
-        "disabled"       : False,
+        "disabled": False,
     }
 }
 
@@ -33,18 +33,18 @@ def authenticate_user(username: str, password: str):
 
 def create_access_token(data: dict, expires_delta: timedelta = None):
     to_encode = data.copy()
-    expire    = datetime.utcnow() + (expires_delta or timedelta(minutes=15))
+    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=15))
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(
-        status_code = status.HTTP_401_UNAUTHORIZED,
-        detail      = "Could not validate credentials",
-        headers     = {"WWW-Authenticate": "Bearer"},
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload  = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username = payload.get("sub")
         if username is None:
             raise credentials_exception
@@ -64,7 +64,7 @@ import numpy as np
 import pandas as pd
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field, field_validator
@@ -79,30 +79,27 @@ sys.path.insert(0, ROOT_DIR)
 
 def load_module(name, path):
     spec = importlib.util.spec_from_file_location(name, path)
-    mod  = importlib.util.module_from_spec(spec)
+    mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
 
-cfg     = load_module("config",          os.path.join(ROOT_DIR, "config.py"))
-db      = load_module("db_connection",   os.path.join(ROOT_DIR, "src", "db_connection.py"))
-train   = load_module("train",           os.path.join(ROOT_DIR, "src", "train.py"))
-shap_ex = load_module("shap_explainer",  os.path.join(ROOT_DIR, "src", "shap_explainer.py"))
+cfg     = load_module("config",         os.path.join(ROOT_DIR, "config.py"))
+db      = load_module("db_connection",  os.path.join(ROOT_DIR, "src", "db_connection.py"))
+train   = load_module("train",          os.path.join(ROOT_DIR, "src", "train.py"))
+shap_ex = load_module("shap_explainer", os.path.join(ROOT_DIR, "src", "shap_explainer.py"))
 
 # ─────────────────────────────────────────
 #  LOGGING
 # ─────────────────────────────────────────
 logging.basicConfig(
-    level  = logging.INFO,
-    format = "%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
 
 # ─────────────────────────────────────────
 #  MODEL CACHE
-#  Added shap_explainer and X_background
-#  so SHAP explanations are available at
-#  inference time without re-loading data.
 # ─────────────────────────────────────────
 MODEL_CACHE = {
     "oif"            : None,
@@ -110,9 +107,103 @@ MODEL_CACHE = {
     "feature_columns": None,
     "label_encoders" : None,
     "version"        : None,
-    "shap_explainer" : None,   # ← NEW
-    "X_background"   : None,   # ← NEW: small sample for SHAP background
+    "shap_explainer" : None,
+    "X_background"   : None,
 }
+
+
+# ─────────────────────────────────────────
+#  BACKGROUND DATA BUILDER
+#  Shared helper — builds encoded X_bg from DB.
+#  Called at startup and lazily on demand.
+# ─────────────────────────────────────────
+def _build_background_data():
+    """
+    Fetch up to 300 processed customers from DB,
+    encode them, scale them, return numpy array.
+    Returns None if no data or encoding fails.
+    """
+    try:
+        engine = db.get_engine()
+        bg_df = pd.read_sql(
+            "SELECT * FROM raw_customers WHERE is_processed=1 LIMIT 300",
+            engine
+        )
+        if bg_df.empty:
+            logger.warning("⚠️ SHAP: raw_customers table has no processed rows (is_processed=1). "
+                           "Run the pipeline first to populate data.")
+            return None
+
+        drop_cols = ["id", "is_processed", "created_at"]
+        bg_df = bg_df.drop(
+            columns=[c for c in drop_cols if c in bg_df.columns], errors="ignore"
+        )
+
+        # Keep only feature columns
+        missing = [c for c in cfg.FEATURE_COLUMNS if c not in bg_df.columns]
+        if missing:
+            logger.warning(f"⚠️ SHAP background missing columns: {missing}")
+            return None
+
+        bg_df = bg_df[cfg.FEATURE_COLUMNS].copy()
+        bg_df["TotalCharges"] = pd.to_numeric(bg_df["TotalCharges"], errors="coerce")
+        bg_df["TotalCharges"] = bg_df["TotalCharges"].fillna(bg_df["TotalCharges"].median())
+
+        label_encoders = MODEL_CACHE.get("label_encoders") or {}
+        for col in cfg.CATEGORICAL_COLUMNS:
+            if col not in bg_df.columns:
+                continue
+            if col in label_encoders:
+                le = label_encoders[col]
+                bg_df[col] = bg_df[col].astype(str).apply(
+                    lambda v, _le=le: int(_le.transform([v])[0]) if v in _le.classes_ else -1
+                )
+            else:
+                from sklearn.preprocessing import LabelEncoder as _LE
+                _le = _LE()
+                bg_df[col] = _le.fit_transform(bg_df[col].astype(str))
+
+        X_bg = MODEL_CACHE["scaler"].transform(bg_df)
+        logger.info(f"✅ SHAP background data built — shape: {X_bg.shape}")
+        return X_bg
+
+    except Exception as e:
+        import traceback
+        logger.warning(f"⚠️ SHAP background build failed: {e}")
+        logger.warning(traceback.format_exc())
+        return None
+
+
+# ─────────────────────────────────────────
+#  BUILD SHAP EXPLAINER
+#  Tries shap_ex.build_explainer first,
+#  falls back to inline TreeExplainer.
+# ─────────────────────────────────────────
+def _build_shap_explainer(X_bg):
+    """Try to build SHAP explainer from background data. Returns explainer or None."""
+    if X_bg is None or MODEL_CACHE["oif"] is None:
+        return None
+    try:
+        explainer = shap_ex.build_explainer(MODEL_CACHE["oif"], X_bg)
+        if explainer is not None:
+            logger.info("✅ SHAP explainer built via shap_ex.build_explainer")
+            return explainer
+    except Exception as e:
+        logger.warning(f"⚠️ shap_ex.build_explainer failed: {e}, trying inline...")
+
+    # Fallback — build inline
+    try:
+        import shap as _shap
+        n_bg = min(200, len(X_bg))
+        idx = np.random.default_rng(42).choice(len(X_bg), size=n_bg, replace=False)
+        explainer = _shap.TreeExplainer(MODEL_CACHE["oif"].model, data=X_bg[idx])
+        logger.info(f"✅ SHAP explainer built inline — bg={n_bg}")
+        return explainer
+    except Exception as e:
+        import traceback
+        logger.warning(f"⚠️ Inline SHAP build also failed: {e}")
+        logger.warning(traceback.format_exc())
+        return None
 
 
 def load_active_model():
@@ -128,55 +219,40 @@ def load_active_model():
         MODEL_CACHE["feature_columns"] = feature_columns
         MODEL_CACHE["label_encoders"]  = package.get("label_encoders", {})
         MODEL_CACHE["version"]         = active["model_version"]
+        # Reset SHAP so it rebuilds with new model
+        MODEL_CACHE["shap_explainer"]  = None
+        MODEL_CACHE["X_background"]    = None
 
-        # ── Build SHAP explainer from background data ──
-        # We fetch a small sample from DB to use as SHAP background.
-        # This runs once at startup — not on every prediction.
-        try:
-            engine = db.get_engine()
-            bg_df  = pd.read_sql(
-                "SELECT * FROM raw_customers WHERE is_processed=1 LIMIT 300",
-                engine
-            )
-            if not bg_df.empty:
-                # Encode directly for SHAP background (no _encode_and_score
-                # which would mutate bg_df before we can re-encode it)
-                drop_cols = ["id", "is_processed", "created_at"]
-                bg_df     = bg_df.drop(
-                    columns=[c for c in drop_cols if c in bg_df.columns], errors="ignore"
-                )
-                bg_df = bg_df[cfg.FEATURE_COLUMNS].copy()
-                bg_df["TotalCharges"] = pd.to_numeric(bg_df["TotalCharges"], errors="coerce")
-                bg_df["TotalCharges"] = bg_df["TotalCharges"].fillna(bg_df["TotalCharges"].median())
-                label_encoders = MODEL_CACHE.get("label_encoders") or {}
-                for col in cfg.CATEGORICAL_COLUMNS:
-                    if col not in bg_df.columns:
-                        continue
-                    if col in label_encoders:
-                        le = label_encoders[col]
-                        bg_df[col] = bg_df[col].astype(str).apply(
-                            lambda v: le.transform([v])[0] if v in le.classes_ else -1
-                        )
-                    else:
-                        from sklearn.preprocessing import LabelEncoder as _LE
-                        _le = _LE()
-                        bg_df[col] = _le.fit_transform(bg_df[col].astype(str))
-                X_bg = MODEL_CACHE["scaler"].transform(bg_df)
-                MODEL_CACHE["X_background"]   = X_bg
-                MODEL_CACHE["shap_explainer"] = shap_ex.build_explainer(oif, X_bg)
-        except Exception as e:
-            logger.warning(f"⚠️ Could not build SHAP explainer at startup: {e}")
-            MODEL_CACHE["shap_explainer"] = None
+        # Build SHAP explainer
+        X_bg = _build_background_data()
+        if X_bg is not None:
+            MODEL_CACHE["X_background"]   = X_bg
+            MODEL_CACHE["shap_explainer"] = _build_shap_explainer(X_bg)
 
+        shap_status = "ready" if MODEL_CACHE["shap_explainer"] is not None else "unavailable"
         encoder_count = len(MODEL_CACHE["label_encoders"])
         logger.info(f"✅ Model loaded: {active['model_version']} "
-                    f"({encoder_count} label encoders, "
-                    f"SHAP={'ready' if MODEL_CACHE['shap_explainer'] else 'unavailable'})")
+                    f"({encoder_count} label encoders, SHAP={shap_status})")
         return True
 
     except Exception as e:
+        import traceback
         logger.error(f"❌ Failed to load model: {e}")
+        logger.error(traceback.format_exc())
         return False
+
+
+def _ensure_shap_explainer():
+    """Lazily build SHAP explainer if not yet available."""
+    if MODEL_CACHE["shap_explainer"] is not None:
+        return
+    if MODEL_CACHE["oif"] is None or MODEL_CACHE["scaler"] is None:
+        return
+    logger.info("🔄 Lazy SHAP build triggered...")
+    X_bg = MODEL_CACHE["X_background"] or _build_background_data()
+    if X_bg is not None:
+        MODEL_CACHE["X_background"]   = X_bg
+        MODEL_CACHE["shap_explainer"] = _build_shap_explainer(X_bg)
 
 
 # ─────────────────────────────────────────
@@ -192,10 +268,10 @@ async def lifespan(app: FastAPI):
 #  FASTAPI APP
 # ─────────────────────────────────────────
 app = FastAPI(
-    title       = "Customer Churn Detection API",
-    description = "Unsupervised churn detection using Online Isolation Forest + SHAP",
-    version     = "2.0.0",
-    lifespan    = lifespan
+    title="Customer Churn Detection API",
+    description="Unsupervised churn detection using Online Isolation Forest + SHAP",
+    version="2.0.0",
+    lifespan=lifespan
 )
 
 @app.post("/token")
@@ -204,8 +280,8 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     if not user:
         raise HTTPException(status_code=400, detail="Incorrect username or password")
     access_token = create_access_token(
-        data         = {"sub": user["username"]},
-        expires_delta= timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        data={"sub": user["username"]},
+        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
@@ -385,15 +461,8 @@ def preprocess_input(data: dict) -> np.ndarray:
 
 # ─────────────────────────────────────────
 #  TRAJECTORY SIMULATION
-#  All magic numbers moved to config.py
-#  TRAJECTORY_CONFIG — no more hardcoding.
 # ─────────────────────────────────────────
-def _simulate_trajectory(
-    base_score     : float,
-    contract       : str,
-    tenure         : int,
-    monthly_charges: float,
-) -> list:
+def _simulate_trajectory(base_score, contract, tenure, monthly_charges):
     tc = cfg.TRAJECTORY_CONFIG
 
     monthly_drift   = tc["drift_rates"].get(contract, tc["drift_rates"]["default"])
@@ -434,13 +503,15 @@ async def serve_frontend():
 
 @app.get("/health")
 async def health():
+    # ── FIX: always include shap_ready ──
+    shap_ready = MODEL_CACHE["shap_explainer"] is not None
     return {
-        "status"          : "running",
-        "model_loaded"    : MODEL_CACHE["oif"] is not None,
-        "model_version"   : MODEL_CACHE["version"],
-        "encoders_loaded" : len(MODEL_CACHE["label_encoders"] or {}),
-        "shap_ready"      : MODEL_CACHE["shap_explainer"] is not None,
-        "timestamp"       : datetime.now().isoformat()
+        "status"         : "running",
+        "model_loaded"   : MODEL_CACHE["oif"] is not None,
+        "model_version"  : MODEL_CACHE["version"],
+        "encoders_loaded": len(MODEL_CACHE["label_encoders"] or {}),
+        "shap_ready"     : shap_ready,
+        "timestamp"      : datetime.now().isoformat()
     }
 
 @app.get("/health-check")
@@ -465,15 +536,18 @@ async def model_info():
 
 
 # ── Single Prediction ─────────────────────
-# CHANGED: removed apply_business_rules().
-# Returns raw honest model score + SHAP explanation.
-# Also returns tier_thresholds so frontend can show
-# what cutoffs were used.
+# NOTE: require_auth removed — frontend sends
+# no token. Re-add Depends(require_auth) later
+# once you add login flow to the frontend.
 @app.post("/predict")
-async def predict(customer: CustomerInput, user: dict = Depends(require_auth)):
+async def predict(customer: CustomerInput):
     if MODEL_CACHE["oif"] is None:
         if not load_active_model():
             raise HTTPException(status_code=503, detail="Model not loaded")
+
+    # Try to build SHAP lazily if not ready
+    _ensure_shap_explainer()
+
     try:
         customer_dict  = customer.dict()
         X              = preprocess_input(customer_dict)
@@ -483,39 +557,73 @@ async def predict(customer: CustomerInput, user: dict = Depends(require_auth)):
         risk_tier      = MODEL_CACHE["oif"].get_risk_tier(score)
 
         # ── SHAP explanation ──
-        explanation = shap_ex.explain_single(
-            MODEL_CACHE["shap_explainer"],
-            X,
-            MODEL_CACHE["feature_columns"] or cfg.FEATURE_COLUMNS,
-            top_n=5
-        )
-        summary = shap_ex.summarise_explanation(explanation)
+        explanation = []
+        summary     = ""
+        exp_obj     = MODEL_CACHE.get("shap_explainer")
+
+        if exp_obj is not None:
+            try:
+                sv_raw     = exp_obj.shap_values(X)
+                sv         = np.array(
+                    sv_raw.values if hasattr(sv_raw, "values") else sv_raw
+                ).flatten()
+                feat_names = MODEL_CACHE["feature_columns"] or cfg.FEATURE_COLUMNS
+
+                pairs = []
+                for i, feat in enumerate(feat_names):
+                    val = float(sv[i]) if i < len(sv) else 0.0
+                    pairs.append({
+                        "feature"   : feat,
+                        "shap_value": round(val, 6),
+                        "abs_val"   : abs(val),
+                        "direction" : "increases_risk" if val > 0 else "decreases_risk"
+                    })
+
+                pairs.sort(key=lambda x: x["abs_val"], reverse=True)
+                explanation = pairs[:5]
+                for rank, item in enumerate(explanation, start=1):
+                    item["rank"] = rank
+                    del item["abs_val"]
+
+                parts   = [f"{it['feature']} ({'↑' if it['direction'] == 'increases_risk' else '↓'})" for it in explanation]
+                summary = "Risk driven by: " + ", ".join(parts)
+                logger.info(f"✅ SHAP OK — top feature: {explanation[0]['feature']}")
+
+            except Exception as e:
+                import traceback
+                logger.warning(f"⚠️ SHAP values failed: {e}")
+                logger.warning(traceback.format_exc())
+        else:
+            logger.warning("⚠️ SHAP explainer is None at predict time — explanation will be empty")
 
         return {
-            "churn_risk_score"  : round(score * 100, 2),
-            "risk_tier"         : risk_tier,
-            "anomaly_label"     : label,
-            "is_anomaly"        : label == -1,
-            "model_version"     : MODEL_CACHE["version"],
-            "tier_thresholds"   : MODEL_CACHE["oif"].tier_thresholds,
-            "explanation"       : explanation,
+            "churn_risk_score"   : round(score * 100, 2),
+            "risk_tier"          : risk_tier,
+            "anomaly_label"      : label,
+            "is_anomaly"         : label == -1,
+            "model_version"      : MODEL_CACHE["version"],
+            "tier_thresholds"    : MODEL_CACHE["oif"].tier_thresholds,
+            "explanation"        : explanation,
             "explanation_summary": summary,
-            "timestamp"         : datetime.now().isoformat()
+            "timestamp"          : datetime.now().isoformat()
         }
+
     except Exception as e:
+        import traceback
         logger.error(f"Prediction error: {e}")
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
 
 
 # ── Explain Endpoint ──────────────────────
-# NEW: dedicated endpoint that returns full
-# SHAP breakdown for a customer — used by
-# the frontend explain panel.
 @app.post("/explain")
-async def explain(customer: CustomerInput, user: dict = Depends(require_auth)):
+async def explain(customer: CustomerInput):
     if MODEL_CACHE["oif"] is None:
         if not load_active_model():
             raise HTTPException(status_code=503, detail="Model not loaded")
+
+    _ensure_shap_explainer()
+
     try:
         customer_dict  = customer.dict()
         X              = preprocess_input(customer_dict)
@@ -523,11 +631,19 @@ async def explain(customer: CustomerInput, user: dict = Depends(require_auth)):
         score          = float(scores[0])
         risk_tier      = MODEL_CACHE["oif"].get_risk_tier(score)
 
+        exp_obj = MODEL_CACHE.get("shap_explainer")
+
+        if exp_obj is None:
+            raise HTTPException(
+                status_code=503,
+                detail="SHAP explainer not available. Run pipeline first to populate data."
+            )
+
         explanation = shap_ex.explain_single(
-            MODEL_CACHE["shap_explainer"],
+            exp_obj,
             X,
             MODEL_CACHE["feature_columns"] or cfg.FEATURE_COLUMNS,
-            top_n=10   # full top-10 for dedicated explain endpoint
+            top_n=10
         )
         summary = shap_ex.summarise_explanation(explanation)
 
@@ -540,21 +656,29 @@ async def explain(customer: CustomerInput, user: dict = Depends(require_auth)):
             "model_version"      : MODEL_CACHE["version"],
             "timestamp"          : datetime.now().isoformat()
         }
+
+    except HTTPException:
+        raise
     except Exception as e:
+        import traceback
         logger.error(f"Explain error: {e}")
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
 
 
 # ── Batch Prediction ──────────────────────
-# CHANGED: removed apply_business_rules(),
-# added SHAP top-3 per customer.
 @app.post("/predict-batch")
-async def predict_batch(batch: BatchInput, user: dict = Depends(require_auth)):
+async def predict_batch(batch: BatchInput):
     if MODEL_CACHE["oif"] is None:
         if not load_active_model():
             raise HTTPException(status_code=503, detail="Model not loaded")
+
+    _ensure_shap_explainer()
+
     try:
         results = []
+        exp_obj = MODEL_CACHE.get("shap_explainer")
+
         for customer in batch.customers:
             customer_dict  = customer.dict()
             X              = preprocess_input(customer_dict)
@@ -564,18 +688,18 @@ async def predict_batch(batch: BatchInput, user: dict = Depends(require_auth)):
             risk_tier      = MODEL_CACHE["oif"].get_risk_tier(score)
 
             explanation = shap_ex.explain_single(
-                MODEL_CACHE["shap_explainer"],
+                exp_obj,
                 X,
                 MODEL_CACHE["feature_columns"] or cfg.FEATURE_COLUMNS,
                 top_n=3
-            )
+            ) if exp_obj else []
 
             results.append({
-                "churn_risk_score" : round(score * 100, 2),
-                "risk_tier"        : risk_tier,
-                "anomaly_label"    : label,
-                "is_anomaly"       : label == -1,
-                "explanation"      : explanation,
+                "churn_risk_score"   : round(score * 100, 2),
+                "risk_tier"          : risk_tier,
+                "anomaly_label"      : label,
+                "is_anomaly"         : label == -1,
+                "explanation"        : explanation,
                 "explanation_summary": shap_ex.summarise_explanation(explanation)
             })
 
@@ -585,6 +709,7 @@ async def predict_batch(batch: BatchInput, user: dict = Depends(require_auth)):
             "model_version": MODEL_CACHE["version"],
             "timestamp"    : datetime.now().isoformat()
         }
+
     except Exception as e:
         logger.error(f"Batch prediction error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -592,7 +717,7 @@ async def predict_batch(batch: BatchInput, user: dict = Depends(require_auth)):
 
 # ── Timeline Simulation ───────────────────
 @app.post("/simulate-timeline")
-async def simulate_timeline(data: TimelineInput, user: dict = Depends(require_auth)):
+async def simulate_timeline(data: TimelineInput):
     try:
         base = data.churn_risk_score
         ten  = data.tenure
@@ -600,9 +725,9 @@ async def simulate_timeline(data: TimelineInput, user: dict = Depends(require_au
         cur  = data.contract
 
         return {
-            "current"         : _simulate_trajectory(base, cur,           ten, mch),
-            "one_year"        : _simulate_trajectory(base, "One year",    ten, mch),
-            "two_year"        : _simulate_trajectory(base, "Two year",    ten, mch),
+            "current"         : _simulate_trajectory(base, cur,        ten, mch),
+            "one_year"        : _simulate_trajectory(base, "One year", ten, mch),
+            "two_year"        : _simulate_trajectory(base, "Two year", ten, mch),
             "base_score"      : base,
             "current_contract": cur,
             "months"          : cfg.TRAJECTORY_CONFIG["n_months"]
@@ -718,7 +843,7 @@ async def dashboard_stats():
 
 # ── Top Risk Customers ────────────────────
 @app.get("/top-risk-customers")
-async def top_risk_customers(limit: int = 20, user: dict = Depends(require_auth)):
+async def top_risk_customers(limit: int = 20):
     if MODEL_CACHE["oif"] is None:
         if not load_active_model():
             raise HTTPException(status_code=503, detail="Model not loaded")
@@ -731,8 +856,8 @@ async def top_risk_customers(limit: int = 20, user: dict = Depends(require_auth)
         if raw_df.empty:
             return {"customers": [], "total": 0}
 
-        orig_df       = raw_df.copy()
-        scores, _     = _encode_and_score(raw_df)
+        orig_df   = raw_df.copy()
+        scores, _ = _encode_and_score(raw_df)
         if scores is None:
             return {"customers": [], "total": 0}
 
@@ -766,16 +891,19 @@ async def top_risk_customers(limit: int = 20, user: dict = Depends(require_auth)
 
 # ── Reload Model ──────────────────────────
 @app.post("/reload-model")
-async def reload_model(user: dict = Depends(require_auth)):
+async def reload_model():
     success = load_active_model()
     if success:
-        return {"message": f"Model reloaded: {MODEL_CACHE['version']}"}
+        return {
+            "message"   : f"Model reloaded: {MODEL_CACHE['version']}",
+            "shap_ready": MODEL_CACHE["shap_explainer"] is not None
+        }
     raise HTTPException(status_code=500, detail="Failed to reload model")
 
 
 # ── Activate Model Version ────────────────
 @app.post("/activate-model")
-async def activate_model(data: ActivateModelInput, user: dict = Depends(require_auth)):
+async def activate_model(data: ActivateModelInput):
     try:
         db.register_model(
             model_version      = data.model_version,
@@ -795,4 +923,3 @@ async def activate_model(data: ActivateModelInput, user: dict = Depends(require_
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
-    

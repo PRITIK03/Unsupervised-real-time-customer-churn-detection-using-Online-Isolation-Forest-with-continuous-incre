@@ -1725,6 +1725,318 @@
             color: var(--text-muted);
             margin-left: auto;
         }
+
+        /* ─── SHAP PANEL (inline in result card) ─── */
+        .shap-panel {
+            margin-top: 16px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(139, 92, 246, 0.05));
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: var(--radius-sm);
+            padding: 14px 16px;
+            display: none;
+        }
+
+        .shap-panel.visible {
+            display: block;
+            animation: fadeUp 0.4s ease;
+        }
+
+        .shap-panel-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--cyan);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .shap-ai-chip {
+            font-size: 9px;
+            background: rgba(6, 182, 212, 0.15);
+            color: var(--cyan);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            padding: 2px 7px;
+            border-radius: 8px;
+            margin-left: 4px;
+        }
+
+        .shap-summary {
+            background: rgba(6, 182, 212, 0.08);
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            border-radius: 6px;
+            padding: 10px 12px;
+            font-size: 12px;
+            color: var(--text-sec);
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+
+        .shap-summary strong {
+            color: var(--cyan);
+        }
+
+        .shap-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+        }
+
+        .shap-bar-row {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .shap-bar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .shap-feature-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .shap-value-chip {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .shap-value-chip.risk {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--red);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .shap-value-chip.safe {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--green);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .shap-bar-track {
+            height: 7px;
+            background: var(--bg-primary);
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .shap-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .shap-bar-fill.risk {
+            background: linear-gradient(90deg, #ef4444, #f97316);
+        }
+
+        .shap-bar-fill.safe {
+            background: linear-gradient(90deg, #10b981, #06b6d4);
+        }
+
+        .shap-full-btn {
+            width: 100%;
+            margin-top: 12px;
+            padding: 8px;
+            border-radius: 6px;
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            color: var(--purple);
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: var(--transition);
+            letter-spacing: 0.5px;
+        }
+
+        .shap-full-btn:hover {
+            background: rgba(139, 92, 246, 0.2);
+            transform: translateY(-1px);
+        }
+
+        /* ─── SHAP MODAL ─── */
+        .shap-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .shap-modal-overlay.open {
+            display: flex;
+            animation: fadeScale 0.3s ease;
+        }
+
+        @keyframes fadeScale {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .shap-modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border-bright);
+            border-radius: var(--radius);
+            padding: 28px;
+            width: 600px;
+            max-width: 95vw;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+        }
+
+        .shap-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .shap-modal-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .shap-modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px;
+            transition: color 0.2s;
+        }
+
+        .shap-modal-close:hover {
+            color: var(--text);
+        }
+
+        .shap-modal-summary {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.08), rgba(139, 92, 246, 0.08));
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            border-radius: 8px;
+            padding: 14px 16px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: var(--text-sec);
+            line-height: 1.7;
+        }
+
+        .shap-modal-summary strong {
+            color: var(--cyan);
+        }
+
+        .shap-modal-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .shap-modal-row {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .shap-modal-row-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .shap-modal-feature {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .shap-modal-rank {
+            font-size: 10px;
+            color: var(--text-muted);
+            background: var(--bg-secondary);
+            padding: 2px 7px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .shap-modal-track {
+            height: 10px;
+            background: var(--bg-primary);
+            border-radius: 5px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .shap-modal-fill {
+            height: 100%;
+            border-radius: 5px;
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .shap-modal-fill.risk {
+            background: linear-gradient(90deg, #ef4444, #f97316);
+        }
+
+        .shap-modal-fill.safe {
+            background: linear-gradient(90deg, #10b981, #06b6d4);
+        }
+
+        .shap-modal-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        .shap-legend {
+            display: flex;
+            gap: 16px;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .shap-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--text-sec);
+        }
+
+        .shap-legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        #result-shap-status {
+            color: var(--cyan);
+        }
     </style>
 </head>
 
@@ -2119,29 +2431,29 @@
                                 </div>
                                 <div class="tier-badge tier-Low" id="result-tier-badge">LOW</div>
                             </div>
-                            <!-- Business Rules Badge -->
-                            <div style="text-align:center;margin:10px 0" id="br-badge-wrap"></div>
-                            <!-- Raw vs Adjusted Score Comparison -->
-                            <div class="score-compare" id="score-compare" style="display:none">
-                                <span class="old" id="raw-score-display">0%</span>
-                                <span class="arrow">→</span>
-                                <span class="new" id="adj-score-display" style="color:var(--green)">0%</span>
-                            </div>
                             <div style="background:var(--bg-secondary);border-radius:8px;padding:12px;margin:14px 0;font-size:12px;color:var(--text-sec);line-height:1.6;border-left:3px solid var(--blue)"
                                 id="result-interpretation"></div>
+
+                            <!-- ══ SHAP PANEL ══ -->
+                            <div class="shap-panel" id="shap-panel">
+                                <div class="shap-panel-title">
+                                    🧠 Why this score?
+                                    <span class="shap-ai-chip">AI-Learned</span>
+                                </div>
+                                <div class="shap-summary" id="shap-summary-text"></div>
+                                <div class="shap-bars" id="shap-bars-container"></div>
+                                <button class="shap-full-btn" onclick="openShapModal()">🔬 Full Feature Breakdown (Top
+                                    10)</button>
+                            </div>
+
                             <div class="result-details">
                                 <div class="result-detail">
-                                    <div class="result-detail-lbl">Adjusted Score</div>
+                                    <div class="result-detail-lbl">Risk Score</div>
                                     <div class="result-detail-val" id="result-score">—</div>
                                 </div>
                                 <div class="result-detail">
                                     <div class="result-detail-lbl">Risk Tier</div>
                                     <div class="result-detail-val" id="result-tier">—</div>
-                                </div>
-                                <div class="result-detail">
-                                    <div class="result-detail-lbl">Raw Model Score</div>
-                                    <div class="result-detail-val" id="result-raw-score"
-                                        style="color:var(--text-muted)">—</div>
                                 </div>
                                 <div class="result-detail">
                                     <div class="result-detail-lbl">Anomaly Status</div>
@@ -2155,6 +2467,10 @@
                                     <div class="result-detail-lbl">Model Version</div>
                                     <div class="result-detail-val" style="font-size:11px;word-break:break-all"
                                         id="result-model">—</div>
+                                </div>
+                                <div class="result-detail">
+                                    <div class="result-detail-lbl">SHAP Status</div>
+                                    <div class="result-detail-val" id="result-shap-status">—</div>
                                 </div>
                             </div>
                         </div>
@@ -2653,43 +2969,31 @@
             document.getElementById('result-placeholder').style.display = 'none';
             document.getElementById('result-content').style.display = 'block';
             const score = data.churn_risk_score, tier = data.risk_tier;
-            const rawScore = data.raw_model_score !== undefined ? data.raw_model_score : score;
-            const rulesApplied = data.business_rules_applied || false;
             updateRiskMeter(score, tier);
             const tb = document.getElementById('result-tier-badge');
             if (tb) { tb.textContent = tier; tb.className = `tier-badge tier-${tier}`; }
             setV('result-score', score.toFixed(1) + '%');
             setV('result-tier', tier);
-            setV('result-raw-score', rawScore.toFixed(1) + '%');
             setV('result-anomaly', data.is_anomaly ? '⚠️ Anomaly' : '✅ Normal');
             setV('result-model', data.model_version || 'N/A');
             setV('result-time', new Date(data.timestamp).toLocaleTimeString());
-            // Business rules badge
-            const brWrap = document.getElementById('br-badge-wrap');
-            if (brWrap) {
-                if (rulesApplied) {
-                    brWrap.innerHTML = '<span class="br-badge applied">🛡️ Business Rules Applied</span>';
-                } else {
-                    brWrap.innerHTML = '<span class="br-badge none">📊 Raw Model Score</span>';
-                }
-            }
-            // Raw vs Adjusted comparison
-            const scWrap = document.getElementById('score-compare');
-            if (scWrap) {
-                if (rulesApplied) {
-                    scWrap.style.display = 'flex';
-                    document.getElementById('raw-score-display').textContent = rawScore.toFixed(1) + '%';
-                    const adjEl = document.getElementById('adj-score-display');
-                    adjEl.textContent = score.toFixed(1) + '%';
-                    adjEl.style.color = score < rawScore ? 'var(--green)' : 'var(--red)';
-                } else {
-                    scWrap.style.display = 'none';
-                }
-            }
             const msgs = { Critical: '🔴 Very high churn probability. Immediate intervention recommended.', High: '🟠 High churn risk detected. Consider proactive outreach.', Medium: '🟡 Moderate churn risk. Monitor and engage.', Low: '🟢 Low churn risk. Customer appears stable.' };
             setV('result-interpretation', msgs[tier] || '');
             const ae = document.getElementById('result-anomaly');
             if (ae) ae.style.color = data.is_anomaly ? '#ef4444' : '#10b981';
+
+            // ── SHAP Explanation ──
+            if (data.explanation && data.explanation.length > 0) {
+                renderShapPanel(data.explanation, data.explanation_summary || '');
+                setV('result-shap-status', '✅ Available');
+                // Store for modal use
+                window._lastShapData = { explanation: data.explanation, summary: data.explanation_summary || '' };
+            } else {
+                const sp = document.getElementById('shap-panel');
+                if (sp) sp.classList.remove('visible');
+                setV('result-shap-status', '⚠️ Unavailable');
+                window._lastShapData = null;
+            }
         }
 
         function setV(id, val) { const e = document.getElementById(id); if (e) e.textContent = val; }
@@ -2699,11 +3003,140 @@
             document.getElementById('result-placeholder').style.display = 'flex';
             document.getElementById('result-content').style.display = 'none';
             document.getElementById('timeline-wrap').classList.remove('visible');
-            const brWrap = document.getElementById('br-badge-wrap');
-            if (brWrap) brWrap.innerHTML = '';
-            const scWrap = document.getElementById('score-compare');
-            if (scWrap) scWrap.style.display = 'none';
+            const sp = document.getElementById('shap-panel');
+            if (sp) sp.classList.remove('visible');
+            window._lastShapData = null;
             initRiskMeter();
+        }
+
+        // ══════════════════════════════════════════════════════════════
+        //  SHAP EXPLAINABILITY UI
+        // ══════════════════════════════════════════════════════════════
+
+        function renderShapPanel(explanation, summary) {
+            const panel = document.getElementById('shap-panel');
+            if (!panel) return;
+
+            // Summary text
+            const summaryEl = document.getElementById('shap-summary-text');
+            if (summaryEl) {
+                const parts = summary.replace('Risk driven by: ', '').split(', ');
+                summaryEl.innerHTML = '<strong>Key risk drivers:</strong> ' +
+                    parts.map(p => {
+                        const isUp = p.includes('↑');
+                        return `<span style="color:${isUp ? 'var(--red)' : 'var(--green)'}">${p}</span>`;
+                    }).join(', ');
+            }
+
+            // Top-5 bars
+            const container = document.getElementById('shap-bars-container');
+            if (container) {
+                const top5 = explanation.slice(0, 5);
+                const maxAbs = Math.max(...top5.map(e => Math.abs(e.shap_value)), 0.001);
+                container.innerHTML = top5.map(e => {
+                    const isRisk = e.direction === 'increases_risk';
+                    const cls = isRisk ? 'risk' : 'safe';
+                    const arrow = isRisk ? '▲' : '▼';
+                    const pct = Math.min((Math.abs(e.shap_value) / maxAbs) * 100, 100).toFixed(0);
+                    return `<div class="shap-bar-row">
+                        <div class="shap-bar-header">
+                            <span class="shap-feature-name">${e.feature}</span>
+                            <span class="shap-value-chip ${cls}">${arrow} ${Math.abs(e.shap_value).toFixed(4)}</span>
+                        </div>
+                        <div class="shap-bar-track">
+                            <div class="shap-bar-fill ${cls}" style="width:${pct}%"></div>
+                        </div>
+                    </div>`;
+                }).join('');
+            }
+
+            panel.classList.add('visible');
+        }
+
+        function openShapModal() {
+            const overlay = document.getElementById('shap-modal-overlay');
+            const content = document.getElementById('shap-modal-content');
+            if (!overlay || !content) return;
+
+            const shapData = window._lastShapData;
+            if (!shapData || !shapData.explanation || shapData.explanation.length === 0) {
+                content.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-muted)">No SHAP data available. Run a prediction first.</div>';
+                overlay.classList.add('open');
+                return;
+            }
+
+            // Fetch full top-10 from /explain endpoint
+            const formPayload = collectFormData();
+            if (!formPayload) {
+                content.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-muted)">Form data needed. Please keep form filled.</div>';
+                overlay.classList.add('open');
+                return;
+            }
+
+            content.innerHTML = '<div style="text-align:center;padding:32px"><div class="spinner" style="margin:0 auto"></div><div style="margin-top:12px;color:var(--text-muted);font-size:12px">Fetching full breakdown...</div></div>';
+            overlay.classList.add('open');
+
+            fetch('/explain', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formPayload) })
+                .then(r => r.json())
+                .then(data => {
+                    renderShapModalContent(data.explanation || shapData.explanation, data.explanation_summary || shapData.summary);
+                })
+                .catch(() => {
+                    // Fallback — use the cached top-5
+                    renderShapModalContent(shapData.explanation, shapData.summary);
+                });
+        }
+
+        function renderShapModalContent(explanation, summary) {
+            const content = document.getElementById('shap-modal-content');
+            if (!content) return;
+
+            const maxAbs = Math.max(...explanation.map(e => Math.abs(e.shap_value)), 0.001);
+
+            let html = '';
+
+            // Summary
+            html += `<div class="shap-modal-summary"><strong>Summary:</strong> ${summary}</div>`;
+
+            // Bars
+            html += '<div class="shap-modal-bars">';
+            explanation.forEach((e, i) => {
+                const isRisk = e.direction === 'increases_risk';
+                const cls = isRisk ? 'risk' : 'safe';
+                const arrow = isRisk ? '▲ Increases Risk' : '▼ Decreases Risk';
+                const pct = Math.min((Math.abs(e.shap_value) / maxAbs) * 100, 100).toFixed(0);
+                html += `<div class="shap-modal-row">
+                    <div class="shap-modal-row-header">
+                        <span class="shap-modal-feature">${e.feature}</span>
+                        <span class="shap-modal-rank">#${e.rank || (i + 1)}</span>
+                    </div>
+                    <div class="shap-modal-track">
+                        <div class="shap-modal-fill ${cls}" style="width:${pct}%"></div>
+                    </div>
+                    <div class="shap-modal-meta">
+                        <span>${arrow}</span>
+                        <span>SHAP: ${e.shap_value > 0 ? '+' : ''}${e.shap_value.toFixed(4)}</span>
+                    </div>
+                </div>`;
+            });
+            html += '</div>';
+
+            // Legend
+            html += `<div class="shap-legend">
+                <div class="shap-legend-item"><div class="shap-legend-dot" style="background:linear-gradient(135deg,#ef4444,#f97316)"></div> Increases Risk</div>
+                <div class="shap-legend-item"><div class="shap-legend-dot" style="background:linear-gradient(135deg,#10b981,#06b6d4)"></div> Decreases Risk</div>
+            </div>`;
+
+            content.innerHTML = html;
+        }
+
+        function closeShapModal() {
+            const overlay = document.getElementById('shap-modal-overlay');
+            if (overlay) overlay.classList.remove('open');
+        }
+
+        function closeShapModalOutside(event) {
+            if (event.target === event.currentTarget) closeShapModal();
         }
 
         function fillSampleData(type) {
@@ -3676,6 +4109,21 @@
             }
         }
     </script>
+
+    <!-- ══ SHAP MODAL ══ -->
+    <div class="shap-modal-overlay" id="shap-modal-overlay" onclick="closeShapModalOutside(event)">
+        <div class="shap-modal">
+            <div class="shap-modal-header">
+                <div class="shap-modal-title">🧠 Full SHAP Feature Breakdown</div>
+                <button class="shap-modal-close" onclick="closeShapModal()">✕</button>
+            </div>
+            <div id="shap-modal-content">
+                <div style="text-align:center;padding:32px">
+                    <div class="spinner" style="margin:0 auto"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- FLOATING ACTION BUTTON -->
     <div class="fab">

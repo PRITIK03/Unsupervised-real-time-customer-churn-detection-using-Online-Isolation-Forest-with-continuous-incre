@@ -139,8 +139,8 @@ def load_active_model():
                 engine
             )
             if not bg_df.empty:
-                scores, _ = _encode_and_score(bg_df)
-                # Re-encode to get X_background as numpy array
+                # Encode directly for SHAP background (no _encode_and_score
+                # which would mutate bg_df before we can re-encode it)
                 drop_cols = ["id", "is_processed", "created_at"]
                 bg_df     = bg_df.drop(
                     columns=[c for c in drop_cols if c in bg_df.columns], errors="ignore"
@@ -795,3 +795,4 @@ async def activate_model(data: ActivateModelInput, user: dict = Depends(require_
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    

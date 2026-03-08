@@ -298,7 +298,122 @@ def incremental_update():
     logger.info(f"  ✅ INCREMENTAL UPDATE COMPLETE — {X.shape[0]} new records processed")
     logger.info("=" * 55)
     return version
+# ─────────────────────────────────────────
+#  ONLINE ISOLATION FOREST WRAPPER
+#  main.py depends on oif.predict(),
+#  oif._normalize(), oif.get_risk_tier(),
+#  oif.tier_thresholds — kept for compatibility.
+# ─────────────────────────────────────────
+from collections import deque
 
+def compute_dynamic_tiers(scores: np.ndarray) -> dict:
+    percentiles        = cfg.TIER_PERCENTILES
+    critical_threshold = float(np.percentile(scores, percentiles["critical_pct"]))
+    high_threshold     = float(np.percentile(scores, percentiles["high_pct"]))
+    medium_threshold   = float(np.percentile(scores, percentiles["medium_pct"]))
+    logger.info("Dynamic tier thresholds:")
+    logger.info(f"  Critical >= {critical_threshold:.4f}")
+    logger.info(f"  High     >= {high_threshold:.4f}")
+    logger.info(f"  Medium   >= {medium_threshold:.4f}")
+    return {
+        "critical_threshold": critical_threshold,
+        "high_threshold"    : high_threshold,
+        "medium_threshold"  : medium_threshold,
+    }
+
+
+class OnlineIsolationForest:
+    """
+    Wrapper around sklearn IsolationForest that provides
+    the interface main.py depends on:
+      - .predict(X)       → (labels, normalised_scores)
+      - ._normalize(raw)  → normalised scores 0-1
+      - .get_risk_tier(s) → "Critical" / "High" / "Medium" / "Low"
+      - .tier_thresholds  → dict of thresholds
+      - .model            → the underlying IsolationForest
+    """
+    def __init__(self, model: IsolationForest,
+                 global_min: float, global_max: float,
+                 tier_thresholds: dict = None):
+        self.model           = model
+        self.global_min      = global_min
+        self.global_max      = global_max
+        self.tier_thresholds = tier_thresholds
+        self.update_count    = 0
+
+    def predict(self, X: np.ndarray):
+        raw_scores = self.model.score_samples(X)
+        labels     = self.model.predict(X)
+        scores     = self._normalize(raw_scores)
+        return labels, scores
+
+    def _normalize(self, raw_scores: np.ndarray) -> np.ndarray:
+        denom = self.global_max - self.global_min
+        if denom == 0:
+            return np.full(len(raw_scores), 0.5)
+        # IsolationForest: lower score_sample = more anomalous
+        # Invert so higher normalised score = higher risk
+        scores = (self.global_max - np.clip(raw_scores, self.global_min, self.global_max)) / denom
+        return np.clip(scores, 0.0, 1.0)
+
+    def get_risk_tier(self, score: float) -> str:
+        if self.tier_thresholds is not None:
+            t = self.tier_thresholds
+            if score >= t["critical_threshold"]: return "Critical"
+            if score >= t["high_threshold"]:     return "High"
+            if score >= t["medium_threshold"]:   return "Medium"
+            return "Low"
+        # Fallback if tiers not yet computed
+        if score >= 0.75: return "Critical"
+        if score >= 0.50: return "High"
+        if score >= 0.25: return "Medium"
+        return "Low"
+
+    def score_samples(self, X: np.ndarray) -> np.ndarray:
+        """Passthrough so main.py can call oif.model.score_samples directly."""
+        return self.model.score_samples(X)
+
+
+# ─────────────────────────────────────────
+#  LOAD MODEL — called by main.py
+#  Returns (oif, scaler, feature_columns, package)
+# ─────────────────────────────────────────
+def load_model(model_path: str):
+    """
+    Load model package and wrap the plain IsolationForest
+    in an OnlineIsolationForest so main.py's interface works.
+
+    Returns:
+        oif             : OnlineIsolationForest wrapper
+        scaler          : StandardScaler
+        feature_columns : list of feature names
+        package         : full raw dict from pickle
+    """
+    if not os.path.exists(model_path):
+        raise FileNotFoundError(f"Model file not found: {model_path}")
+
+    with open(model_path, "rb") as f:
+        package = pickle.load(f)
+
+    raw_model      = package.get("model")
+    scaler         = package.get("scaler")
+    feature_columns= package.get("feature_columns") or cfg.FEATURE_COLUMNS
+    global_min     = package.get("global_min", 0.0)
+    global_max     = package.get("global_max", 1.0)
+
+    # Wrap in OnlineIsolationForest so main.py's
+    # oif.predict(), oif._normalize(), oif.get_risk_tier()
+    # all work without changing main.py at all.
+    oif = OnlineIsolationForest(
+        model          = raw_model,
+        global_min     = global_min,
+        global_max     = global_max,
+        tier_thresholds= None,   # main.py computes this after loading
+    )
+
+    logger.info(f"✅ load_model: wrapped IsolationForest as OnlineIsolationForest")
+    logger.info(f"   global_min={global_min:.4f}, global_max={global_max:.4f}")
+    return oif, scaler, feature_columns, package
 
 if __name__ == "__main__":
     import argparse

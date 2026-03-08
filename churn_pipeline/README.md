@@ -146,3 +146,4 @@ This ensures that a loyal, long-tenure customer doesn't get flagged as "Critical
 | Frontend | HTML, CSS, JavaScript, Chart.js |
 | Auth | JWT (python-jose) |
 | Scheduling | APScheduler |
+http://localhost:8000

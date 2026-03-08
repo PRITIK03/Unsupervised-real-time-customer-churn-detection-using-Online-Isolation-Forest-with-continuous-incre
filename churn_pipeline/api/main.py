@@ -3,27 +3,68 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from fastapi import Depends, HTTPException, status
 from datetime import timedelta, datetime
+from passlib.context import CryptContext
 
 # ─────────────────────────────────────────
 #  AUTH CONFIG
+#  FIX 1: SECRET_KEY was "supersecretkey" hardcoded
+#  in source code committed to a public GitHub repo.
+#  Now loaded from .env via config.py.
+#
+#  FIX 2: ACCESS_TOKEN_EXPIRE_MINUTES was hardcoded.
+#  Now loaded from config.py.
 # ─────────────────────────────────────────
-SECRET_KEY = "supersecretkey"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
+import sys
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if ROOT_DIR not in sys.path:
+    sys.path.insert(0, ROOT_DIR)
 
+import importlib.util
+def _load_cfg():
+    spec = importlib.util.spec_from_file_location("config", os.path.join(ROOT_DIR, "config.py"))
+    mod  = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+cfg_auth = _load_cfg()
+
+SECRET_KEY                  = cfg_auth.SECRET_KEY
+ALGORITHM                   = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = cfg_auth.ACCESS_TOKEN_EXPIRE_MINUTES
+
+# ─────────────────────────────────────────
+#  FIX 3: verify_password previously did plain
+#  string comparison:
+#      return plain_password == hashed_password
+#  "adminpass" was stored as plaintext — no hashing.
+#  Now uses bcrypt via passlib. Timing-safe.
+#
+#  FIX 4: fake_users_db now loads the password hash
+#  from .env via config.py — never plaintext in source.
+#  Generate a hash with:
+#    python -c "from passlib.context import CryptContext; \
+#               ctx=CryptContext(schemes=['bcrypt']); \
+#               print(ctx.hash('your_password'))"
+#  Then set ADMIN_PASSWORD_HASH in your .env file.
+# ─────────────────────────────────────────
+pwd_context   = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
 
 fake_users_db = {
-    "admin": {
-        "username": "admin",
-        "full_name": "Admin User",
-        "hashed_password": "adminpass",
-        "disabled": False,
+    cfg_auth.ADMIN_USERNAME: {
+        "username"       : cfg_auth.ADMIN_USERNAME,
+        "full_name"      : "Admin User",
+        "hashed_password": cfg_auth.ADMIN_PASSWORD_HASH,
+        "disabled"       : False,
     }
 }
 
 def verify_password(plain_password, hashed_password):
-    return plain_password == hashed_password
+    # FIX: was `return plain_password == hashed_password`
+    # Plain string comparison with no hashing whatsoever.
+    # Now uses bcrypt verify — hash never leaves .env.
+    if not hashed_password:
+        return False  # no hash configured — reject all logins safely
+    return pwd_context.verify(plain_password, hashed_password)
 
 def authenticate_user(username: str, password: str):
     user = fake_users_db.get(username)
@@ -59,7 +100,6 @@ def require_auth(user: dict = Depends(get_current_user)):
     return user
 
 
-import sys
 import numpy as np
 import pandas as pd
 import logging
@@ -74,8 +114,7 @@ import importlib.util
 # ─────────────────────────────────────────
 #  PATH FIX
 # ─────────────────────────────────────────
-ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, ROOT_DIR)
+# ROOT_DIR and sys.path already set above in auth section
 
 def load_module(name, path):
     spec = importlib.util.spec_from_file_location(name, path)
@@ -139,7 +178,6 @@ def _build_background_data():
             columns=[c for c in drop_cols if c in bg_df.columns], errors="ignore"
         )
 
-        # Keep only feature columns
         missing = [c for c in cfg.FEATURE_COLUMNS if c not in bg_df.columns]
         if missing:
             logger.warning(f"⚠️ SHAP background missing columns: {missing}")
@@ -176,8 +214,6 @@ def _build_background_data():
 
 # ─────────────────────────────────────────
 #  BUILD SHAP EXPLAINER
-#  Tries shap_ex.build_explainer first,
-#  falls back to inline TreeExplainer.
 # ─────────────────────────────────────────
 def _build_shap_explainer(X_bg):
     """Try to build SHAP explainer from background data. Returns explainer or None."""
@@ -191,7 +227,6 @@ def _build_shap_explainer(X_bg):
     except Exception as e:
         logger.warning(f"⚠️ shap_ex.build_explainer failed: {e}, trying inline...")
 
-    # Fallback — build inline
     try:
         import shap as _shap
         n_bg = min(200, len(X_bg))
@@ -219,20 +254,14 @@ def load_active_model():
         MODEL_CACHE["feature_columns"] = feature_columns
         MODEL_CACHE["label_encoders"]  = package.get("label_encoders", {})
         MODEL_CACHE["version"]         = active["model_version"]
-        # Reset SHAP so it rebuilds with new model
         MODEL_CACHE["shap_explainer"]  = None
         MODEL_CACHE["X_background"]    = None
 
-        # Build SHAP explainer
         X_bg = _build_background_data()
         if X_bg is not None:
             MODEL_CACHE["X_background"]   = X_bg
             MODEL_CACHE["shap_explainer"] = _build_shap_explainer(X_bg)
 
-            # ── Compute dynamic tier thresholds if missing ──
-            # Old model packages don't have tier_thresholds.
-            # We compute from SHAP-adjusted scores so the tiers
-            # match the post-adjustment distribution.
             if oif.tier_thresholds is None:
                 try:
                     shap_exp = MODEL_CACHE.get("shap_explainer")
@@ -240,7 +269,6 @@ def load_active_model():
                     norm_scores = oif._normalize(raw_scores)
 
                     if shap_exp is not None:
-                        # Compute SHAP-adjusted scores for a sub-sample
                         n_sample = min(50, len(X_bg))
                         idx = np.random.default_rng(42).choice(len(X_bg), size=n_sample, replace=False)
                         adj_scores = []
@@ -266,7 +294,7 @@ def load_active_model():
                     logger.warning(f"⚠️ Could not compute tiers: {e}")
                     logger.warning(traceback.format_exc())
 
-        shap_status = "ready" if MODEL_CACHE["shap_explainer"] is not None else "unavailable"
+        shap_status   = "ready" if MODEL_CACHE["shap_explainer"] is not None else "unavailable"
         encoder_count = len(MODEL_CACHE["label_encoders"])
         logger.info(f"✅ Model loaded: {active['model_version']} "
                     f"({encoder_count} label encoders, SHAP={shap_status})")
@@ -540,7 +568,6 @@ async def serve_frontend():
 
 @app.get("/health")
 async def health():
-    # ── FIX: always include shap_ready ──
     shap_ready = MODEL_CACHE["shap_explainer"] is not None
     return {
         "status"         : "running",
@@ -582,7 +609,6 @@ async def predict(customer: CustomerInput):
         if not load_active_model():
             raise HTTPException(status_code=503, detail="Model not loaded")
 
-    # Try to build SHAP lazily if not ready
     _ensure_shap_explainer()
 
     try:
@@ -592,11 +618,10 @@ async def predict(customer: CustomerInput):
         raw_score      = float(scores[0])
         label          = int(labels[0])
 
-        # ── SHAP explanation ──
         explanation = []
         summary     = ""
         exp_obj     = MODEL_CACHE.get("shap_explainer")
-        shap_values_all = None                        # keep full SV for scoring
+        shap_values_all = None
 
         if exp_obj is not None:
             try:
@@ -604,7 +629,7 @@ async def predict(customer: CustomerInput):
                 sv         = np.array(
                     sv_raw.values if hasattr(sv_raw, "values") else sv_raw
                 ).flatten()
-                shap_values_all = sv                  # save for adjustment
+                shap_values_all = sv
                 feat_names = MODEL_CACHE["feature_columns"] or cfg.FEATURE_COLUMNS
 
                 pairs = []
@@ -634,26 +659,17 @@ async def predict(customer: CustomerInput):
         else:
             logger.warning("⚠️ SHAP explainer is None at predict time — explanation will be empty")
 
-        # ── SHAP-adjusted scoring ──
-        # IsolationForest anomaly score = "how statistically unusual".
-        # A stable, loyal customer can be unusual without being a churn risk.
-        # Use SHAP net direction to adjust: if features mostly REDUCE risk,
-        # dampen the anomaly score downward.  If features mostly INCREASE
-        # risk, boost the score upward.
         score = raw_score
         if shap_values_all is not None and len(shap_values_all) > 0:
             risk_sum = float(np.sum(shap_values_all[shap_values_all > 0]))
             safe_sum = float(np.abs(np.sum(shap_values_all[shap_values_all < 0])))
 
             if (risk_sum + safe_sum) > 0:
-                # ratio: 0 = all features reduce risk, 1 = all increase risk
                 risk_ratio = risk_sum / (risk_sum + safe_sum)
 
                 if risk_ratio < 0.5:
-                    # Net safe → dampen score  (ratio=0 → ×0.20, ratio=0.5 → ×0.80)
                     factor = 0.20 + 1.20 * risk_ratio
                 else:
-                    # Net risky → mild boost   (ratio=0.5 → ×1.0, ratio=1.0 → ×1.15)
                     factor = 1.0 + 0.30 * (risk_ratio - 0.5)
 
                 dampened = np.clip(score * factor, 0, 1)
@@ -682,7 +698,6 @@ async def predict(customer: CustomerInput):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ── Explain Endpoint ──────────────────────
 @app.post("/explain")
 async def explain(customer: CustomerInput):
     if MODEL_CACHE["oif"] is None:
@@ -699,7 +714,6 @@ async def explain(customer: CustomerInput):
         risk_tier      = MODEL_CACHE["oif"].get_risk_tier(score)
 
         exp_obj = MODEL_CACHE.get("shap_explainer")
-
         if exp_obj is None:
             raise HTTPException(
                 status_code=503,
@@ -733,7 +747,6 @@ async def explain(customer: CustomerInput):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ── Batch Prediction ──────────────────────
 @app.post("/predict-batch")
 async def predict_batch(batch: BatchInput):
     if MODEL_CACHE["oif"] is None:
@@ -782,7 +795,6 @@ async def predict_batch(batch: BatchInput):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ── Timeline Simulation ───────────────────
 @app.post("/simulate-timeline")
 async def simulate_timeline(data: TimelineInput):
     try:
@@ -804,7 +816,6 @@ async def simulate_timeline(data: TimelineInput):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ── Monitoring Metrics ────────────────────
 @app.get("/monitoring")
 async def monitoring(days: int = 30):
     try:
@@ -818,7 +829,6 @@ async def monitoring(days: int = 30):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ── Model Registry ────────────────────────
 @app.get("/registry")
 async def registry():
     try:
@@ -832,7 +842,6 @@ async def registry():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ── Dashboard Stats ───────────────────────
 @app.get("/dashboard-stats")
 async def dashboard_stats():
     try:
@@ -908,7 +917,6 @@ async def dashboard_stats():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ── Top Risk Customers ────────────────────
 @app.get("/top-risk-customers")
 async def top_risk_customers(limit: int = 20):
     if MODEL_CACHE["oif"] is None:
@@ -956,7 +964,6 @@ async def top_risk_customers(limit: int = 20):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ── Reload Model ──────────────────────────
 @app.post("/reload-model")
 async def reload_model():
     success = load_active_model()
@@ -968,7 +975,6 @@ async def reload_model():
     raise HTTPException(status_code=500, detail="Failed to reload model")
 
 
-# ── Activate Model Version ────────────────
 @app.post("/activate-model")
 async def activate_model(data: ActivateModelInput):
     try:

@@ -1,110 +1,104 @@
 import os
+from dotenv import load_dotenv
 
 # ─────────────────────────────────────────
-#  DATABASE
+#  LOAD .env
+#  FIX: DB password and SECRET_KEY were hardcoded
+#  in plain source code committed to a public repo.
+#  All secrets now live in .env which is gitignored.
 # ─────────────────────────────────────────
-DB_CONFIG = {
-    "host"    : "localhost",
-    "port"    : 3306,
-    "user"    : "root",
-    "password": "1234",
-    "database": "churn_db"
-}
-DB_URL = "mysql+pymysql://root:1234@localhost:3306/churn_db"
+load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
 
-# ─────────────────────────────────────────
-#  PATHS
-# ─────────────────────────────────────────
-BASE_DIR        = os.path.dirname(os.path.abspath(__file__))
-DATA_RAW_DIR    = os.path.join(BASE_DIR, "data", "raw")
-DATA_PROC_DIR   = os.path.join(BASE_DIR, "data", "processed")
-MODELS_DIR      = os.path.join(BASE_DIR, "models")
-LOGS_DIR        = os.path.join(BASE_DIR, "logs")
-RAW_CSV         = os.path.join(DATA_RAW_DIR, "telco_customers.csv")
+def _require(key: str) -> str:
+    val = os.getenv(key)
+    if not val:
+        raise EnvironmentError(
+            f"Required environment variable '{key}' is not set. "
+            f"Check your .env file."
+        )
+    return val
 
-# ─────────────────────────────────────────
-#  MODEL PARAMETERS
-# ─────────────────────────────────────────
+# ── Database ──────────────────────────────
+DB_URL = (
+    f"mysql+pymysql://{_require('DB_USER')}:{_require('DB_PASSWORD')}"
+    f"@{os.getenv('DB_HOST', 'localhost')}:{os.getenv('DB_PORT', '3306')}"
+    f"/{_require('DB_NAME')}"
+)
+
+# ── JWT Auth ──────────────────────────────
+SECRET_KEY                  = _require("SECRET_KEY")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
+
+# ── Admin credentials ─────────────────────
+ADMIN_USERNAME      = os.getenv("ADMIN_USERNAME", "admin")
+ADMIN_PASSWORD_HASH = os.getenv("ADMIN_PASSWORD_HASH", "")
+
+# ── Paths ─────────────────────────────────
+BASE_DIR      = os.path.dirname(os.path.abspath(__file__))
+DATA_RAW_DIR  = os.path.join(BASE_DIR, "data", "raw")
+DATA_PROC_DIR = os.path.join(BASE_DIR, "data", "processed")
+MODELS_DIR    = os.path.join(BASE_DIR, "models")
+LOGS_DIR      = os.path.join(BASE_DIR, "logs")
+RAW_CSV       = os.path.join(DATA_RAW_DIR, "telco_customers.csv")
+
+# ── Model parameters ──────────────────────
 MODEL_PARAMS = {
-    "n_estimators"  : 100,
-    "contamination" : 0.15,
-    "window_size"   : 8000,
-    "random_state"  : 42
+    "n_estimators" : 100,
+    "contamination": 0.15,
+    "window_size"  : 8000,
+    "random_state" : 42,
 }
 
-SCORE_BOUNDARIES = {
-    "global_min": -0.599399,
-    "global_max": -0.484276
-}
-
-# ─────────────────────────────────────────
-#  DYNAMIC RISK TIER PERCENTILES
-#  Thresholds are computed from actual score
-#  distribution at training time — not hardcoded.
-#  Top 10% → Critical, next 15% → High,
-#  next 25% → Medium, rest → Low
-# ─────────────────────────────────────────
+# ── Risk tier percentiles ─────────────────
 TIER_PERCENTILES = {
-    "critical_pct" : 90,   # top 10% of scores
-    "high_pct"     : 75,   # top 10–25%
-    "medium_pct"   : 50,   # top 25–50%
-                           # below 50th → Low
+    "critical_pct": 90,
+    "high_pct"    : 75,
+    "medium_pct"  : 50,
 }
 
-# ─────────────────────────────────────────
-#  EVALUATION THRESHOLDS
-# ─────────────────────────────────────────
+# ── Evaluation thresholds ─────────────────
 EVAL_CONFIG = {
-    "ks_warning_threshold"  : 0.15,
-    "ks_critical_threshold" : 0.30,
-    "min_anomaly_rate"      : 0.05,
-    "max_anomaly_rate"      : 0.40,
-    "trend_window_days"     : 7
+    "ks_warning_threshold" : 0.15,
+    "ks_critical_threshold": 0.30,
+    "min_anomaly_rate"     : 0.05,
+    "max_anomaly_rate"     : 0.40,
+    "trend_window_days"    : 7,
 }
 
-# ─────────────────────────────────────────
-#  SCHEDULER
-# ─────────────────────────────────────────
+# ── Scheduler ─────────────────────────────
 CRON_HOUR   = 0
 CRON_MINUTE = 0
 
-# ─────────────────────────────────────────
-#  FEATURES
-# ─────────────────────────────────────────
+# ── Features ──────────────────────────────
 FEATURE_COLUMNS = [
     "gender", "SeniorCitizen", "Partner", "Dependents",
     "tenure", "PhoneService", "MultipleLines", "InternetService",
     "OnlineSecurity", "OnlineBackup", "DeviceProtection", "TechSupport",
     "StreamingTV", "StreamingMovies", "Contract", "PaperlessBilling",
-    "PaymentMethod", "MonthlyCharges", "TotalCharges"
+    "PaymentMethod", "MonthlyCharges", "TotalCharges",
 ]
 CATEGORICAL_COLUMNS = [
     "gender", "Partner", "Dependents", "PhoneService", "MultipleLines",
     "InternetService", "OnlineSecurity", "OnlineBackup", "DeviceProtection",
     "TechSupport", "StreamingTV", "StreamingMovies", "Contract",
-    "PaperlessBilling", "PaymentMethod"
+    "PaperlessBilling", "PaymentMethod",
 ]
 NUMERICAL_COLUMNS = ["SeniorCitizen", "tenure", "MonthlyCharges", "TotalCharges"]
 
-# ─────────────────────────────────────────
-#  TRAJECTORY CONFIG
-#  Monthly drift rates per contract type.
-#  Moved out of hardcoded function into config
-#  so business team can adjust without touching code.
-# ─────────────────────────────────────────
+# ── Trajectory config ─────────────────────
 TRAJECTORY_CONFIG = {
     "drift_rates": {
         "Month-to-month": +0.9,
-        "One year"       : -1.2,
-        "Two year"       : -1.8,
-        "default"        : +0.5,
+        "One year"      : -1.2,
+        "Two year"      : -1.8,
+        "default"       : +0.5,
     },
-    "charge_pressure_threshold": 70,    # monthly charges above this add pressure
-    "charge_pressure_scale"    : 100,   # divisor for normalising charge pressure
-    "loyalty_reduction_per_month": 0.04,# risk reduction per month of tenure
-    "loyalty_reduction_cap"    : 1.5,   # max loyalty reduction (pp)
-    "noise_range"              : 0.8,   # ± noise per month
-    "score_min"                : 1.0,   # floor for trajectory scores
-    "score_max"                : 99.0,  # ceiling for trajectory scores
-    "n_months"                 : 12,    # projection horizon
+    "charge_pressure_threshold"  : 70,
+    "charge_pressure_scale"      : 100,
+    "loyalty_reduction_per_month": 0.04,
+    "loyalty_reduction_cap"      : 1.5,
+    "noise_range"                : 0.8,
+    "score_min"                  : 1.0,
+    "score_max"                  : 99.0,
+    "n_months"                   : 12,
 }

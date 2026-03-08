@@ -11,3 +11,7 @@ apscheduler
 python-multipart
 jinja2
 requests
+python-dotenv
+passlib[bcrypt]
+python-jose[cryptography]
+shap

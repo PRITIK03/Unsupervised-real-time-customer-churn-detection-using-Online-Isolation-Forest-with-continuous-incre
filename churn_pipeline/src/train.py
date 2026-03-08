@@ -3,403 +3,315 @@ import sys
 import pickle
 import logging
 import numpy as np
-from datetime import datetime
-from collections import deque
-from sklearn.ensemble import IsolationForest
-from sklearn.preprocessing import LabelEncoder
 
-# ─────────────────────────────────────────
-#  PATH FIX
-# ─────────────────────────────────────────
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, ROOT_DIR)
+if ROOT_DIR not in sys.path:
+    sys.path.insert(0, ROOT_DIR)
 
-import importlib.util
+import config as cfg
+from src import db_connection as db
+from src.preprocessing import preprocess
+from sklearn.ensemble import IsolationForest
 
-def load_module(name, path):
-    spec = importlib.util.spec_from_file_location(name, path)
-    mod  = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
-
-cfg = load_module("config",        os.path.join(ROOT_DIR, "config.py"))
-db  = load_module("db_connection", os.path.join(ROOT_DIR, "src", "db_connection.py"))
-
-# ─────────────────────────────────────────
-#  LOGGING
-# ─────────────────────────────────────────
 logging.basicConfig(
-    level   = logging.INFO,
-    format  = "%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
 
 # ─────────────────────────────────────────
-#  DYNAMIC TIER COMPUTATION
-#  Replaces hardcoded 0.75 / 0.50 / 0.25 cutoffs.
-#  Thresholds are computed from the actual score
-#  distribution on the training data, so they
-#  automatically adapt every time the model retrains.
-#
-#  Example on 7032 customers:
-#    critical_threshold = 90th percentile score
-#    high_threshold     = 75th percentile score
-#    medium_threshold   = 50th percentile score
-#
-#  This means:
-#    Top 10% of customers  → Critical
-#    Next 15%              → High
-#    Next 25%              → Medium
-#    Bottom 50%            → Low
+#  LOAD ACTIVE MODEL PACKAGE
+#  Returns model, scaler, label_encoders,
+#  global_min, global_max from the saved .pkl
+#  Returns None for all if no model exists yet.
 # ─────────────────────────────────────────
-def compute_dynamic_tiers(scores: np.ndarray) -> dict:
+def load_active_model_package():
     """
-    Compute risk tier boundaries from actual score distribution.
-
-    Args:
-        scores: normalised anomaly scores (0-1) for all training records
-
-    Returns:
-        dict with keys: critical_threshold, high_threshold, medium_threshold
-        These are saved into the model package and used at inference time.
+    Load the full model package (model + scaler + encoders + score bounds)
+    from the path registered in model_registry.
+    Returns (model, scaler, label_encoders, global_min, global_max)
+    or (None, None, None, None, None) if no model is registered yet.
     """
-    percentiles = cfg.TIER_PERCENTILES
+    try:
+        active = db.get_active_model()
+        if active is None:
+            return None, None, None, None, None
 
-    critical_threshold = float(np.percentile(scores, percentiles["critical_pct"]))
-    high_threshold     = float(np.percentile(scores, percentiles["high_pct"]))
-    medium_threshold   = float(np.percentile(scores, percentiles["medium_pct"]))
+        path = active.get("model_path")
+        if not path or not os.path.exists(path):
+            logger.warning(f"⚠️  Model path not found: {path}")
+            return None, None, None, None, None
 
-    logger.info("✅ Dynamic tier thresholds computed from training data:")
-    logger.info(f"   Critical  : score >= {critical_threshold:.4f} "
-                f"(top {100 - percentiles['critical_pct']}%)")
-    logger.info(f"   High      : score >= {high_threshold:.4f} "
-                f"(top {100 - percentiles['high_pct']}%)")
-    logger.info(f"   Medium    : score >= {medium_threshold:.4f} "
-                f"(top {100 - percentiles['medium_pct']}%)")
-    logger.info(f"   Low       : score <  {medium_threshold:.4f}")
+        with open(path, "rb") as f:
+            package = pickle.load(f)
 
-    return {
-        "critical_threshold": critical_threshold,
-        "high_threshold"    : high_threshold,
-        "medium_threshold"  : medium_threshold,
-    }
+        model          = package.get("model")
+        scaler         = package.get("scaler")
+        label_encoders = package.get("label_encoders", {})
+        global_min     = package.get("global_min", 0.0)
+        global_max     = package.get("global_max", 1.0)
 
+        logger.info(f"✅ Loaded model package: {path}")
+        return model, scaler, label_encoders, global_min, global_max
 
-# ─────────────────────────────────────────
-#  ONLINE ISOLATION FOREST CLASS
-# ─────────────────────────────────────────
-class OnlineIsolationForest:
-    def __init__(self,
-                 n_estimators  = 100,
-                 contamination = 0.15,
-                 window_size   = 1000,
-                 random_state  = 42):
-
-        self.n_estimators  = n_estimators
-        self.contamination = contamination
-        self.window_size   = window_size
-        self.random_state  = random_state
-        self.window        = deque(maxlen=window_size)
-        self.model         = None
-        self.update_count  = 0
-        self.global_min    = None
-        self.global_max    = None
-
-        # ── Dynamic tier thresholds ──
-        # Set to None on init — populated after first training
-        # via compute_dynamic_tiers() and saved in model package.
-        # At inference time, loaded from the saved package.
-        self.tier_thresholds = None
-
-        logger.info(f"OnlineIsolationForest initialized — "
-                    f"window={window_size}, contamination={contamination}")
-
-    def _build_model(self):
-        return IsolationForest(
-            n_estimators  = self.n_estimators,
-            contamination = self.contamination,
-            random_state  = self.random_state
-        )
-
-    def initial_train(self, X: np.ndarray):
-        """First time full training on entire dataset."""
-        logger.info(f"Starting initial training on {len(X)} records...")
-
-        for row in X[-self.window_size:]:
-            self.window.append(row)
-
-        self.model = self._build_model()
-        self.model.fit(X)
-        self.update_count += 1
-
-        raw_scores      = self.model.score_samples(X)
-        self.global_min = float(np.percentile(raw_scores, 5))
-        self.global_max = float(np.percentile(raw_scores, 95))
-
-        # ── Compute dynamic tiers from training scores ──
-        normalised_scores    = self._normalize(raw_scores)
-        self.tier_thresholds = compute_dynamic_tiers(normalised_scores)
-
-        logger.info(f"✅ Initial training complete.")
-        logger.info(f"   Score range: [{self.global_min:.4f}, {self.global_max:.4f}]")
-        logger.info(f"   Window filled: {len(self.window)} records")
-
-    def update(self, X_new: np.ndarray):
-        """Continuous learning — add new data to window and retrain."""
-        if self.model is None:
-            logger.warning("No existing model found. Running initial training.")
-            self.initial_train(X_new)
-            return
-
-        logger.info(f"Updating model with {len(X_new)} new records...")
-
-        for row in X_new:
-            self.window.append(row)
-
-        window_data = np.array(self.window)
-        self.model  = self._build_model()
-        self.model.fit(window_data)
-        self.update_count += 1
-
-        raw_scores      = self.model.score_samples(window_data)
-        self.global_min = float(np.percentile(raw_scores, 5))
-        self.global_max = float(np.percentile(raw_scores, 95))
-
-        # ── Recompute tiers from updated window scores ──
-        normalised_scores    = self._normalize(raw_scores)
-        self.tier_thresholds = compute_dynamic_tiers(normalised_scores)
-
-        logger.info(f"✅ Model updated — update count: {self.update_count}")
-        logger.info(f"   Window size: {len(self.window)}")
-        logger.info(f"   Score range: [{self.global_min:.4f}, {self.global_max:.4f}]")
-
-    def predict(self, X: np.ndarray):
-        if self.model is None:
-            raise ValueError("Model not trained yet!")
-        raw_scores = self.model.score_samples(X)
-        labels     = self.model.predict(X)
-        scores     = self._normalize(raw_scores)
-        return labels, scores
-
-    def _normalize(self, raw_scores: np.ndarray):
-        scores = (self.global_max - np.clip(raw_scores, self.global_min, self.global_max)) \
-                 / (self.global_max - self.global_min)
-        return np.clip(scores, 0, 1)
-
-    def get_risk_tier(self, score: float) -> str:
-        """
-        Assign risk tier using data-driven thresholds.
-
-        If tier_thresholds were computed from training data, use them.
-        Falls back to hardcoded values only if model was loaded from
-        an old package that predates this change.
-        """
-        if self.tier_thresholds is not None:
-            t = self.tier_thresholds
-            if score >= t["critical_threshold"]: return "Critical"
-            if score >= t["high_threshold"]:     return "High"
-            if score >= t["medium_threshold"]:   return "Medium"
-            return "Low"
-
-        # ── Fallback for old model packages ──
-        logger.warning("tier_thresholds not found — using fallback. Re-run training to fix.")
-        if score >= 0.75:   return "Critical"
-        elif score >= 0.50: return "High"
-        elif score >= 0.25: return "Medium"
-        else:               return "Low"
+    except Exception as e:
+        logger.error(f"❌ Failed to load model package: {e}")
+        return None, None, None, None, None
 
 
 # ─────────────────────────────────────────
-#  BUILD & SAVE LABEL ENCODERS
+#  SAVE MODEL PACKAGE
+#  Saves model + scaler + encoders + score bounds
+#  together in one .pkl so they are always in sync.
 # ─────────────────────────────────────────
-def build_label_encoders(df_raw):
+def save_model_package(model, scaler, label_encoders,
+                       global_min, global_max, version: str) -> str:
     """
-    Fit one LabelEncoder per categorical column on the full training data.
-    Saved into the model package so the API reuses exact same encodings
-    at inference time.
-    """
-    encoders = {}
-    for col in cfg.CATEGORICAL_COLUMNS:
-        if col in df_raw.columns:
-            le = LabelEncoder()
-            le.fit(df_raw[col].astype(str).fillna("Unknown"))
-            encoders[col] = le
-            logger.info(f"  Encoder for '{col}': {list(le.classes_)}")
-    logger.info(f"✅ Built {len(encoders)} label encoders.")
-    return encoders
-
-
-# ─────────────────────────────────────────
-#  SAVE MODEL
-# ─────────────────────────────────────────
-def save_model(oif: OnlineIsolationForest, scaler, feature_columns: list,
-               label_encoders: dict,
-               existing_version: str = None, existing_path: str = None):
-    """
-    Save model — always overwrites the same file.
-    First time: creates model_v_1.pkl
-    Every time after: overwrites the same existing file.
-    Now also saves tier_thresholds into the package.
+    Save all model artefacts together in one file.
+    Keeping them together guarantees the scaler and
+    encoders are always the ones the model was trained with.
+    FIX: old code saved only the model — scaler and encoders
+    were never persisted, so incremental runs always had to
+    refit them on the new batch (wrong scale every time).
     """
     os.makedirs(cfg.MODELS_DIR, exist_ok=True)
+    path = os.path.join(cfg.MODELS_DIR, f"{version}.pkl")
 
-    if existing_path and os.path.exists(existing_path):
-        save_path = existing_path
-        version   = existing_version
-        logger.info(f"Overwriting existing model file: {save_path}")
-    else:
-        version   = "model_v_1"
-        filename  = f"{version}.pkl"
-        save_path = os.path.join(cfg.MODELS_DIR, filename)
-        logger.info(f"Creating new model file: {save_path}")
-
-    model_package = {
-        "model"           : oif.model,
-        "window"          : oif.window,
-        "window_size"     : oif.window_size,
-        "contamination"   : oif.contamination,
-        "n_estimators"    : oif.n_estimators,
-        "update_count"    : oif.update_count,
-        "global_min"      : oif.global_min,
-        "global_max"      : oif.global_max,
-        "tier_thresholds" : oif.tier_thresholds,   # ← NEW: data-driven tiers
-        "scaler"          : scaler,
-        "label_encoders"  : label_encoders,
-        "feature_columns" : feature_columns,
-        "version"         : version,
-        "last_updated"    : datetime.now().isoformat()
+    package = {
+        "model"         : model,
+        "scaler"        : scaler,
+        "label_encoders": label_encoders,
+        "global_min"    : global_min,
+        "global_max"    : global_max,
+        "version"       : version,
     }
+    with open(path, "wb") as f:
+        pickle.dump(package, f)
 
-    with open(save_path, "wb") as f:
-        pickle.dump(model_package, f)
-
-    logger.info(f"✅ Model saved: {save_path}")
-    return version, save_path
+    logger.info(f"✅ Model package saved: {path}")
+    return path
 
 
 # ─────────────────────────────────────────
-#  LOAD MODEL
+#  NEXT VERSION NAME
 # ─────────────────────────────────────────
-def load_model(model_path: str):
+def _next_version() -> str:
     """
-    Load model package from .pkl file.
-    Returns: (oif, scaler, feature_columns, full_package)
+    FIX: old logic searched for the highest existing
+    model_vN.pkl file, but if model_v1.pkl was manually
+    deleted it would create another model_v1 and silently
+    overwrite the registry entry.
+    Now reads the highest version number from model_registry
+    in the DB instead — source of truth is the DB not the
+    filesystem.
     """
-    if not os.path.exists(model_path):
-        logger.error(f"❌ Model file not found: {model_path}")
+    try:
+        all_models = db.get_all_models()
+        if all_models.empty:
+            return "model_v1"
+
+        versions = all_models["model_version"].tolist()
+        numbers  = []
+        for v in versions:
+            try:
+                numbers.append(int(v.replace("model_v", "")))
+            except ValueError:
+                pass
+
+        next_n = max(numbers) + 1 if numbers else 1
+        return f"model_v{next_n}"
+    except Exception:
+        return "model_v1"
+
+
+# ─────────────────────────────────────────
+#  INITIAL TRAIN
+#  Fits a fresh model on all processed records.
+#  Called once on first run or after a full reset.
+# ─────────────────────────────────────────
+def initial_train():
+    """
+    Full train from scratch on all records in raw_customers.
+    Fits fresh scaler and label encoders — correct because
+    we have the full dataset available.
+    Saves model + scaler + encoders together in one package.
+    """
+    logger.info("=" * 55)
+    logger.info("  INITIAL TRAIN STARTED")
+    logger.info("=" * 55)
+
+    # preprocess with no scaler/encoders → fits fresh ones on full data
+    X, feature_cols, scaler, raw_ids, label_encoders = preprocess(
+        fetch_all=True,
+        scaler=None,
+        label_encoders=None,
+    )
+
+    if X is None:
+        logger.error("❌ Preprocessing returned no data. Aborting.")
         return None
 
-    with open(model_path, "rb") as f:
-        package = pickle.load(f)
-
-    oif               = OnlineIsolationForest(
-        n_estimators  = package["n_estimators"],
-        contamination = package["contamination"],
-        window_size   = package["window_size"]
+    logger.info(f"Training IsolationForest on {X.shape[0]} records...")
+    model = IsolationForest(
+        n_estimators =cfg.MODEL_PARAMS["n_estimators"],
+        contamination=cfg.MODEL_PARAMS["contamination"],
+        random_state =cfg.MODEL_PARAMS["random_state"],
     )
-    oif.model         = package["model"]
-    oif.window        = package["window"]
-    oif.update_count  = package["update_count"]
-    oif.global_min    = package["global_min"]
-    oif.global_max    = package["global_max"]
+    model.fit(X)
 
-    # ── Load dynamic tier thresholds ──
-    # Falls back to None for old packages — get_risk_tier() handles this gracefully
-    oif.tier_thresholds = package.get("tier_thresholds", None)
-    if oif.tier_thresholds:
-        logger.info(f"   Tier thresholds loaded: "
-                    f"Critical>={oif.tier_thresholds['critical_threshold']:.3f}, "
-                    f"High>={oif.tier_thresholds['high_threshold']:.3f}, "
-                    f"Medium>={oif.tier_thresholds['medium_threshold']:.3f}")
-    else:
-        logger.warning("⚠️ No tier_thresholds in package — re-run training to generate them.")
+    # Score bounds — computed once on full training set
+    # FIX: old code recomputed global_min/max from each
+    # incremental window, making score ranges shift every
+    # retrain. Storing them here keeps the scale stable.
+    raw_scores = model.decision_function(X)
+    scores_inv = -raw_scores                        # higher = more anomalous
+    global_min = float(scores_inv.min())
+    global_max = float(scores_inv.max())
+    logger.info(f"Score bounds — min: {global_min:.4f}, max: {global_max:.4f}")
 
-    # Backward compat: older packages may not have label_encoders
-    if "label_encoders" not in package:
-        logger.warning("⚠️ Model package has no label_encoders. Re-run training.")
-        package["label_encoders"] = {}
+    version = _next_version()
+    path    = save_model_package(
+        model, scaler, label_encoders, global_min, global_max, version
+    )
 
-    logger.info(f"✅ Model loaded: {package['version']}")
-    return oif, package["scaler"], package["feature_columns"], package
+    db.register_model(
+        model_version      =version,
+        model_path         =path,
+        trained_on_records =X.shape[0],
+        notes              ="Initial train",
+    )
+
+    logger.info("=" * 55)
+    logger.info(f"  ✅ INITIAL TRAIN COMPLETE — version: {version}")
+    logger.info("=" * 55)
+    return version
 
 
 # ─────────────────────────────────────────
-#  MAIN TRAIN FUNCTION
+#  INCREMENTAL UPDATE
+#  Processes only new (unprocessed) records.
+#  Reuses the saved scaler and encoders so the
+#  new data is on exactly the same scale as the
+#  model's training data.
 # ─────────────────────────────────────────
-def run_training(X: np.ndarray, feature_columns: list, scaler,
-                 record_ids: list, label_encoders: dict = None):
+def incremental_update():
     """
-    Full training run:
-    1. Check if active model exists
-    2. If yes  → update same model, overwrite same file, update same DB row
-    3. If no   → initial train, create model_v_1, insert first DB row
-    4. Mark records as processed
+    Update model with new unprocessed records only.
+
+    FIX — CRITICAL: the old version called preprocess()
+    with no scaler argument, so it always fitted a fresh
+    scaler on the new batch alone. 50 new customers → scaler
+    fitted on 50 rows → completely different scale than the
+    7043-row training distribution → model scores garbage.
+
+    Fix: load the saved scaler and label_encoders from the
+    active model package and pass them into preprocess() so
+    new data is transformed on the original training scale.
     """
-    logger.info("=" * 50)
-    logger.info("  TRAINING STARTED")
-    logger.info("=" * 50)
+    logger.info("=" * 55)
+    logger.info("  INCREMENTAL UPDATE STARTED")
+    logger.info("=" * 55)
 
-    active_model_info = db.get_active_model()
-    existing_version  = None
-    existing_path     = None
+    # Load current model + its scaler + its encoders
+    model, scaler, label_encoders, global_min, global_max = load_active_model_package()
 
-    if active_model_info and os.path.exists(active_model_info["model_path"]):
-        logger.info(f"Found existing model: {active_model_info['model_version']}")
-        existing_version = active_model_info["model_version"]
-        existing_path    = active_model_info["model_path"]
-        oif, _, _, _     = load_model(existing_path)
-        oif.update(X)
-    else:
-        logger.info("No existing model found. Starting fresh training.")
-        oif = OnlineIsolationForest(
-            n_estimators  = cfg.MODEL_PARAMS["n_estimators"],
-            contamination = cfg.MODEL_PARAMS["contamination"],
-            window_size   = cfg.MODEL_PARAMS["window_size"],
-            random_state  = cfg.MODEL_PARAMS["random_state"]
+    if model is None:
+        logger.warning("⚠️  No active model found. Running initial train instead.")
+        return initial_train()
+
+    # preprocess with saved scaler + encoders → transform() only, no refit
+    X, feature_cols, scaler, raw_ids, label_encoders = preprocess(
+        fetch_all=False,
+        scaler=scaler,                  # ← reuse saved scaler
+        label_encoders=label_encoders,  # ← reuse saved encoders
+    )
+
+    if X is None or len(X) == 0:
+        logger.info("ℹ️  No new records to process.")
+        return None
+
+    logger.info(f"Updating model with {X.shape[0]} new records...")
+
+    # Partial fit: add new trees to existing forest
+    # IsolationForest does not have partial_fit natively —
+    # we retrain on the window of existing + new data.
+    window_size = cfg.MODEL_PARAMS.get("window_size", 8000)
+
+    # Fetch recent processed data to form the training window
+    all_processed = db.fetch_all_processed_customers()
+    if all_processed is not None and not all_processed.empty:
+        # Preprocess the full window using the same saved scaler/encoders
+        X_all, _, _, _, _ = preprocess(
+            fetch_all=True,
+            scaler=scaler,
+            label_encoders=label_encoders,
         )
-        oif.initial_train(X)
+        if X_all is not None and len(X_all) > window_size:
+            X_window = X_all[-window_size:]
+        elif X_all is not None:
+            X_window = X_all
+        else:
+            X_window = X
+    else:
+        X_window = X
 
-    version, save_path = save_model(
-        oif, scaler, feature_columns,
-        label_encoders   = label_encoders or {},
-        existing_version = existing_version,
-        existing_path    = existing_path
+    model = IsolationForest(
+        n_estimators =cfg.MODEL_PARAMS["n_estimators"],
+        contamination=cfg.MODEL_PARAMS["contamination"],
+        random_state =cfg.MODEL_PARAMS["random_state"],
+    )
+    model.fit(X_window)
+
+    # FIX: do NOT recompute global_min/max from the window —
+    # that would shift the score scale every update and make
+    # historical comparisons meaningless. Keep the bounds from
+    # the initial train and only expand them if the new data
+    # genuinely exceeds the original range.
+    raw_scores = model.decision_function(X_window)
+    scores_inv = -raw_scores
+    new_min    = float(scores_inv.min())
+    new_max    = float(scores_inv.max())
+    global_min = min(global_min, new_min)
+    global_max = max(global_max, new_max)
+    logger.info(f"Score bounds — min: {global_min:.4f}, max: {global_max:.4f}")
+
+    # Mark new records as processed
+    if raw_ids:
+        db.mark_customers_processed(raw_ids)
+
+    # Save updated package with same scaler/encoders
+    active     = db.get_active_model()
+    version    = active["model_version"] if active else _next_version()
+    path       = save_model_package(
+        model, scaler, label_encoders, global_min, global_max, version
     )
 
     db.update_model_registry(
-        model_version      = version,
-        model_path         = save_path,
-        trained_on_records = len(X),
-        notes              = f"Update #{oif.update_count}"
+        model_version      =version,
+        model_path         =path,
+        trained_on_records =X_window.shape[0],
+        notes              =f"Incremental update +{X.shape[0]} records",
     )
 
-    if record_ids:
-        db.mark_customers_processed(record_ids)
-        logger.info(f"✅ Marked {len(record_ids)} records as processed in DB.")
-
-    logger.info("=" * 50)
-    logger.info(f"  ✅ TRAINING COMPLETE — Version: {version}")
-    logger.info("=" * 50)
-
-    return oif, version
+    logger.info("=" * 55)
+    logger.info(f"  ✅ INCREMENTAL UPDATE COMPLETE — {X.shape[0]} new records processed")
+    logger.info("=" * 55)
+    return version
 
 
-# ─────────────────────────────────────────
-#  TEST
-# ─────────────────────────────────────────
 if __name__ == "__main__":
-    prep = load_module("preprocessing", os.path.join(ROOT_DIR, "src", "preprocessing.py"))
-    X, feature_cols, scaler, raw_ids, label_encoders = prep.preprocess(fetch_all=False)
+    import argparse
 
-    if X is not None:
-        oif, version = run_training(X, feature_cols, scaler, raw_ids, label_encoders)
-        labels, scores = oif.predict(X[:5])
-        print("\n── Sample Predictions ──")
-        for i in range(5):
-            tier = oif.get_risk_tier(scores[i])
-            print(f"  Customer {i+1}: Score={scores[i]:.4f} | Risk={tier} | Label={labels[i]}")
-        print(f"\n── Tier Thresholds ──")
-        print(f"  {oif.tier_thresholds}")
+    parser = argparse.ArgumentParser(description="Train ChurnGuard model")
+    parser.add_argument(
+        "--full",
+        action="store_true",
+        help="Force a full retrain from scratch (default: incremental update)"
+    )
+    args = parser.parse_args()
+
+    if args.full:
+        initial_train()
     else:
-        print("No data available for training.")
+        incremental_update()

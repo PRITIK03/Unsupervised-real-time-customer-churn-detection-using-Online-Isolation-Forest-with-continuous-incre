@@ -751,6 +751,90 @@ async def explain(customer: CustomerInput):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+class CompareInput(BaseModel):
+    customer_a: CustomerInput
+    customer_b: CustomerInput
+
+
+@app.post("/compare-shap")
+async def compare_shap(data: CompareInput):
+    if MODEL_CACHE["oif"] is None:
+        if not load_active_model():
+            raise HTTPException(status_code=503, detail="Model not loaded")
+    _ensure_shap_explainer()
+
+    def _score_and_explain(customer_dict):
+        X              = preprocess_input(customer_dict)
+        labels, scores = MODEL_CACHE["oif"].predict(X)
+        raw_score      = float(scores[0])
+        label          = int(labels[0])
+        explanation     = []
+        summary         = ""
+        exp_obj         = MODEL_CACHE.get("shap_explainer")
+        shap_values_all = None
+
+        if exp_obj is not None:
+            try:
+                sv_raw          = exp_obj.shap_values(X)
+                sv              = np.array(sv_raw.values if hasattr(sv_raw, "values") else sv_raw).flatten()
+                shap_values_all = sv
+                feat_names      = MODEL_CACHE["feature_columns"] or cfg.FEATURE_COLUMNS
+                pairs = []
+                for i, feat in enumerate(feat_names):
+                    val = float(sv[i]) if i < len(sv) else 0.0
+                    pairs.append({
+                        "feature"   : feat,
+                        "shap_value": round(val, 6),
+                        "abs_val"   : abs(val),
+                        "direction" : "increases_risk" if val > 0 else "decreases_risk"
+                    })
+                pairs.sort(key=lambda x: x["abs_val"], reverse=True)
+                explanation = pairs[:10]
+                for rank, item in enumerate(explanation, start=1):
+                    item["rank"] = rank
+                    del item["abs_val"]
+                parts   = [f"{it['feature']} ({'↑' if it['direction'] == 'increases_risk' else '↓'})" for it in explanation]
+                summary = "Risk driven by: " + ", ".join(parts[:3])
+            except Exception as e:
+                logger.warning(f"⚠️ SHAP values failed in compare: {e}")
+
+        score = raw_score
+        if shap_values_all is not None and len(shap_values_all) > 0:
+            risk_sum = float(np.sum(shap_values_all[shap_values_all > 0]))
+            safe_sum = float(np.abs(np.sum(shap_values_all[shap_values_all < 0])))
+            if (risk_sum + safe_sum) > 0:
+                risk_ratio = risk_sum / (risk_sum + safe_sum)
+                if risk_ratio < 0.5:
+                    factor = 0.20 + 1.20 * risk_ratio
+                else:
+                    factor = 1.0 + 0.30 * (risk_ratio - 0.5)
+                score = float(np.clip(score * factor, 0, 1))
+
+        risk_tier = MODEL_CACHE["oif"].get_risk_tier(score)
+        return {
+            "churn_risk_score"   : round(score * 100, 2),
+            "risk_tier"          : risk_tier,
+            "is_anomaly"         : label == -1,
+            "explanation"        : explanation,
+            "explanation_summary": summary,
+        }
+
+    try:
+        result_a = _score_and_explain(data.customer_a.dict())
+        result_b = _score_and_explain(data.customer_b.dict())
+        return {
+            "customer_a"   : result_a,
+            "customer_b"   : result_b,
+            "model_version": MODEL_CACHE["version"],
+            "timestamp"    : datetime.now().isoformat()
+        }
+    except Exception as e:
+        import traceback
+        logger.error(f"Compare SHAP error: {e}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/predict-batch")
 async def predict_batch(batch: BatchInput):
     if MODEL_CACHE["oif"] is None:
@@ -829,6 +913,20 @@ async def monitoring(days: int = 30):
         if "logged_at" in df.columns:
             df["logged_at"] = df["logged_at"].astype(str)
         return {"metrics": df.to_dict(orient="records"), "total": len(df)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/alerts")
+async def alerts(days: int = 30):
+    """Fetch recent pipeline alerts (degradation, rollback, failure)."""
+    try:
+        df = db.fetch_recent_alerts(days=days)
+        if df.empty:
+            return {"alerts": [], "total": 0}
+        if "created_at" in df.columns:
+            df["created_at"] = df["created_at"].astype(str)
+        return {"alerts": df.to_dict(orient="records"), "total": len(df)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

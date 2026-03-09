@@ -48,54 +48,81 @@ logger = logging.getLogger(__name__)
 def run_pipeline():
     """
     Full daily pipeline job:
-    1. Fetch new unprocessed data from MySQL
-    2. Preprocess and feature engineer
-    3. Train / update model (with saved label encoders)
-    4. Evaluate and log metrics
-    5. Update model registry (same row)
-
-    FIX: preprocess() now returns 5 values — added label_encoders
-    as the 5th. Passed through to run_training() so encoders get
-    saved into the model package for correct API inference.
+    1. Run incremental_update() — trains on new data while preserving old
+       (falls back to initial_train() on first run automatically)
+    2. Load the updated model package
+    3. Evaluate and log metrics (KS drift, trend, anomaly rate)
+    4. Handle degradation alerts if needed
     """
     logger.info("=" * 60)
     logger.info(f"  PIPELINE JOB STARTED — {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     logger.info("=" * 60)
 
     try:
-        # ── Step 1: Preprocess ────────────
-        logger.info("STEP 1 — Preprocessing new data...")
-        X, feature_cols, scaler, raw_ids, label_encoders = prep.preprocess(fetch_all=False)
+        # ── Step 1: Train (incremental or initial) ────────────
+        logger.info("STEP 1 — Running incremental training...")
+        version = train.incremental_update()
 
-        if X is None or len(X) == 0:
+        if version is None:
             logger.warning("⚠️ No new data found for today. Pipeline skipped.")
             return
 
-        logger.info(f"✅ Step 1 complete — {len(X)} records preprocessed.")
+        logger.info(f"✅ Step 1 complete — Model version: {version}")
 
-        # ── Step 2: Train ─────────────────
-        logger.info("STEP 2 — Training model...")
-        oif, version = train.run_training(
-            X, feature_cols, scaler, raw_ids,
-            label_encoders = label_encoders   # ← pass encoders through to model package
-        )
-        logger.info(f"✅ Step 2 complete — Model version: {version}")
+        # ── Step 2: Load updated model for evaluation ─────────
+        logger.info("STEP 2 — Loading updated model for evaluation...")
+        active = db.get_active_model()
+        if active is None:
+            logger.error("❌ No active model found after training. Aborting.")
+            return
+
+        oif, scaler, feature_cols, package = train.load_model(active["model_path"])
+
+        # Compute dynamic tier thresholds on full processed data
+        all_processed = db.fetch_all_processed_customers()
+        if all_processed is not None and not all_processed.empty:
+            X_eval, _, _, _, _ = prep.preprocess(
+                fetch_all=True,
+                scaler=scaler,
+                label_encoders=package.get("label_encoders", {}),
+            )
+            if X_eval is not None and len(X_eval) > 0:
+                import numpy as np
+                all_scores = oif._normalize(oif.model.score_samples(X_eval))
+                oif.tier_thresholds = train.compute_dynamic_tiers(all_scores)
+        else:
+            X_eval = None
+
+        if X_eval is None:
+            logger.warning("⚠️ Could not load evaluation data. Skipping evaluation.")
+            return
+
+        logger.info(f"✅ Step 2 complete — Evaluating on {len(X_eval)} records.")
 
         # ── Step 3: Evaluate ──────────────
         logger.info("STEP 3 — Evaluating model...")
-        metrics = eval_.evaluate(oif, X, version)
+        metrics = eval_.evaluate(oif, X_eval, version)
         logger.info(f"✅ Step 3 complete — Status: {metrics['status']}")
 
         # ── Done ──────────────────────────
         logger.info("=" * 60)
         logger.info(f"  ✅ PIPELINE COMPLETE — {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         logger.info(f"  Model   : {version}")
-        logger.info(f"  Records : {len(X)}")
+        logger.info(f"  Records : {len(X_eval)}")
         logger.info(f"  Status  : {metrics['status']}")
         logger.info("=" * 60)
 
     except Exception as e:
         logger.error(f"❌ PIPELINE FAILED: {e}", exc_info=True)
+        try:
+            db.log_pipeline_alert(
+                alert_type    = "PIPELINE_FAIL",
+                message       = f"Pipeline failed: {e}",
+                model_version = "",
+                severity      = "CRITICAL",
+            )
+        except Exception:
+            pass  # don't let alert logging crash the error handler
 
 
 # ─────────────────────────────────────────

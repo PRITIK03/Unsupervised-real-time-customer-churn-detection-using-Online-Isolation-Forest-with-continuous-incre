@@ -260,5 +260,51 @@ def fetch_last_n_metrics(n: int = 7) -> pd.DataFrame:
         raise
 
 
+# ─────────────────────────────────────────
+#  PIPELINE ALERTS
+# ─────────────────────────────────────────
+def log_pipeline_alert(alert_type: str, message: str,
+                       model_version: str = "", severity: str = "WARNING"):
+    """
+    Insert a row into pipeline_alerts.
+    alert_type: DEGRADED, WARNING, ROLLBACK, PIPELINE_FAIL
+    severity  : INFO, WARNING, CRITICAL
+    """
+    try:
+        with get_engine().begin() as conn:
+            conn.execute(text("""
+                INSERT INTO pipeline_alerts
+                    (alert_type, message, model_version, severity)
+                VALUES
+                    (:alert_type, :message, :model_version, :severity)
+            """), {
+                "alert_type"   : alert_type,
+                "message"      : message,
+                "model_version": model_version,
+                "severity"     : severity,
+            })
+        logger.info(f"🔔 Alert logged — [{severity}] {alert_type}: {message}")
+    except Exception as e:
+        logger.error(f"❌ log_pipeline_alert failed: {e}")
+
+
+def fetch_recent_alerts(days: int = 30) -> pd.DataFrame:
+    """Fetch alerts from the last N days."""
+    try:
+        df = pd.read_sql(
+            text(
+                "SELECT * FROM pipeline_alerts "
+                "WHERE created_at >= DATE_SUB(NOW(), INTERVAL :days DAY) "
+                "ORDER BY created_at DESC"
+            ),
+            con=get_engine(),
+            params={"days": int(days)},
+        )
+        return df
+    except Exception as e:
+        logger.error(f"❌ fetch_recent_alerts failed: {e}")
+        return pd.DataFrame()
+
+
 if __name__ == "__main__":
     test_connection()

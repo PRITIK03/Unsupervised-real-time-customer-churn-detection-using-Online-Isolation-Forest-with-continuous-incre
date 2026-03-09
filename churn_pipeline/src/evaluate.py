@@ -97,9 +97,30 @@ def evaluate(oif, X: np.ndarray, model_version: str):
 
     db.log_model_metrics(metrics)
 
-    # ── Step 7: Rollback if DEGRADED ──────
+    # ── Step 7: Log alert if degraded/warning ─
     if status == "DEGRADED":
+        db.log_pipeline_alert(
+            alert_type    = "DEGRADED",
+            message       = (
+                f"Model {model_version} DEGRADED — "
+                f"KS={ks_distance:.4f}, anomaly_rate={anomaly_rate:.2f}%, "
+                f"trend={trend_score:.4f}"
+            ),
+            model_version = model_version,
+            severity      = "CRITICAL",
+        )
         handle_degraded_model(model_version)
+    elif status == "WARNING":
+        db.log_pipeline_alert(
+            alert_type    = "WARNING",
+            message       = (
+                f"Model {model_version} WARNING — "
+                f"KS={ks_distance:.4f}, anomaly_rate={anomaly_rate:.2f}%, "
+                f"trend={trend_score:.4f}"
+            ),
+            model_version = model_version,
+            severity      = "WARNING",
+        )
 
     logger.info("=" * 50)
     logger.info(f"  ✅ EVALUATION COMPLETE — Status: {status}")
@@ -251,6 +272,12 @@ def handle_degraded_model(current_version: str):
             notes              = "ROLLED BACK due to degradation"
         )
 
+        db.log_pipeline_alert(
+            alert_type    = "ROLLBACK",
+            message       = f"Rolled back from {current_version} to {rollback_version} due to degradation",
+            model_version = rollback_version,
+            severity      = "CRITICAL",
+        )
         logger.warning(f"  ✅ Rolled back to: {rollback_version}")
 
     except Exception as e:

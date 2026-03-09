@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root {
             --bg-primary: #0a0e1a;
@@ -146,6 +147,7 @@
             font-weight: 700;
             background: linear-gradient(135deg, #e2e8f0, #94a3b8);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
@@ -1836,6 +1838,24 @@
             color: var(--text);
             transform: translateX(-4px);
         }
+
+        /* ── COMPARE TAB ── */
+        .compare-two-col { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:18px; }
+        .compare-col-header { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:1px; padding:8px 14px; border-radius:8px; text-align:center; margin-bottom:14px; }
+        .compare-col-header.a { background:rgba(59,130,246,0.12); color:var(--blue); border:1px solid rgba(59,130,246,0.25); }
+        .compare-col-header.b { background:rgba(139,92,246,0.12); color:var(--purple); border:1px solid rgba(139,92,246,0.25); }
+        .compare-score-strip { display:grid; grid-template-columns:1fr auto 1fr; gap:14px; align-items:center; margin-bottom:18px; }
+        .compare-vs-badge { width:44px; height:44px; border-radius:50%; background:var(--bg-secondary); border:1px solid var(--border-bright); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; color:var(--text-muted); margin:0 auto; }
+        .compare-score-card { background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-sm); padding:16px 20px; text-align:center; transition:var(--transition); }
+        .compare-score-card.lower-risk { border-color:rgba(16,185,129,0.35); background:rgba(16,185,129,0.05); }
+        .compare-score-big { font-size:34px; font-weight:800; line-height:1; }
+        .compare-feature-table { width:100%; border-collapse:collapse; }
+        .compare-feature-table th { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); padding:9px 10px; border-bottom:1px solid var(--border); }
+        .compare-feature-table td { padding:8px 10px; font-size:12px; border-bottom:1px solid rgba(30,41,59,0.4); vertical-align:middle; }
+        .compare-mini-bar-wrap { display:flex; align-items:center; gap:4px; }
+        .compare-mini-bar-track { flex:1; height:7px; background:var(--bg-primary); border-radius:3px; overflow:hidden; border:1px solid var(--border); }
+        .compare-mini-bar-fill { height:100%; border-radius:3px; transition:width 0.8s ease; }
+        .compare-diff-hl { background:rgba(245,158,11,0.05); }
     </style>
 </head>
 
@@ -2080,6 +2100,7 @@
             <div class="batch-tabs">
                 <button class="batch-tab active" onclick="switchPredictTab('single', this)">👤 Single Customer</button>
                 <button class="batch-tab" onclick="switchPredictTab('batch', this)">📂 Batch CSV Upload</button>
+                <button class="batch-tab" onclick="switchPredictTab('compare', this)">🔬 Compare Customers</button>
             </div>
 
             <!-- ── SINGLE PREDICT TAB ── -->
@@ -2245,10 +2266,12 @@
                                 </div>
                                 <!-- Top 5 Feature Bars -->
                                 <div class="shap-bars" id="shap-bars-container"></div>
-                                <!-- Full Breakdown Button -->
-                                <button class="shap-explain-btn" onclick="openShapModal()">
-                                    🔬 View Full Feature Breakdown (Top 10)
-                                </button>
+                                <!-- Download Buttons -->
+                                <div style="display:flex;gap:10px;margin:10px 0 0 0">
+                                    <button class="shap-explain-btn" onclick="downloadShapCSV()">⬇ Download CSV</button>
+                                    <button class="shap-explain-btn" onclick="downloadShapPDF()">⬇ Download PDF</button>
+                                    <button class="shap-explain-btn" onclick="openShapModal()">🔬 View Full Feature Breakdown (Top 10)</button>
+                                </div>
                             </div>
 
                             <!-- Result Detail Grid -->
@@ -2399,6 +2422,47 @@
                         </div>
                         <div style="font-size:11px;color:var(--text-muted);margin-top:10px;text-align:right"
                             id="batch-showing-label"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── COMPARE SHAP TAB ── -->
+            <div id="tab-compare" style="display:none">
+                <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+                    <span style="font-size:12px;color:var(--text-muted);font-weight:500">Fill both forms and compare SHAP explanations side by side:</span>
+                    <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
+                        <button onclick="fillCompare('a','high_risk')" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#ef4444;padding:5px 11px;border-radius:6px;cursor:pointer;font-size:11px;font-family:Inter,sans-serif">🔴 High Risk → A</button>
+                        <button onclick="fillCompare('a','low_risk')" style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);color:#10b981;padding:5px 11px;border-radius:6px;cursor:pointer;font-size:11px;font-family:Inter,sans-serif">🟢 Low Risk → A</button>
+                        <button onclick="fillCompare('b','high_risk')" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#ef4444;padding:5px 11px;border-radius:6px;cursor:pointer;font-size:11px;font-family:Inter,sans-serif">🔴 High Risk → B</button>
+                        <button onclick="fillCompare('b','low_risk')" style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);color:#10b981;padding:5px 11px;border-radius:6px;cursor:pointer;font-size:11px;font-family:Inter,sans-serif">🟢 Low Risk → B</button>
+                        <button onclick="resetCompare()" style="background:rgba(71,85,105,0.2);border:1px solid #2d3748;color:#94a3b8;padding:5px 11px;border-radius:6px;cursor:pointer;font-size:11px;font-family:Inter,sans-serif">🔄 Reset</button>
+                    </div>
+                </div>
+                <div class="compare-two-col">
+                    <div class="card">
+                        <div class="compare-col-header a">🔵 Customer A</div>
+                        <div id="compare-form-a"></div>
+                    </div>
+                    <div class="card">
+                        <div class="compare-col-header b">🟣 Customer B</div>
+                        <div id="compare-form-b"></div>
+                    </div>
+                </div>
+                <div style="text-align:center;margin-bottom:20px">
+                    <button id="compare-btn" onclick="runCompare()" style="background:linear-gradient(135deg,var(--blue),var(--purple));border:none;border-radius:var(--radius-sm);color:white;padding:13px 44px;font-size:14px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;box-shadow:0 4px 20px rgba(59,130,246,0.3);transition:var(--transition)">🔬 Compare Explanations</button>
+                </div>
+                <div id="compare-results" style="display:none">
+                    <div class="compare-score-strip" id="compare-score-strip"></div>
+                    <div class="card">
+                        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+                            <div class="card-title">🧠 SHAP Feature Comparison <span style="font-size:9px;background:rgba(6,182,212,0.15);color:var(--cyan);border:1px solid rgba(6,182,212,0.3);padding:2px 7px;border-radius:8px;margin-left:6px">Side by Side</span></div>
+                            <div style="display:flex;gap:8px">
+                                <button class="shap-explain-btn" onclick="downloadCompareCSV()">⬇ CSV</button>
+                                <button class="shap-explain-btn" onclick="downloadComparePDF()">⬇ PDF</button>
+                            </div>
+                        </div>
+                        <div style="font-size:11px;color:var(--text-muted);margin:-8px 0 14px">Sorted by combined importance. <span style="color:var(--red)">Red = increases risk</span> · <span style="color:var(--green)">Green = reduces risk</span> · <span style="background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.3);padding:1px 5px;border-radius:4px;font-size:9px;font-weight:700">DIFF</span> = notable difference</div>
+                        <div id="compare-feature-table-wrap" class="table-wrap"></div>
                     </div>
                 </div>
             </div>
@@ -2589,6 +2653,10 @@
             <div id="shap-modal-content">
                 <div class="spinner"></div>
             </div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;margin:10px 0 0 0;padding:0 18px 10px 0">
+                <button class="shap-explain-btn" onclick="downloadShapCSV(true)">⬇ Download CSV</button>
+                <button class="shap-explain-btn" onclick="downloadShapPDF(true)">⬇ Download PDF</button>
+            </div>
         </div>
     </div>
 
@@ -2715,7 +2783,9 @@
             if (el) el.classList.add('active');
             document.getElementById('tab-single').style.display = tab === 'single' ? 'block' : 'none';
             document.getElementById('tab-batch').style.display = tab === 'batch' ? 'block' : 'none';
+            document.getElementById('tab-compare').style.display = tab === 'compare' ? 'block' : 'none';
             if (tab === 'single') initRiskMeter();
+            if (tab === 'compare') initCompareTab();
         }
 
         // ══════════════════════════════════════════════════════════════
@@ -3118,6 +3188,155 @@
         function resetBatchUpload() { batchResults = []; document.getElementById('batch-upload-zone').style.display = 'block'; document.getElementById('batch-results').style.display = 'none'; document.getElementById('batch-processing').style.display = 'none'; document.getElementById('csvFileInput').value = ''; document.getElementById('batch-filter').value = 'all'; document.getElementById('batch-sort').value = 'score-desc'; }
 
         // ══════════════════════════════════════════════════════════════
+        //  COMPARE SHAP TAB
+        // ══════════════════════════════════════════════════════════════
+        let _compareInitialized = false;
+        const _CFIELDS = [
+            { id:'gender',           label:'Gender',              type:'select', opts:[['','Select...'],['Male','Male'],['Female','Female']] },
+            { id:'SeniorCitizen',    label:'Senior Citizen',       type:'select', opts:[['','Select...'],['0','No (0)'],['1','Yes (1)']] },
+            { id:'Partner',          label:'Partner',              type:'select', opts:[['','Select...'],['Yes','Yes'],['No','No']] },
+            { id:'Dependents',       label:'Dependents',           type:'select', opts:[['','Select...'],['Yes','Yes'],['No','No']] },
+            { id:'tenure',           label:'Tenure (months)',      type:'number', placeholder:'e.g. 12', min:0, max:120 },
+            { id:'PhoneService',     label:'Phone Service',        type:'select', opts:[['','Select...'],['Yes','Yes'],['No','No']] },
+            { id:'MultipleLines',    label:'Multiple Lines',       type:'select', opts:[['','Select...'],['Yes','Yes'],['No','No'],['No phone service','No phone service']] },
+            { id:'InternetService',  label:'Internet Service',     type:'select', opts:[['','Select...'],['DSL','DSL'],['Fiber optic','Fiber optic'],['No','No']] },
+            { id:'OnlineSecurity',   label:'Online Security',      type:'select', opts:[['','Select...'],['Yes','Yes'],['No','No'],['No internet service','No internet service']] },
+            { id:'OnlineBackup',     label:'Online Backup',        type:'select', opts:[['','Select...'],['Yes','Yes'],['No','No'],['No internet service','No internet service']] },
+            { id:'DeviceProtection', label:'Device Protection',    type:'select', opts:[['','Select...'],['Yes','Yes'],['No','No'],['No internet service','No internet service']] },
+            { id:'TechSupport',      label:'Tech Support',         type:'select', opts:[['','Select...'],['Yes','Yes'],['No','No'],['No internet service','No internet service']] },
+            { id:'StreamingTV',      label:'Streaming TV',         type:'select', opts:[['','Select...'],['Yes','Yes'],['No','No'],['No internet service','No internet service']] },
+            { id:'StreamingMovies',  label:'Streaming Movies',     type:'select', opts:[['','Select...'],['Yes','Yes'],['No','No'],['No internet service','No internet service']] },
+            { id:'Contract',         label:'Contract',             type:'select', opts:[['','Select...'],['Month-to-month','Month-to-month'],['One year','One year'],['Two year','Two year']] },
+            { id:'PaperlessBilling', label:'Paperless Billing',    type:'select', opts:[['','Select...'],['Yes','Yes'],['No','No']] },
+            { id:'PaymentMethod',    label:'Payment Method',       type:'select', opts:[['','Select...'],['Electronic check','Electronic check'],['Mailed check','Mailed check'],['Bank transfer (automatic)','Bank transfer (auto)'],['Credit card (automatic)','Credit card (auto)']], span:2 },
+            { id:'MonthlyCharges',   label:'Monthly Charges ($)',  type:'number', placeholder:'e.g. 65.50', step:'0.01', min:0 },
+            { id:'TotalCharges',     label:'Total Charges ($)',    type:'number', placeholder:'e.g. 1200.00', step:'0.01', min:0 },
+        ];
+
+        function initCompareTab() {
+            if (_compareInitialized) return;
+            _compareInitialized = true;
+            ['a', 'b'].forEach(side => {
+                const container = document.getElementById('compare-form-' + side);
+                if (!container) return;
+                container.innerHTML = '<div class="form-grid">' + _CFIELDS.map(f => {
+                    const fid = 'c' + side + '_' + f.id;
+                    const spanStyle = f.span ? 'grid-column:span ' + f.span + ';' : '';
+                    if (f.type === 'select') {
+                        return '<div class="form-group" style="' + spanStyle + '"><label>' + f.label + '</label><select id="' + fid + '">' + f.opts.map(o => '<option value="' + o[0] + '">' + o[1] + '</option>').join('') + '</select></div>';
+                    } else {
+                        return '<div class="form-group" style="' + spanStyle + '"><label>' + f.label + '</label><input type="' + f.type + '" id="' + fid + '" placeholder="' + (f.placeholder || '') + '"' + (f.step ? ' step="' + f.step + '"' : '') + (f.min !== undefined ? ' min="' + f.min + '"' : '') + (f.max !== undefined ? ' max="' + f.max + '"' : '') + '></div>';
+                    }
+                }).join('') + '</div>';
+            });
+        }
+
+        function fillCompare(side, type) {
+            const s = {
+                high_risk: { gender:'Female',SeniorCitizen:'1',Partner:'No',Dependents:'No',tenure:'1',PhoneService:'Yes',MultipleLines:'No',InternetService:'Fiber optic',OnlineSecurity:'No',OnlineBackup:'No',DeviceProtection:'No',TechSupport:'No',StreamingTV:'Yes',StreamingMovies:'Yes',Contract:'Month-to-month',PaperlessBilling:'Yes',PaymentMethod:'Electronic check',MonthlyCharges:'95.75',TotalCharges:'95.75' },
+                low_risk:  { gender:'Male',SeniorCitizen:'0',Partner:'Yes',Dependents:'Yes',tenure:'60',PhoneService:'Yes',MultipleLines:'Yes',InternetService:'DSL',OnlineSecurity:'Yes',OnlineBackup:'Yes',DeviceProtection:'Yes',TechSupport:'Yes',StreamingTV:'No',StreamingMovies:'No',Contract:'Two year',PaperlessBilling:'No',PaymentMethod:'Bank transfer (automatic)',MonthlyCharges:'65.50',TotalCharges:'3930.00' }
+            };
+            const sample = s[type]; if (!sample) return;
+            for (const [k, v] of Object.entries(sample)) { const el = document.getElementById('c' + side + '_' + k); if (el) el.value = v; }
+        }
+
+        function _collectCompareForm(side) {
+            const numFields = ['tenure', 'SeniorCitizen'], floatFields = ['MonthlyCharges', 'TotalCharges'];
+            const payload = {};
+            for (const f of _CFIELDS) {
+                const el = document.getElementById('c' + side + '_' + f.id); if (!el) continue;
+                const val = el.value.trim();
+                if (!val) { alert('Please fill in: ' + f.label + ' for Customer ' + side.toUpperCase()); return null; }
+                if (numFields.includes(f.id)) payload[f.id] = parseInt(val);
+                else if (floatFields.includes(f.id)) payload[f.id] = parseFloat(val);
+                else payload[f.id] = val;
+            }
+            return payload;
+        }
+
+        async function runCompare() {
+            const btn = document.getElementById('compare-btn');
+            btn.disabled = true; btn.textContent = '⏳ Comparing...';
+            try {
+                const ca = _collectCompareForm('a'), cb = _collectCompareForm('b');
+                if (!ca || !cb) return;
+                const res = await fetch('/compare-shap', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ customer_a:ca, customer_b:cb }) });
+                if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Compare failed'); }
+                const data = await res.json();
+                renderCompareResults(data);
+            } catch (e) { alert('❌ Error: ' + e.message); }
+            finally { btn.disabled = false; btn.textContent = '🔬 Compare Explanations'; }
+        }
+
+        function renderCompareResults(data) {
+            const ra = data.customer_a, rb = data.customer_b;
+            const tierColor = { Critical:'#ef4444', High:'#f97316', Medium:'#f59e0b', Low:'#10b981' };
+            const aLower = ra.churn_risk_score <= rb.churn_risk_score;
+
+            // Score strip
+            document.getElementById('compare-score-strip').innerHTML =
+                '<div class="compare-score-card ' + (aLower ? 'lower-risk' : '') + '" style="border-color:rgba(59,130,246,0.3)">'
+                + '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--blue);margin-bottom:8px">🔵 Customer A</div>'
+                + '<div class="compare-score-big" style="color:' + tierColor[ra.risk_tier] + '">' + ra.churn_risk_score.toFixed(1) + '%</div>'
+                + '<div style="margin-top:8px"><span class="tier-badge tier-' + ra.risk_tier + '">' + ra.risk_tier + '</span></div>'
+                + '<div style="font-size:11px;color:var(--text-muted);margin-top:6px">' + (ra.is_anomaly ? '⚠️ Anomaly' : '✅ Normal') + '</div>'
+                + (aLower ? '<div style="font-size:11px;color:var(--green);margin-top:5px;font-weight:600">✅ Lower Risk</div>' : '<div style="font-size:11px;color:var(--red);margin-top:5px;font-weight:600">⬆ Higher Risk</div>')
+                + '</div>'
+                + '<div class="compare-vs-badge">VS</div>'
+                + '<div class="compare-score-card ' + (!aLower ? 'lower-risk' : '') + '" style="border-color:rgba(139,92,246,0.3)">'
+                + '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--purple);margin-bottom:8px">🟣 Customer B</div>'
+                + '<div class="compare-score-big" style="color:' + tierColor[rb.risk_tier] + '">' + rb.churn_risk_score.toFixed(1) + '%</div>'
+                + '<div style="margin-top:8px"><span class="tier-badge tier-' + rb.risk_tier + '">' + rb.risk_tier + '</span></div>'
+                + '<div style="font-size:11px;color:var(--text-muted);margin-top:6px">' + (rb.is_anomaly ? '⚠️ Anomaly' : '✅ Normal') + '</div>'
+                + (!aLower ? '<div style="font-size:11px;color:var(--green);margin-top:5px;font-weight:600">✅ Lower Risk</div>' : '<div style="font-size:11px;color:var(--red);margin-top:5px;font-weight:600">⬆ Higher Risk</div>')
+                + '</div>';
+
+            // SHAP comparison table
+            const expA = ra.explanation || [], expB = rb.explanation || [];
+            const featMap = {};
+            expA.forEach(f => { featMap[f.feature] = featMap[f.feature] || { feature:f.feature, a:0, b:0 }; featMap[f.feature].a = f.shap_value; });
+            expB.forEach(f => { featMap[f.feature] = featMap[f.feature] || { feature:f.feature, a:0, b:0 }; featMap[f.feature].b = f.shap_value; });
+            const rows = Object.values(featMap).sort((x, y) => (Math.abs(y.a) + Math.abs(y.b)) - (Math.abs(x.a) + Math.abs(x.b)));
+            const maxVal = Math.max(...rows.map(r => Math.max(Math.abs(r.a), Math.abs(r.b))), 0.0001);
+
+            let tableHTML = '<table class="compare-feature-table"><thead><tr>'
+                + '<th style="text-align:left">Feature</th>'
+                + '<th style="color:var(--blue)">← Customer A</th>'
+                + '<th style="color:var(--blue);text-align:right;width:72px">A Value</th>'
+                + '<th style="color:var(--purple);text-align:left;width:72px">B Value</th>'
+                + '<th style="color:var(--purple)">Customer B →</th>'
+                + '</tr></thead><tbody>';
+
+            rows.forEach(r => {
+                const pctA = (Math.abs(r.a) / maxVal * 100).toFixed(1);
+                const pctB = (Math.abs(r.b) / maxVal * 100).toFixed(1);
+                const colorA = r.a > 0 ? '#ef4444' : '#10b981';
+                const colorB = r.b > 0 ? '#ef4444' : '#10b981';
+                const isDiff = (r.a > 0) !== (r.b > 0) || Math.abs(Math.abs(r.a) - Math.abs(r.b)) > maxVal * 0.15;
+                const shapA = (r.a >= 0 ? '+' : '') + r.a.toFixed(4);
+                const shapB = (r.b >= 0 ? '+' : '') + r.b.toFixed(4);
+                const diffBadge = isDiff ? ' <span style="font-size:9px;background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.3);padding:1px 5px;border-radius:4px;font-weight:700">DIFF</span>' : '';
+                tableHTML += '<tr class="' + (isDiff ? 'compare-diff-hl' : '') + '">'
+                    + '<td style="font-weight:600;color:var(--text);font-size:12px">' + r.feature + diffBadge + '</td>'
+                    + '<td><div class="compare-mini-bar-wrap"><div class="compare-mini-bar-track"><div class="compare-mini-bar-fill" style="width:' + pctA + '%;background:' + colorA + '"></div></div></div></td>'
+                    + '<td style="text-align:right;font-size:11px;font-weight:700;color:' + colorA + '">' + shapA + '</td>'
+                    + '<td style="font-size:11px;font-weight:700;color:' + colorB + '">' + shapB + '</td>'
+                    + '<td><div class="compare-mini-bar-wrap"><div class="compare-mini-bar-track"><div class="compare-mini-bar-fill" style="width:' + pctB + '%;background:' + colorB + '"></div></div></div></td>'
+                    + '</tr>';
+            });
+            tableHTML += '</tbody></table>';
+            document.getElementById('compare-feature-table-wrap').innerHTML = tableHTML;
+
+            document.getElementById('compare-results').style.display = 'block';
+            document.getElementById('compare-results').scrollIntoView({ behavior:'smooth', block:'start' });
+        }
+
+        function resetCompare() {
+            _CFIELDS.forEach(f => { ['a','b'].forEach(side => { const el = document.getElementById('c' + side + '_' + f.id); if (el) el.value = ''; }); });
+            document.getElementById('compare-results').style.display = 'none';
+        }
+
+        // ══════════════════════════════════════════════════════════════
         //  MONITORING
         // ══════════════════════════════════════════════════════════════
         let anomalyTrendChart = null, statusHistoryChart = null, scoreDistChart = null, volatilityChart = null, recordsProcessedChart = null;
@@ -3176,14 +3395,14 @@
             if (statusHistoryChart) statusHistoryChart.destroy();
             const rev = [...metrics].reverse();
             const nums = rev.map(m => m.status === 'GOOD' ? 3 : m.status === 'WARNING' ? 2 : 1);
-            statusHistoryChart = new Chart(ctx, { type: 'bar', data: { labels: rev.map(m => m.logged_at ? m.logged_at.substring(0, 10) : ''), datasets: [{ label: 'Model Status', data: nums, borderRadius: 6, borderWidth: 0, backgroundColor: rev.map(m => m.status === 'GOOD' ? 'rgba(16,185,129,0.7)' : m.status === 'WARNING' ? 'rgba(245,158,11,0.7)' : 'rgba(239,68,68,0.7)') }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8', font: { family: 'Inter', size: 11 } } }, tooltip: { backgroundColor: '#1a2235', titleColor: '#f1f5f9', bodyColor: '#94a3b8', borderColor: '#2d3748', borderWidth: 1, callbacks: { label: c => ` Status: ${{ 3: 'GOOD', 2: 'WARNING', 1: 'DEGRADED' }[c.raw] || c.raw}` } } }, scales: { x: { ticks: { color: '#475569', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.03)' } }, y: { min: 0, max: 4, ticks: { color: '#475569', font: { size: 10 }, callback: v => ({ 1: 'DEG', 2: 'WARN', 3: 'GOOD' }[v] || '') }, grid: { color: 'rgba(255,255,255,0.05)' } } } } });
+            statusHistoryChart = new Chart(ctx, { type: 'bar', data: { labels: rev.map(m => m.logged_at ? m.logged_at.substring(0, 10) : ''), datasets: [{ label: 'Model Status', data: nums, borderRadius: 6, borderWidth: 0, backgroundColor: rev.map(m => m.status === 'GOOD' ? 'rgba(16,185,129,0.7)' : m.status === 'WARNING' ? 'rgba(245,158,11,0.7)' : 'rgba(239,68,68,0.7)') }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11, family: 'Inter' } } }, tooltip: { backgroundColor: '#1a2235', titleColor: '#f1f5f9', bodyColor: '#94a3b8', borderColor: '#2d3748', borderWidth: 1, callbacks: { label: c => ` Status: ${{ 3: 'GOOD', 2: 'WARNING', 1: 'DEGRADED' }[c.raw] || c.raw}` } } }, scales: { x: { ticks: { color: '#475569', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.03)' } }, y: { type: 'linear', position: 'left', ticks: { color: '#8b5cf6', font: { size: 10 } }, grid: { drawOnChartArea: false } } } } });
         }
 
         function renderScoreDist(metrics) {
             const ctx = document.getElementById('scoreDistChart'); if (!ctx) return;
             if (scoreDistChart) scoreDistChart.destroy();
             const rev = [...metrics].reverse();
-            scoreDistChart = new Chart(ctx, { type: 'line', data: { labels: rev.map(m => m.logged_at ? m.logged_at.substring(0, 10) : ''), datasets: [{ label: 'KS Distance', data: rev.map(m => parseFloat(m.ks_distance).toFixed(4)), borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.08)', tension: 0.4, fill: true, pointRadius: 5, pointBackgroundColor: '#8b5cf6', yAxisID: 'y' }, { label: 'Trend Score', data: rev.map(m => parseFloat(m.trend_score).toFixed(2)), borderColor: '#06b6d4', backgroundColor: 'rgba(6,182,212,0.08)', tension: 0.4, fill: true, pointRadius: 5, pointBackgroundColor: '#06b6d4', yAxisID: 'y1' }] }, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11, family: 'Inter' }, usePointStyle: true } }, tooltip: { backgroundColor: '#1a2235', titleColor: '#f1f5f9', bodyColor: '#94a3b8', borderColor: '#2d3748', borderWidth: 1 } }, scales: { x: { ticks: { color: '#475569', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.03)' } }, y: { type: 'linear', position: 'left', ticks: { color: '#8b5cf6', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } }, y1: { type: 'linear', position: 'right', ticks: { color: '#06b6d4', font: { size: 10 } }, grid: { drawOnChartArea: false } } } } });
+            scoreDistChart = new Chart(ctx, { type: 'line', data: { labels: rev.map(m => m.logged_at ? m.logged_at.substring(0, 10) : ''), datasets: [{ label: 'KS Distance', data: rev.map(m => parseFloat(m.ks_distance).toFixed(4)), borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.08)', tension: 0.4, fill: true, pointRadius: 5, pointBackgroundColor: '#8b5cf6', yAxisID: 'y' }, { label: 'Trend Score', data: rev.map(m => parseFloat(m.trend_score).toFixed(2)), borderColor: '#06b6d4', backgroundColor: 'rgba(6,182,212,0.08)', tension: 0.4, fill: true, pointRadius: 5, pointBackgroundColor: '#06b6d4', yAxisID: 'y1' }] }, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11, family: 'Inter' }, usePointStyle: true } }, tooltip: { backgroundColor: '#1a2235', titleColor: '#f1f5f9', bodyColor: '#94a3b8', borderColor: '#2d3748', borderWidth: 1, callbacks: { label: c => ` ${parseInt(c.raw).toLocaleString()} records processed` } } }, scales: { x: { ticks: { color: '#475569', font: { size: 10 }, maxRotation: 45 }, grid: { color: 'rgba(255,255,255,0.03)' } }, y: { ticks: { color: '#475569', font: { size: 10 }, callback: v => v + '%' }, grid: { color: 'rgba(255,255,255,0.05)' } } } } });
         }
 
         function renderVolatilityChart(metrics) {
@@ -3191,7 +3410,7 @@
             if (volatilityChart) volatilityChart.destroy();
             const rev = [...metrics].reverse();
             const stdVals = rev.map(m => (parseFloat(m.std_anomaly_score) * 100).toFixed(2));
-            volatilityChart = new Chart(ctx, { type: 'line', data: { labels: rev.map(m => m.logged_at ? m.logged_at.substring(0, 16) : ''), datasets: [{ label: 'Score Std Dev (%)', data: stdVals, borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.08)', tension: 0.4, fill: true, pointRadius: 6, pointBackgroundColor: stdVals.map(v => parseFloat(v) > 35 ? '#ef4444' : parseFloat(v) > 25 ? '#f59e0b' : '#10b981'), pointBorderColor: '#1a2235', pointBorderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11, family: 'Inter' }, usePointStyle: true } }, tooltip: { backgroundColor: '#1a2235', titleColor: '#f1f5f9', bodyColor: '#94a3b8', borderColor: '#2d3748', borderWidth: 1, callbacks: { label: c => ` Std Dev: ${c.raw}% — ${parseFloat(c.raw) > 35 ? '⚠️ High volatility' : parseFloat(c.raw) > 25 ? '🟡 Moderate' : '✅ Stable'}` } } }, scales: { x: { ticks: { color: '#475569', font: { size: 10 }, maxRotation: 45 }, grid: { color: 'rgba(255,255,255,0.03)' } }, y: { ticks: { color: '#475569', font: { size: 10 }, callback: v => v + '%' }, grid: { color: 'rgba(255,255,255,0.05)' } } } } });
+            volatilityChart = new Chart(ctx, { type: 'line', data: { labels: rev.map(m => m.logged_at ? m.logged_at.substring(0, 16) : ''), datasets: [{ label: 'Score Std Dev (%)', data: stdVals, borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.08)', tension: 0.4, fill: true, pointRadius: 6, pointBackgroundColor: stdVals.map(v => parseFloat(v) > 35 ? '#ef4444' : parseFloat(v) > 25 ? '#f59e0b' : '#10b981'), pointBorderColor: '#1a2235', pointBorderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11, family: 'Inter' }, usePointStyle: true } }, tooltip: { backgroundColor: '#1a2235', titleColor: '#f1f5f9', bodyColor: '#94a3b8', borderColor: '#2d3748', borderWidth: 1, callbacks: { label: c => ` Std Dev: ${c.raw}% — ${parseFloat(c.raw) > 35 ? '⚠️ High volatility' : parseFloat(c.raw) > 25 ? '🟡 Moderate' : '✅ Stable'}` } } }, scales: { x: { ticks: { color: '#475569', font: { size: 10 }, maxRotation: 45 }, grid: { color: 'rgba(255,255,255,0.03)' } }, y: { ticks: { color: '#475569', font: { size: 10 }, callback: v => v.toLocaleString() }, grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: 'Records Count', color: '#475569', font: { size: 10 } } } }, animation: { duration: 900 } } });
         }
 
         function renderRecordsProcessedChart(metrics) {
@@ -3286,42 +3505,6 @@
         }
 
         // ══════════════════════════════════════════════════════════════
-        //  LIVE STATUS BAR + AUTO REFRESH
-        // ══════════════════════════════════════════════════════════════
-        let refreshInterval = 60, refreshCountdown = 60, refreshTimer = null;
-
-        function startLiveClock() {
-            function tick() { const el = document.getElementById('live-clock'); if (el) el.textContent = new Date().toLocaleTimeString(); }
-            tick(); setInterval(tick, 1000);
-        }
-
-        async function checkApiHealth() {
-            const dot = document.getElementById('health-dot'), lat = document.getElementById('api-latency');
-            try {
-                const t0 = performance.now(), res = await fetch('/health'), ms = Math.round(performance.now() - t0);
-                if (res.ok) { if (dot) dot.className = 'status-dot live'; if (lat) { lat.textContent = ms + 'ms'; lat.style.color = ms < 200 ? '#10b981' : ms < 500 ? '#f59e0b' : '#ef4444'; } }
-                else { if (dot) dot.className = 'status-dot offline'; if (lat) { lat.textContent = 'ERR'; lat.style.color = '#ef4444'; } }
-            } catch (e) { if (dot) dot.className = 'status-dot offline'; if (lat) { lat.textContent = 'DOWN'; lat.style.color = '#ef4444'; } }
-        }
-
-        function startAutoRefresh() {
-            refreshCountdown = refreshInterval; if (refreshTimer) clearInterval(refreshTimer);
-            refreshTimer = setInterval(() => {
-                refreshCountdown--;
-                const secEl = document.getElementById('refresh-seconds'); if (secEl) secEl.textContent = refreshCountdown + 's';
-                const ring = document.getElementById('ring-progress'); if (ring) ring.style.strokeDashoffset = (56.5 * (1 - (refreshInterval - refreshCountdown) / refreshInterval)).toFixed(1);
-                if (refreshCountdown <= 0) { refreshCountdown = refreshInterval; const ap = document.querySelector('.page.active'); if (ap && ap.id === 'page-dashboard') { loadDashboard(); checkApiHealth(); } }
-            }, 1000);
-        }
-
-        function manualRefresh() {
-            refreshCountdown = refreshInterval;
-            const ap = document.querySelector('.page.active');
-            if (ap) { if (ap.id === 'page-dashboard') loadDashboard(); else if (ap.id === 'page-monitoring') loadMonitoring(); else if (ap.id === 'page-registry') loadRegistry(); }
-            checkApiHealth(); showToast('🔄 Refreshed', 'success');
-        }
-
-        // ══════════════════════════════════════════════════════════════
         //  KPI TICKER
         // ══════════════════════════════════════════════════════════════
         function renderKPITicker(data) {
@@ -3387,9 +3570,9 @@
             } catch (e) { console.warn('Heatmap error:', e); }
         }
 
-        // ════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════
         //  ROI CALCULATOR
-        // ════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════
         function calculateROI(data) {
             const avgMonthly = 65;
             const saveRate = 0.70;
@@ -3400,9 +3583,9 @@
             const detailEl = document.getElementById('roi-detail'); if (detailEl) detailEl.textContent = `${atRisk} high-risk customers × $${avgMonthly} avg monthly × ${Math.round(saveRate * 100)}% save rate`;
         }
 
-        // ════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════
         //  FAB
-        // ════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════
         let fabOpen = false;
         function toggleFab() {
             fabOpen = !fabOpen;
@@ -3420,9 +3603,9 @@
         }
         document.addEventListener('click', e => { if (fabOpen && !e.target.closest('.fab')) { fabOpen = false; document.querySelector('.fab-menu').classList.remove('open'); document.querySelector('.fab-trigger').classList.remove('open'); } });
 
-        // ════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════
         //  PARTICLE CANVAS
-        // ════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════
         function initParticles() {
             const canvas = document.getElementById('particle-canvas'); if (!canvas) return;
             const ctx = canvas.getContext('2d');
@@ -3454,9 +3637,9 @@
             window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
         }
 
-        // ════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════
         //  KEYBOARD SHORTCUTS
-        // ════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════
         document.addEventListener('keydown', e => {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
             const navItems = document.querySelectorAll('.nav-item');
@@ -3468,18 +3651,18 @@
             else if (e.key === 'Escape') closeShapModal();
         });
 
-        // ════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════
         //  WELCOME BANNER GREETING
-        // ════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════
         function setWelcomeGreeting() {
             const h = new Date().getHours();
             const el = document.getElementById('welcome-text');
             if (el) el.textContent = `👋 ${h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'}!`;
         }
 
-        // ════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════
         //  STAT CARD MOUSE GLOW
-        // ════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════
         document.querySelectorAll('.stat-card').forEach(card => {
             card.addEventListener('mousemove', e => {
                 const r = card.getBoundingClientRect();
@@ -3488,9 +3671,9 @@
             });
         });
 
-        // ════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════
         //  INIT
-        // ════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════
         document.addEventListener('DOMContentLoaded', () => {
             initParticles();
             setWelcomeGreeting();

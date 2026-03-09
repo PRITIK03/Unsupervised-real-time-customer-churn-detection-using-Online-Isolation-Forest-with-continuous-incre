@@ -957,12 +957,69 @@ async def dashboard_stats():
         score_buckets = []
         contract_risk = []
 
-        if active and MODEL_CACHE["oif"] and MODEL_CACHE["scaler"]:
+        if active and MODEL_CACHE["oif"] and MODEL_CACHE["scaler"] and MODEL_CACHE["shap_explainer"]:
             raw_df = pd.read_sql(
                 "SELECT * FROM raw_customers WHERE is_processed=1 LIMIT 500", engine
             )
             if not raw_df.empty:
-                scores, contract_col = _encode_and_score(raw_df)
+                # Preprocess and scale
+                drop_cols = ["id", "is_processed", "created_at"]
+                df = raw_df.drop(columns=[c for c in drop_cols if c in raw_df.columns], errors="ignore")
+                contract_col = df["Contract"].copy() if "Contract" in df.columns else None
+                df = df[cfg.FEATURE_COLUMNS].copy()
+                df["TotalCharges"] = pd.to_numeric(df["TotalCharges"], errors="coerce")
+                df["TotalCharges"] = df["TotalCharges"].fillna(df["TotalCharges"].median())
+                label_encoders = MODEL_CACHE.get("label_encoders") or {}
+                for col in cfg.CATEGORICAL_COLUMNS:
+                    if col not in df.columns:
+                        continue
+                    if col in label_encoders:
+                        le = label_encoders[col]
+                        df[col] = df[col].astype(str).apply(
+                            lambda v: le.transform([v])[0] if v in le.classes_ else -1
+                        )
+                    else:
+                        from sklearn.preprocessing import LabelEncoder as _LE
+                        _le = _LE()
+                        df[col] = _le.fit_transform(df[col].astype(str))
+                
+                X = MODEL_CACHE["scaler"].transform(df)
+                explainer = MODEL_CACHE["shap_explainer"]
+                oif = MODEL_CACHE["oif"]
+                
+                # 1) Get normalized base scores
+                raw_scores = oif.model.score_samples(X)
+                norm_scores = oif._normalize(raw_scores)
+                
+                # 2) Fast Vectorized SHAP Adjustment (instead of slow python loop)
+                try:
+                    sv_raw = explainer.shap_values(X)
+                    if hasattr(sv_raw, "values"):
+                        sv = sv_raw.values
+                    elif isinstance(sv_raw, list):
+                        sv = sv_raw[1]
+                    else:
+                        sv = np.array(sv_raw)
+                        
+                    risk_sums = np.sum(np.where(sv > 0, sv, 0), axis=1)
+                    safe_sums = np.sum(np.abs(np.where(sv < 0, sv, 0)), axis=1)
+                    total_abs_sums = risk_sums + safe_sums
+
+                    with np.errstate(divide='ignore', invalid='ignore'):
+                        risk_ratios = np.where(total_abs_sums > 0, risk_sums / total_abs_sums, 0.5)
+
+                    factors = np.ones_like(risk_ratios)
+                    low_mask = risk_ratios < 0.5
+                    factors[low_mask] = 0.20 + 1.20 * risk_ratios[low_mask]
+                    high_mask = ~low_mask
+                    factors[high_mask] = 1.0 + 0.30 * (risk_ratios[high_mask] - 0.5)
+                    factors[total_abs_sums == 0] = 1.0
+                    
+                    scores = np.clip(norm_scores * factors, 0, 1).tolist()
+                except Exception as e:
+                    logger.warning(f"Vectorized SHAP failed, falling back: {e}")
+                    scores = norm_scores.tolist()
+
                 if scores is not None:
                     # Assign risk tiers
                     for s in scores:

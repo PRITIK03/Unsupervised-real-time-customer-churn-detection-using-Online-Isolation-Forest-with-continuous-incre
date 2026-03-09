@@ -51,9 +51,9 @@ MODEL_PARAMS = {
 
 # ── Risk tier percentiles ─────────────────
 TIER_PERCENTILES = {
-    "critical_pct": 90,
-    "high_pct"    : 75,
-    "medium_pct"  : 50,
+    "critical_pct": 98,   # Top 2% are Critical
+    "high_pct"    : 90,   # Next 8% are High
+    "medium_pct"  : 70,   # Next 20% are Medium
 }
 
 # ── Evaluation thresholds ─────────────────

@@ -957,81 +957,41 @@ async def dashboard_stats():
         score_buckets = []
         contract_risk = []
 
-        if active and MODEL_CACHE["oif"] and MODEL_CACHE["scaler"] and MODEL_CACHE["shap_explainer"]:
+        if active and MODEL_CACHE["oif"] and MODEL_CACHE["scaler"]:
             raw_df = pd.read_sql(
                 "SELECT * FROM raw_customers WHERE is_processed=1 LIMIT 500", engine
             )
             if not raw_df.empty:
-                # Preprocess and scale
-                drop_cols = ["id", "is_processed", "created_at"]
-                df = raw_df.drop(columns=[c for c in drop_cols if c in raw_df.columns], errors="ignore")
-                contract_col = df["Contract"].copy() if "Contract" in df.columns else None
-                df = df[cfg.FEATURE_COLUMNS].copy()
-                df["TotalCharges"] = pd.to_numeric(df["TotalCharges"], errors="coerce")
-                df["TotalCharges"] = df["TotalCharges"].fillna(df["TotalCharges"].median())
-                label_encoders = MODEL_CACHE.get("label_encoders") or {}
-                for col in cfg.CATEGORICAL_COLUMNS:
-                    if col not in df.columns:
-                        continue
-                    if col in label_encoders:
-                        le = label_encoders[col]
-                        df[col] = df[col].astype(str).apply(
-                            lambda v: le.transform([v])[0] if v in le.classes_ else -1
+                scores, contract_col = _encode_and_score(raw_df)
+                if scores is not None:
+                    # Assign risk tiers
+                    for s in scores:
+                        s = float(s)
+                        tier = MODEL_CACHE["oif"].get_risk_tier(s)
+                        risk_dist[tier] += 1
+                        
+                    scores_pct = [float(s) * 100 for s in scores]
+                    for low in range(0, 100, 10):
+                        high  = low + 10
+                        count = sum(
+                            1 for s in scores_pct
+                            if (low <= s <= high if high == 100 else low <= s < high)
                         )
-                    else:
-                        from sklearn.preprocessing import LabelEncoder as _LE
-                        _le = _LE()
-                        df[col] = _le.fit_transform(df[col].astype(str))
-                X = MODEL_CACHE["scaler"].transform(df)
-                explainer = MODEL_CACHE["shap_explainer"]
-                oif = MODEL_CACHE["oif"]
-                tier_thresholds = oif.tier_thresholds
-                shap_scores = []
-                for i in range(len(X)):
-                    x_row = X[i:i+1]
-                    # Raw score (normalized)
-                    raw_score = float(oif.model.score_samples(x_row)[0])
-                    norm_score = oif._normalize(np.array([raw_score]))[0]
-                    # SHAP adjustment (same as /predict)
-                    sv_raw = explainer.shap_values(x_row)
-                    sv = np.array(sv_raw.values if hasattr(sv_raw, "values") else sv_raw).flatten()
-                    risk_sum = float(np.sum(sv[sv > 0]))
-                    safe_sum = float(np.abs(np.sum(sv[sv < 0])))
-                    if (risk_sum + safe_sum) > 0:
-                        risk_ratio = risk_sum / (risk_sum + safe_sum)
-                        if risk_ratio < 0.5:
-                            factor = 0.20 + 1.20 * risk_ratio
-                        else:
-                            factor = 1.0 + 0.30 * (risk_ratio - 0.5)
-                        adj_score = float(np.clip(norm_score * factor, 0, 1))
-                    else:
-                        adj_score = norm_score
-                    shap_scores.append(adj_score)
-                # Assign risk tiers
-                for s in shap_scores:
-                    tier = oif.get_risk_tier(s)
-                    risk_dist[tier] += 1
-                scores_pct = [s * 100 for s in shap_scores]
-                for low in range(0, 100, 10):
-                    high  = low + 10
-                    count = sum(
-                        1 for s in scores_pct
-                        if (low <= s <= high if high == 100 else low <= s < high)
-                    )
-                    score_buckets.append({"range": f"{low}-{high}", "count": count})
-                if contract_col is not None and len(contract_col) == len(shap_scores):
-                    contract_scores = {}
-                    for i, ct in enumerate(contract_col):
-                        ct = str(ct)
-                        contract_scores.setdefault(ct, []).append(shap_scores[i] * 100)
-                    for ct in ["Month-to-month", "One year", "Two year"]:
-                        if ct in contract_scores:
-                            s_list = contract_scores[ct]
-                            contract_risk.append({
-                                "contract"      : ct,
-                                "avg_risk"      : round(float(np.mean(s_list)), 2),
-                                "customer_count": len(s_list)
-                            })
+                        score_buckets.append({"range": f"{low}-{high}", "count": count})
+                        
+                    if contract_col is not None and len(contract_col) == len(scores):
+                        contract_scores = {}
+                        for i, ct in enumerate(contract_col):
+                            ct = str(ct)
+                            contract_scores.setdefault(ct, []).append(float(scores[i]) * 100)
+                        for ct in ["Month-to-month", "One year", "Two year"]:
+                            if ct in contract_scores:
+                                s_list = contract_scores[ct]
+                                contract_risk.append({
+                                    "contract"      : ct,
+                                    "avg_risk"      : round(float(np.mean(s_list)), 2),
+                                    "customer_count": len(s_list)
+                                })
 
         trend_data = []
         if not metrics_df.empty:

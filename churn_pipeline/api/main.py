@@ -350,8 +350,12 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
+
+# Serve the main frontend directory at /static (optional, for legacy)
 FRONTEND_DIR = os.path.join(ROOT_DIR, "frontend")
 app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
+# Serve the assets directory at /assets (for CSS, JS, etc.)
+app.mount("/assets", StaticFiles(directory=os.path.join(FRONTEND_DIR, "assets")), name="assets")
 
 
 # ─────────────────────────────────────────

@@ -1,4 +1,4 @@
-Unsupervised Real-Time Customer Churn Detection using Online Isolation Forest 🚀
+Unsupervised Real-Time Customer Churn Detection using Online Isolation Forest 🚀.
 A robust pipeline for real-time, unsupervised customer churn detection leveraging Online Isolation Forest with continuous incremental learning. The system features a Flask API for predictions and monitoring, and integrates with MySQL for persistent storage.
 
 ✨ Features.
